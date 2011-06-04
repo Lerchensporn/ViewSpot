@@ -20,11 +20,6 @@ document.onkeydown = keyPress;
 document.onmousemove = mouseMove;
 document.onclick = mouseClick;
 
-function initConsole(args)
-{
-    presenter.document.onkeypress = keyPress;
-}
-
 function startPresenter()
 {
     presenter = window.open("main.html?console", "Zweitfenster", "status=yes,menubar=yes,screenX=" + screen.availWidth +
@@ -92,6 +87,7 @@ function init()
         cbar.style.bottom = '0px';
         cbar.style.position = 'absolute';
         cbar.style.width = '100%';
+        // blur, because space key will press button again
         cbar.innerHTML = 
             '<div id="controls" style="margin:auto;display:table">' +
             '   <div style="display:table-row;height:100%">' +
@@ -102,9 +98,9 @@ function init()
             '           <a id="pause" href="javascript:startStop();">Pause</a>' +
             '       </div>' +
             '       <div>' + 
-            '           <button id="notesbutton" onclick="javascript:showNotes=!showNotes;gotoSlide(slideNumber);">Notes</button>' +
+            '           <button id="notesbutton" onclick="javascript:showNotes=!showNotes;gotoSlide(slideNumber);this.blur();">Notes</button>' +
             '       </div>' +
-            '       <div><button id="slidesbutton" onclick="javascript:void">Slides</button></div>' +
+            '       <div><button id="slidesbutton" onclick="javascript:this.blur();">Slides</button></div>' +
             '   </div>' +
             '</div>';
         document.body.appendChild(cbar);
@@ -206,6 +202,7 @@ function mouseClick(args)
     }
 }
 
+// keepMenu: whether to keep an already existing menu
 function contextMenu(keepMenu)
 {
     /*
@@ -225,13 +222,13 @@ function contextMenu(keepMenu)
     }
     if(menuul != null)
     {
-        if((keepMenu == false || keepMenu == undefined))
+        if(!keepMenu)
         {
             document.body.removeChild(menuul);
             menuul = null;
             return;
         }
-        else if(keepMenu === true)
+        else if(keepMenu)
         {
             posx = menuul.style.left;
             posy = menuul.style.top;
@@ -354,7 +351,7 @@ function keyPress(ev)
         return;
     if(ev.keyCode == 32) // space
     {
-        contextMenu();
+        contextMenu(false);
     }
     else if(ev.keyCode == 39) // left
     {
