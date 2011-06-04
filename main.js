@@ -1,13 +1,24 @@
 var theme = "latex-style";
-var slides = [];
-var slideNumber = 0;
+var slides = []; // array with slide divs
+var slideNumber = 0; // current slide index
+
+var notesdiv = null; // div for notes in console
+var presenter = null; // presenter console window
+var curTout; // cursor hide timeout
+var mouseX = 0; // latest mouse coordinates
+var mouseY = 0;
+var startTime = null; // start time of console timer
+var paused = 0; // paused time
+var timerRunning = true; // whether console timer is running
+var menuul = null; // context menu
+var showNotes = false; // whether notes div is shown in console
+
 headInit();
+
 window.onload = init;
 document.onkeydown = keyPress;
 document.onmousemove = mouseMove;
 document.onclick = mouseClick;
-
-var presenter = null;
 
 function initConsole(args)
 {
@@ -29,9 +40,6 @@ function headInit()
     document.write('<script type="text/javascript" src="' + theme + '.js"><\/script>');
 }
 
-var curTout;
-var mouseX;
-var mouseY;
 function mouseMove(args)
 {
     // args.clientX und pageX für IE und andere
@@ -94,7 +102,7 @@ function init()
             '           <a id="pause" href="javascript:startStop();">Pause</a>' +
             '       </div>' +
             '       <div>' + 
-            '           <button id="notesbutton" href="javascript:showNotes=true;gotoSlide(slideNumber);">Notes</button>' +
+            '           <button id="notesbutton" onclick="javascript:showNotes=!showNotes;gotoSlide(slideNumber);">Notes</button>' +
             '       </div>' +
             '       <div><button id="slidesbutton" onclick="javascript:void">Slides</button></div>' +
             '   </div>' +
@@ -110,10 +118,6 @@ function resetTimer()
     paused = 0;
     document.getElementById('time').innerHTML = '0:00';
 }
-
-var startTime = null;
-var paused = 0;
-var timerRunning = true;
 
 function updateTime()
 {
@@ -152,9 +156,6 @@ function pad2two(digit)
 }
 
 
-var sliderTimer;
-var sliderArgs;
-
 function slideScale(num)
 {
     slides[num].style.MozTransform = "scale(1)";
@@ -188,8 +189,6 @@ function slideNoEffect(num)
     slides[num].style.visibility = "visible";
     slides[slideNumber].style.visibility = "hidden";
 }
-
-var menuul = null;
 
 function mouseClick(args)
 {
@@ -270,8 +269,6 @@ function contextMenu(keepMenu)
     document.body.appendChild(menuul);
 }
 
-var showNotes = true;
-
 function gotoSlide(num)
 {
     if(num >= 0 && num < slides.length)
@@ -286,6 +283,11 @@ function gotoSlide(num)
             slides[num].style.visibility = 'visible';
             if(showNotes === false)
             {
+                if(notesdiv != null)
+                {
+                    document.body.removeChild(notesdiv);
+                    notesdiv = null;
+                }
                 slides[num].style.left = '30%';
                 slides[num].style.MozTransform = 'scale(0.6)';
                 slides[num].style.WebkitTransform = 'scale(0.6)';
@@ -296,7 +298,8 @@ function gotoSlide(num)
                 slides[num].style.left = '27%';
                 slides[num].style.MozTransform = slides[num].style.WebkitTransform = 'scale(0.6)';
                 slides[num].style.top = '-15%';
-                notesdiv = document.createElement('div');
+                if(notesdiv == null)
+                    notesdiv = document.createElement('div');
                 notesdiv.className = 'notesdiv';
                 notes = slides[num].getElementsByClassName('notes');
                 if(notes.length > 0)
@@ -307,11 +310,11 @@ function gotoSlide(num)
             }
             if(num < slides.length - 1)
             {
-                //slides[num + 1].style.visibility = 'visible';
                 if(showNotes === false)
                 {
+                    slides[num + 1].style.visibility = 'visible';
                     slides[num + 1].style.left = '75%';
-                    slides[num + 1].style.top = "-15%"; // -30 + 15
+                    slides[num + 1].style.top = '-15%'; // -30 + 15
                     slides[num + 1].style.MozTransform = slides[num + 1].style.WebkitTransform = 'scale(0.4)';
                 }
                 else
