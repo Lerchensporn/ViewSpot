@@ -1,0 +1,184 @@
+*
+{
+    font: 24pt "Linux Biolinum";
+    outline: none;
+}
+
+html, body
+{
+    height: 100%;
+}
+
+body
+{
+    overflow: hidden;
+    margin: 0px;
+    background-color: #557;
+}
+
+.menuul, .menuul ul
+{
+    white-space: nowrap;
+    position: relative;
+    color: white;
+    float: left;
+    background-color: darkgrey;
+    border-radius: 5px;
+    padding: 0px;
+    margin: 0px;
+}
+
+.menuul li
+{
+    list-style: none;
+    font-size: 12pt;
+    cursor: pointer;
+    margin: 0px;
+    background-color: #666;
+    padding: 3px;
+}
+
+.menuul li:hover
+{
+    background-color: #333;
+}
+
+.menuul li:last-child
+{
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.menuul li:first-child
+{
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.menuul li ul
+{
+    display: none;
+    padding: 0px;
+    margin: -3px;
+    margin-left: 0px;
+    border-top-left-radius: 0px;
+}
+
+.inactli
+{
+    color: #aaa;
+}
+
+.menuul li:hover ul
+{
+    position: absolute;
+    left: 100%;
+    display: block;
+}
+
+.slide
+{
+    position: absolute;
+    height: 100%;
+    left: 50%;
+    margin-left: -512px;
+    width: 1024px;
+    overflow: hidden;
+}
+
+#clocktime
+{
+    font-size: 60%;
+    display: block;
+}
+
+#start, #pause
+{
+    text-decoration: none;
+    color: white;
+    font-size: 30%;
+    font-family: Sans;
+}
+
+#time
+{
+    margin-bottom: -21px;
+    margin-top: -5px;
+    color: #4f0;
+    font-weight: bold;
+    font-size: 85%;
+    display: block;
+}
+
+.notesdiv
+{
+    position: absolute;
+    font-size: 70%;
+    left: 55%;
+    padding: 10px;
+    top: 5%;
+    border-radius: 10px;
+    background-color: #345;
+    color: #ddd;
+    height: 65%;
+    width: 500px;
+}
+
+#slidesbutton, #notesbutton
+{
+    font-size: 50%;
+    outline: none;
+    width: 50px;
+    color: yellow;
+    margin: auto;
+    text-decoration:none;
+    cursor: default;
+    height: 80%;
+    background-color: #345;
+    border: none;
+    border-radius: 5px;
+}
+
+#controls div div
+{
+    background-color: #345;
+    display: table-cell;
+    vertical-align: middle;
+    height: 100%;
+    padding: 5px;
+}
+
+#controls div:first-child
+{
+    border-top-left-radius: 10px;
+}
+
+#controls div:last-child
+{
+    border-top-right-radius: 10px;
+}
+
+#notesbutton:hover, #slidesbutton:hover
+{
+    background-color: #134;
+}
+
+#notesbutton:active, #slidesbutton:active
+{
+    border: 1px inset;
+}
+
+#notesbutton::-moz-focus-inner, #slidesbutton::-moz-focus-inner
+{
+    border: none;
+}
+
+.notesdiv *
+{
+    font-size: 100%;
+}
+
+.notes
+{
+    display: none;
+}
