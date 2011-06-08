@@ -6,12 +6,17 @@ pre, pre *
 
 *
 {
-    list-style-position: inside;
     margin: 0px;
     padding: 1px;
     font-size: 24pt;
     font-family: "Linux Biolinum";
     outline: none;
+}
+
+li
+{
+    margin: 0.2em;
+    margin-left: 1em;
 }
 
 html, body
