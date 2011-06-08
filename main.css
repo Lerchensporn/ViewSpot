@@ -6,6 +6,9 @@ pre, pre *
 
 *
 {
+    list-style-position: inside;
+    margin: 0px;
+    padding: 1px;
     font-size: 24pt;
     font-family: "Linux Biolinum";
     outline: none;
@@ -14,6 +17,8 @@ pre, pre *
 html, body
 {
     height: 100%;
+    margin: 0px;
+    padding: 0px;
 }
 
 body
@@ -95,6 +100,7 @@ body
 
 .slide
 {
+    background-color: white;
     position: absolute;
     height: 100%;
     left: 50%;

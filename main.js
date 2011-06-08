@@ -1,4 +1,8 @@
-var theme = "latex-style";
+if(typeof theme == 'undefined')
+{
+    theme = 'latex';
+}
+
 var slides = []; // array with slide divs
 var slideNumber = 0; // current slide index
 
@@ -31,8 +35,8 @@ function headInit()
     document.write('<link rel="stylesheet" href="main.css" type="text/css" />');
     document.write('<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />');
     document.write('<script type="text/javascript" src="mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"><\/script>');
-    document.write('<link rel="stylesheet" href="' + theme + '.css" type="text/css" />');
-    document.write('<script type="text/javascript" src="' + theme + '.js"><\/script>');
+    document.write('<link rel="stylesheet" href="styles/' + theme + '-style.css" type="text/css" />');
+    document.write('<script type="text/javascript" src="styles/' + theme + '-style.js"><\/script>');
 }
 
 function mouseMove(args)
@@ -76,7 +80,8 @@ function init()
         slides.push(children[i]);
         children[i].className = 'slide';
         children[i].style.visibility = 'hidden';
-        createLayout(children[i]);
+        if(typeof createLayout == 'function')
+            createLayout(children[i]);
     }
     gotoSlide(0);
     if(window.location.search == '?console')

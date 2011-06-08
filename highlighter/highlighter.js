@@ -4,7 +4,7 @@ window.addEventListener('load', highlightDocument, false);
 
 /* rules format:
    int : order
-   bool : whether [2] is regex, otherwise it is a comma seperated keyword list
+   bool : whether [2] is regex, otherwise it is a comma separated keyword list
    string : regex or keywords
    string : css class for highlighting
 */
