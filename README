@@ -1,4 +1,4 @@
-Interesting Ideas:
+Interesting ideas:
 * provide for example Python scripts that do important tasks:
     - select only the files needed for the presentation
     - compress these files into a single html file for easy transport
@@ -12,7 +12,6 @@ Next steps
 * finish the presenter console
 * clean up context menu and slide effects
 * implement animations
-* think about a license
 .
 .
 .

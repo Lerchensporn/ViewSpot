@@ -1,6 +1,13 @@
+pre, pre *
+{
+    font-family: "Inconsolata", "Courier New";
+    font-size: 18pt;
+}
+
 *
 {
-    font: 24pt "Linux Biolinum";
+    font-size: 24pt;
+    font-family: "Linux Biolinum";
     outline: none;
 }
 

@@ -1,0 +1,15 @@
+.code-js .keyword
+{
+    color: blue;
+}
+
+.code-js .string
+{
+    color: red;
+}
+
+.code-js .comment
+{
+    font-style: italic;
+    color: grey;
+}

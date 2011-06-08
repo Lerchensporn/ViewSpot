@@ -250,7 +250,7 @@ function contextMenu(keepMenu)
     inner += '<li ' + (slideNumber > 0 ? 'onclick="gotoPrevious(true);contextMenu(true);"' : 'class="inactli"') + '>Previous</li>'
     inner += '<li ' + (slideNumber > 0 ? 'onclick="gotoSlide(0);contextMenu(true);"' : 'class="inactli"') + '>First</li>'
     inner += '<li ' + (slideNumber < slides.length - 1 ? 'onclick="gotoSlide(slides.length - 1);contextMenu(true);"' : 'class="inactli"') + '>Last</li>';
-    inner += '<li onclick="startPresenter();contextMenu(true);">Presenter Screen</li><li><ul>';
+    inner += '<li onclick="startPresenter();contextMenu(false);">Presenter Screen</li><li><ul>';
     for(var i = 0; i < slides.length; ++i)
     {
         inner += '<li ' + (i == slideNumber ? 'class="inactli"' : 'onclick="gotoSlide(' + i.toString() + ')"') + '>' + (i + 1).toString() + "&nbsp;";
