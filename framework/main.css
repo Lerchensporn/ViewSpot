@@ -4,10 +4,16 @@ pre, pre *
     font-size: 18pt;
 }
 
+.MathJax_MathML
+{
+    /* mathjax bug? */
+    padding: 1px;
+}
+
 *
 {
     margin: 0px;
-    padding: 1px;
+   /* padding: 1px; */
     font-size: 24pt;
     font-family: "Linux Biolinum";
     outline: none;
@@ -15,14 +21,13 @@ pre, pre *
 
 li
 {
-    margin: 0.2em;
+    margin: 0.4em;
     margin-left: 1em;
 }
 
 html, body
 {
     height: 100%;
-    margin: 0px;
     padding: 0px;
 }
 
@@ -120,7 +125,7 @@ body
     display: block;
 }
 
-#start, #pause
+#reset, #pause
 {
     text-decoration: none;
     color: white;

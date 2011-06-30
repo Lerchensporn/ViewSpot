@@ -1,6 +1,6 @@
 .code-js .keyword
 {
-    color: blue;
+    color: darkblue;
 }
 
 .code-js .string
@@ -11,5 +11,5 @@
 .code-js .comment
 {
     font-style: italic;
-    color: grey;
+    color: #707070;
 }
