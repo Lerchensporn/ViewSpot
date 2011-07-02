@@ -5,6 +5,70 @@ var modules = ['mathjax', 'highlighter'];
 
 var instance = new WebSlider();
 
+function Slide()
+{
+    var self = this;
+
+    self.div = null;
+
+    self.onload = function(){};
+
+    self.onshow = function(){};
+
+    self.onleave = function(){};
+
+    self.onclick = function(){};
+
+    /**
+     * Add animators to this slide. The Animator instances have to be passed as the function parameters.
+     */
+    self.addAnimators = function()
+    {
+        for(var i = 0; i < arguments.length; i++)
+        {
+            self.animators = self.animators.concat(arguments[i]);
+        }
+    };
+
+    self.nextAnimation = function()
+    {
+        self.animators[self.animIndex].doAnimate();
+        self.animIndex++;
+        // trigger
+    };
+
+    self.undoAnimation = function()
+    {
+        self.animator[self.animIndex].undoAnimate();
+        self.animIndex--;
+    };
+
+    self.backwardAnimation = function()
+    {
+        self.animator[self.animIndex].backwardAnimate();
+        self.animIndex--;
+    };
+
+    self.reset = function()
+    {
+        for(var i = 0; i < self.animIndex; i++)
+        {
+            self.animators[i].undoAnimate();
+            self.animIndex = 0;
+        }
+    };
+
+    self.animationsComplete = function()
+    {
+        return self.animIndex === self.animators.length;
+    };
+
+    self.animIndex = 0;
+
+    self.animators = [];
+}
+
+/** Core functions for the presentation. */
 function WebSlider()
 {
     var self = this;
@@ -63,6 +127,17 @@ function WebSlider()
         return self.slides[self.slideNumber];
     };
 
+    self.slideById = function(id)
+    {
+        for(var i = 0; i < self.slides.length; i++)
+        {
+            if(self.slides[i].div.id === id)
+            {
+                return self.slides[i];
+            }
+        }
+    };
+
     /**
      * Called when document is loaded. Analyses the HTML markup, puts slides
      * into an array and creates their layout.
@@ -76,9 +151,11 @@ function WebSlider()
             {
                 continue;
             }
-            self.slides.push(children[i]);
+            var tmpslide = new Slide();
             children[i].className = 'slide';
             children[i].style.visibility = 'hidden';
+            tmpslide.div = children[i];
+            self.slides.push(tmpslide);
 
             if(typeof createLayout == 'function')
             {
@@ -146,9 +223,10 @@ function WebSlider()
             ['Last', self.slideNumber < self.slides.length - 1, function() { self.gotoSlide(self.slides.length - 1); self.contextMenu(true); }],
             ['Presenter Console',  true, function() { console = new PresenterConsole(self, true); self.contextMenu(false); }],
             ['Go to',  true, function() { }],
-            'opensubmenu',
+            'opensubmenu'
         ];
 
+        var gotofunc = function() { self.gotoSlide(this.innerHTML[0] - 1); };
         for(var i = 0; i < self.slides.length; ++i)
         {
             var title = (i + 1).toString();
@@ -157,7 +235,7 @@ function WebSlider()
             {
                 title += '&nbsp;' + h1arr[0].innerHTML;
             }
-            menuEntries[menuEntries.length] = [title, i != self.slideNumber, function() { self.gotoSlide(this.innerHTML[0] - 1); }];
+            menuEntries[menuEntries.length] = [title, i != self.slideNumber, gotofunc];
         }
         menuEntries[menuEntries.length] = 'closesubmenu';
 
@@ -248,18 +326,18 @@ function WebSlider()
             {
                 if(self.slideNumber == num)
                 {
-                    self.slides[num].style.visibility = 'visible';
+                    self.slides[num].div.style.visibility = 'visible';
                 }
                 else
                 {
                     if(effect === undefined || effect === null)
                     {
-                        self.slides[self.slideNumber].style.visibility = 'hidden';
-                        self.slides[num].style.visibility = 'visible';
+                        self.slides[self.slideNumber].div.style.visibility = 'hidden';
+                        self.slides[num].div.style.visibility = 'visible';
                     }
                     else
                     {
-                       effect(num, self.slideNumber);
+                       effect(this, num, self.slideNumber);
                     }
                     self.slideNumber = num;
                 }
@@ -270,13 +348,29 @@ function WebSlider()
     /** Go to the next slide. */
     function gotoNext()
     {
-        self.gotoSlide(self.slideNumber + 1);
+        if(self.slides[self.slideNumber].animationsComplete() === false)
+        {
+            self.slides[self.slideNumber].nextAnimation();
+        }
+        else
+        {
+            self.slides[self.slideNumber].reset();
+            self.gotoSlide(self.slideNumber + 1, Sliding.slideAlpha);
+        }
     }
 
     /** Go to the previous slide. */
     function gotoPrevious()
     {
-        self.gotoSlide(self.slideNumber - 1);
+        if(self.slides[self.slideNumber].aniIndex > 0)
+        {
+            self.slides[self.slideNumber].undoAnimation();
+        }
+        else
+        {
+            self.slides[self.slideNumber].reset();
+            self.gotoSlide(self.slideNumber - 1, Sliding.slideAlpha);
+        }
     }
 
     /**
@@ -347,160 +441,11 @@ function WebSlider()
     }
 }
 
-var AniBase =
-{
-    /** Linear progress. */
-    animatorEase: function(progress)
-    {
-        return progress;
-    },
-
-    animatorSin: function(progress)
-    {
-        // a sine square function hill goes from 0 to pi/2, maximum is still 1
-        return Math.pow(Math.sin(progress*Math.PI/2), 2);
-    },
-
-    /*
-     * Stops an animation started by startAnimation(...).
-     * @param aniObject The return value of startAnimation(...).
-     */
-    stopAnimation: function(aniObject)
-    {
-        clearInterval(aniObject.timer);
-        aniObject.cleanfunc();
-    },
-
-    /**
-     * Starts an animation.
-     * @param bodyfunc Function callback that sets the animated properties after each every elapsed interval.
-     * @param cleanfunc Function callback that is executed after the animation stops or is stopped manually.
-     * @param start Initial value of the animated property.
-     * @param end Final value of the animated property.
-     * @valfunc Function callback that returns the animation process depending on the elapsed time.
-     * @return Object instance with the information necessary to stop the animation.
-     */
-    startAnimation: function(bodyfunc, cleanfunc, start, end, anitime, valfunc)
-    {
-        aniObject = {};
-        aniObject.cleanfunc = cleanfunc;
-        startTime = new Date().getTime();
-        aniObject.timer = setInterval(function()
-        {
-            deltaT = (new Date()).getTime() - startTime;
-            if(deltaT >= anitime)
-            {
-                stopAnimation(aniObject);
-                return;
-            }
-            bodyfunc(start + (end-start)*valfunc(deltaT/anitime));
-        }, 10);
-        return aniObject;
-    }
-};
-
-/** Contains functions for slide effects. */
-var Sliding =
-{
-    /** Animate transparency. */
-    slideAlpha: function(slides, num)
-    {
-        this.startSlideAnimation(null, function(value)
-        {
-            slides.current.style.opacity = (1-value).toString();
-            slides.list[num].style.opacity = value.toString();
-            slides.list[num].style.visibility = 'visible';
-        },
-        function()
-        {
-            slides.current.style.opacity = '';
-            slides.list[num].style.opacity = '';
-            slides.current.style.visibility = 'hidden';
-        }, 0, 1, 1000, Sliding.animatorEase);
-    },
-
-    startSlideAnimation: function(prepare, bodyfunc, cleanfunc, start, end, anitime, valfunc)
-    {
-        if(slideAnim !== null)
-        {
-            stopAnimation(slideAnim);
-        }
-        prepare();
-        slideAnim = startAnimation(bodyfunc, function() { cleanfunc(); slideAnim = null; } , start, end, anitime, valfunc);
-    },
-
-    slideHorizontal: function(slides, num)
-    {
-        // left: 50% is the middle
-        startSlideAnimation(
-        function()
-        {
-            var sign = (num > slideNumber) ? 1 : -1;
-            slides.list[num].style.visibility = 'visible';
-            slides.current.style.zIndex = '1';
-        },
-        function(value)
-        {
-            slides.current.style.marginLeft = -sign*value - 512 + 'px';
-        },
-        function()
-        {
-            slides.current.style.visibility = 'hidden';
-            slides.current.style.marginLeft = slides.current.style.zIndex = '';
-        },
-        0, 1024, 1000, Sliding.animatorSin);
-    },
-
-    setCrossBrowserCss: function(element, prop, css)
-    {
-        // border-radius
-        // transform
-        if(prop == 'transform')
-        {
-            element.style.MozTransform = css;
-            element.style.WebkitTransform = css;
-            element.style.OTransform = css;
-            // IE?
-        }
-    },
-
-    matrix: function(x1, x2, x3, x4, x5, x6)
-    {
-        // normal browsers:
-        return 'matrix(' + x1 + ',' + x2 + ',' + x3 + ',' + x4 + ',' + x5 + ',' + x6 + ')';
-    },
-
-    /** Spin around the y-axis while changing the slide. */
-    slideRotate: function(slides, num)
-    {
-        startSlideAnimation(
-        function()
-        {
-            slides.current.style.zIndex = '1';
-            slides.list[num].style.visibility = 'visible';
-        },
-        function(value)
-        {
-            if(value < 0)
-            {
-                slides.current.style.zIndex = '';
-                slides.list[num].style.zIndex = '1';
-            }
-            setCrossBrowserCss(slides.current, 'transform', matrix(value, 0, 0, 1, 0, 0));
-            setCrossBrowserCss(slides.list[num], 'transform', matrix(-value, 0, 0, 1, 0, 0));
-        },
-        function()
-        {
-            setCrossBrowserCss(slides.current, 'transform', '');
-            setCrossBrowserCss(slides.list[num], 'transform', '');
-            slides.list[num].style.zIndex = '';
-            slides.current.style.zIndex = '';
-            slides.current.style.visibility = 'hidden';
-        },
-        1, -1, 1000, Sliding.animatorSin);
-    }
-};
-
+/**
+ * A presenter screen with additional information, which are only visible to the presenter.
+ * @param webslider The WebSlider instance of this presentation.
+ * @param newWindow If true, the presenter screen will be started in a new window.
+ */
 function PresenterConsole(webslider, newWindow)
 {
     var startTime = null;
@@ -574,12 +519,12 @@ function PresenterConsole(webslider, newWindow)
         {
             window.opener.instance.gotoSlide(num);
         }
-        webslider.slides[webslider.slideNumber].style.visibility = 'hidden';
+        webslider.slides[webslider.slideNumber].div.style.visibility = 'hidden';
         if(webslider.slideNumber < webslider.slides.length - 1)
         {
-            webslider.slides[webslider.slideNumber + 1].style.visibility = 'hidden';
+            webslider.slides[webslider.slideNumber + 1].div.style.visibility = 'hidden';
         }
-        webslider.slides[num].style.visibility = 'visible';
+        webslider.slides[num].div.style.visibility = 'visible';
         if(showNotes === false)
         {
             if(notesdiv !== null)
@@ -587,22 +532,22 @@ function PresenterConsole(webslider, newWindow)
                 document.body.removeChild(notesdiv);
                 notesdiv = null;
             }
-            webslider.slides[num].style.left = '30%';
-            webslider.slides[num].style.MozTransform = 'scale(0.6)';
-            webslider.slides[num].style.WebkitTransform = 'scale(0.6)';
-            webslider.slides[num].style.top = '-5%'; // -20 + 15
+            webslider.slides[num].div.style.left = '30%';
+            webslider.slides[num].div.style.MozTransform = 'scale(0.6)';
+            webslider.slides[num].div.style.WebkitTransform = 'scale(0.6)';
+            webslider.slides[num].div.style.top = '-5%'; // -20 + 15
         }
         else
         {
-            webslider.slides[num].style.left = '27%';
-            webslider.slides[num].style.MozTransform = webslider.slides[num].style.WebkitTransform = 'scale(0.6)';
-            webslider.slides[num].style.top = '-15%';
+            webslider.slides[num].div.style.left = '27%';
+            webslider.slides[num].div.style.MozTransform = webslider.slides[num].div.style.WebkitTransform = 'scale(0.6)';
+            webslider.slides[num].div.style.top = '-15%';
             if(notesdiv === null)
             {
                 notesdiv = document.createElement('div');
             }
             notesdiv.className = 'notesdiv';
-            notes = webslider.slides[num].getElementsByClassName('notes');
+            var notes = webslider.slides[num].getElementsByClassName('notes');
             if(notes.length > 0)
             {
                 notesdiv.innerHTML = notes[0].innerHTML;
@@ -613,10 +558,10 @@ function PresenterConsole(webslider, newWindow)
         {
             if(showNotes === false)
             {
-                webslider.slides[num + 1].style.visibility = 'visible';
-                webslider.slides[num + 1].style.left = '75%';
-                webslider.slides[num + 1].style.top = '-15%'; // -30 + 15
-                webslider.slides[num + 1].style.MozTransform = webslider.slides[num + 1].style.WebkitTransform = 'scale(0.4)';
+                webslider.slides[num + 1].div.style.visibility = 'visible';
+                webslider.slides[num + 1].div.style.left = '75%';
+                webslider.slides[num + 1].div.style.top = '-15%'; // -30 + 15
+                webslider.slides[num + 1].div.style.MozTransform = webslider.slides[num + 1].div.style.WebkitTransform = 'scale(0.4)';
             }
             else
             {
@@ -676,58 +621,354 @@ function PresenterConsole(webslider, newWindow)
     }
 }
 
+/** Basic animation functions. */
+var AniBase =
+{
+    veryfastSpeed: 100,
+
+    fastSpeed : 200,
+
+    moderateSpeed : 500,
+
+    slowSpeed: 1000,
+
+    veryslowSpeed : 2000,
+
+    /** Linear progress. */
+    animatorEase : function(progress)
+    {
+        return progress;
+    },
+
+    animatorSin : function(progress)
+    {
+        // a sine square function hill goes from 0 to pi/2, maximum is still 1
+        return Math.pow(Math.sin(progress*Math.PI/2), 2);
+    },
+
+    /*
+     * Stops an animation started by startAnimation(...).
+     * @param aniObject The return value of startAnimation(...).
+     */
+    stopAnimation : function(aniObject)
+    {
+        clearInterval(aniObject.timer);
+        if(aniObject.cleanfunc !== null)
+        {
+            aniObject.cleanfunc();
+        }
+    },
+
+    /**
+     * Starts an animation.
+     * @param bodyfunc Function callback that sets the animated properties after each every elapsed interval.
+     * @param cleanfunc Function callback that is executed after the animation stops or is stopped manually.
+     * @param start Initial value of the animated property.
+     * @param end Final value of the animated property.
+     * @valfunc Function callback that returns the animation process depending on the elapsed time.
+     * @return Object instance with the information necessary to stop the animation.
+     */
+    startAnimation : function(bodyfunc, cleanfunc, start, end, anitime, valfunc)
+    {
+        var aniObject = {};
+        aniObject.cleanfunc = cleanfunc;
+        startTime = new Date().getTime();
+        bodyfunc(0);
+        aniObject.timer = setInterval(function()
+        {
+            var deltaT = (new Date()).getTime() - startTime;
+            if(deltaT >= anitime)
+            {
+                // clean animation end
+                bodyfunc(end);
+                AniBase.stopAnimation(aniObject);
+                return;
+            }
+            bodyfunc(start + (end-start)*valfunc(deltaT/anitime));
+        }, 9);
+        return aniObject;
+    }
+};
+
+/** Functions for slide effects. */
+var Sliding =
+{
+    /** The current animator object. */
+    slideAnim : null,
+
+    /** Animate transparency. */
+    slideAlpha : function(slides, num, currentSlide)
+    {
+        Sliding.startSlideAnimation(null, function(value)
+        {
+            slides.slides[currentSlide].div.style.opacity = (1-value).toString();
+            slides.slides[num].div.style.opacity = value.toString();
+            slides.slides[num].div.style.visibility = 'visible';
+        },
+        function()
+        {
+            slides.slides[currentSlide].div.style.opacity = '';
+            slides.slides[num].div.style.opacity = '';
+            slides.slides[currentSlide].div.style.visibility = 'hidden';
+        }, 0, 1, 400, AniBase.animatorEase);
+    },
+
+    startSlideAnimation : function(prepare, bodyfunc, cleanfunc, start, end, anitime, valfunc)
+    {
+        if(Sliding.slideAnim !== null)
+        {
+            AniBase.stopAnimation(Sliding.slideAnim);
+        }
+        if(prepare !== null)
+        {
+            prepare();
+        }
+        Sliding.slideAnim = AniBase.startAnimation(bodyfunc, function() { cleanfunc(); Sliding.slideAnim = null; } , start, end, anitime, valfunc);
+    },
+
+    slideHorizontal : function(slides, num, currentSlide)
+    {
+        // left: 50% is the middle
+        var sign = (num > currentSlide) ? 1 : -1;
+        Sliding.startSlideAnimation(
+        function()
+        {
+            slides.slides[num].div.style.visibility = 'visible';
+            slides.slides[currentSlide].div.style.zIndex = '1';
+        },
+        function(value)
+        {
+            slides.slides[currentSlide].div.style.marginLeft = -sign*value - 512 + 'px';
+        },
+        function()
+        {
+            slides.slides[currentSlide].div.style.visibility = 'hidden';
+            slides.slides[currentSlide].div.style.marginLeft = slides.slides[currentSlide].div.style.zIndex = '';
+        },
+        0, 1024, 1000, AniBase.animatorSin);
+    },
+
+    setCrossBrowserCss : function(element, prop, css)
+    {
+        // border-radius
+        // transform
+        if(prop == 'transform')
+        {
+            element.style.MozTransform = css;
+            element.style.WebkitTransform = css;
+            element.style.OTransform = css;
+            // IE?
+        }
+    },
+
+    matrix : function(x1, x2, x3, x4, x5, x6)
+    {
+        // normal browsers:
+        return 'matrix(' + x1 + ',' + x2 + ',' + x3 + ',' + x4 + ',' + x5 + ',' + x6 + ')';
+    },
+
+    /** Spin around the y-axis while changing the slide. */
+    slideRotate : function(slides, num, currentSlide)
+    {
+        Sliding.startSlideAnimation(
+        function()
+        {
+            slides.slides[currentSlide].div.style.zIndex = '1';
+            slides.slides[num].div.style.visibility = 'visible';
+        },
+        function(value)
+        {
+            if(value < 0)
+            {
+                slides.slides[currentSlide].div.style.zIndex = '';
+                slides.slides[num].div.style.zIndex = '1';
+            }
+            setCrossBrowserCss(slides.current, 'transform', matrix(value, 0, 0, 1, 0, 0));
+            setCrossBrowserCss(slides.slides[num], 'transform', matrix(-value, 0, 0, 1, 0, 0));
+        },
+        function()
+        {
+            setCrossBrowserCss(slides.current, 'transform', '');
+            setCrossBrowserCss(slides.slides[num], 'transform', '');
+            slides.slides[num].div.style.zIndex = '';
+            slides.slides[currentSlide].div.style.zIndex = '';
+            slides.slides[currentSlide].div.style.visibility = 'hidden';
+        },
+        1, -1, 1000, AniBase.animatorSin);
+    }
+};
+
+/** Animation effects. */
 var Effects =
 {
-    writeText : function(element, progress, arg)
+    showLines : function(oldElement, element, progress, args)
     {
 
     },
 
-    changeCss : function(element, arg)
+    highlightLines : function(oldElement, element, progress, args)
     {
-        element.cssText = arg;
 
+    },
+
+    /** Writes the letters of an element one after another. */
+    writeText : function(oldElement, element, progress, args)
+    {
+       var text = oldElement.innerHTML;
+       var letters = Math.round(text.length*progress);
+       element.innerHTML = text.substring(0, letters);
+    },
+
+    /** Changes the css style. This is no continuous animation. */
+    changeStyle : function(oldElement, element, progress, args)
+    {
+        element.cssText = (progress < 0.5 ? oldElement.cssText : args.newCss);
     }
 };
 
-function Animator()
+/**
+ * Defines an object animation.
+ * @param selector The selector for DOM elements.
+ *  Rules:
+ *  .class ... select by class name
+ *  #id ... select by id NOTE: this will be the only option at first
+ *  #id->child(n) ... nth child
+ *  h1 ... by tag name
+ * @param config Configuration array.
+ * @param callback Function callback that does the animation.
+ */
+
+// NOTE: are the selector rules necessary?
+function Animator(selector, callback, config)
 {
-   var self = this;
+    /*
+    * config: {aniTime : AniBase.fastSpeed, timeOffset : 10, args : { xpath : [], ypath : [] } }
+    */
+    var self = this;
 
-   self.aniTime = 100;
+    self.config = { };
 
-   self.callback = null;
+    self.aniTime = 0;
 
-   self.element = null;
+    self.callback = null;
 
-   self.oldElement = null;
+    self.timeOffset = 0;
 
-   self.arg = [];
+    self.selector = '';
 
-   self.animated = false;
+    var element = null;
 
-   /** @constructor */
-   function ctor(element, callback)
-   {
-       self.element = element;
-       self.oldElement = element;
-       self.callback = callback;
-   }
+    var oldElement = null;
 
-   ctor();
+    /** How often to repeat the animation. If set to -1, the repetitions never end. */
+    self.repeat = 0;
 
-   self.doAnimate = function()
-   {
-       self.animated = true;
-       if(self.element === null || self.callback === null)
-       {
-           return;
-       }
-       self.callback(self.element, self.arg);
-   };
+    self.args = null;
 
-   self.undoAnimate = function()
-   {
-       self.element = self.oldElement;
-   };
+    self.completed = false;
+
+    var animator = null;
+
+    /** @constructor */
+    function ctor(selector, callback, config)
+    {
+        self.element = document.getElementById(selector);
+        self.selector = selector;
+        self.oldElement = copyObject(self.element);
+        self.callback = callback;
+
+        if(config.aniTime !== undefined)
+        {
+            self.aniTime = config.aniTime;
+        }
+
+        if(config.timeOffset !== undefined)
+        {
+            self.timeOffset = config.timeOffset;
+        }
+
+        if(config.repeat !== undefined)
+        {
+            self.repeat = config.repeat;
+        }
+
+        if(config.args !== undefined)
+        {
+            self.args = config.args;
+        }
+    }
+
+    function copyObject(obj)
+    {
+        var newElement = { };
+        for(var key in obj)
+        {
+            newElement[key] = obj[key];
+        }
+        return newElement;
+    }
+
+    ctor(selector, callback, config);
+
+    self.doAnimate = function()
+    {
+        _animate(true);
+    };
+    // NOTE: oldElement
+    function _animate(forwards)
+    {
+        if(self.aniTime === 0)
+        {
+            self.callback(self.oldElement, self.element, forwards === true ? 1 : 0, self.args);
+        }
+        else
+        {
+            animator = AniBase.startAnimation(function(value)
+            {
+                self.callback(self.oldElement, document.getElementById(self.selector), value, self.args);
+            },
+            null, forwards === true ? 0 : 1, forwards === true ? 1 : 0, self.aniTime, AniBase.animatorEase);
+        }
+        self.completed = (forwards === true);
+    }
+
+    /** Animates backwards, use to reset an animated object. */
+    self.backwardAnimate = function()
+    {
+        _animate(false);
+    };
+
+    /** Finish the animation now. */
+    self.forceComplete = function()
+    {
+        if(self.completed === false)
+        {
+            self.abort();
+            if(self.aniTime === 0)
+            {
+                self.callback(self.oldElement, self.element, self.args);
+            }
+            else
+            {
+                self.callback(self.oldElement, self.element, 1, self.args);
+            }
+        }
+    };
+
+    /** Aborts the current animation and sets to the final animation state. */
+    // NOTE: backwards and forwards
+    self.abort = function()
+    {
+        if(self.animator !== null)
+        {
+            AniBase.stopAnimation(self.animator);
+            self.completed = true;
+        }
+    };
+
+    self.undoAnimate = function()
+    {
+        self.element = self.oldElement;
+        self.completed = false;
+    };
 }

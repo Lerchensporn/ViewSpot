@@ -22,7 +22,8 @@ var CodeHighlighter =
                 [2, true, '"[^\n"]*"', 'string'],
                 [2, true, "'[^\n']*'", 'string'],
                 [1, true, '//[^\n]*', 'comment'],
-                [3, false, 'function,var,undefined,return,for,while,do,if,else,null,true,false,in,new', 'keyword'],
+                [3, false, 'break,case,catch,continue,debugger,default,delete,do,else,finally,for,function,if,in,instanceof,new,return,switch,this,throw,try,typeof,var,void,while,with', 'keyword'],
+                [3, false, 'null,true,false', 'keyword']
             ]
         },
         'css' :
@@ -30,8 +31,7 @@ var CodeHighlighter =
             'ignorecase' : true,
             'rules' :
             [
-                [2, true, '\b[0-9]+.[0-9]*(px\b|cm\b|pt\b|em\b|mm\b|pc\b|in\b|\b)', 'number'],
-                [2, true, '[.#]+[^0-9\W][\w]*', 'object']
+                [2, true, '\b[0-9]+.[0-9]*(px\b|cm\b|pt\b|em\b|mm\b|pc\b|in\b|\b)', 'number']
             ]
         }
     },
@@ -49,29 +49,26 @@ var CodeHighlighter =
 
     highlightDocument : function()
     {
-        css = document.createElement('link');
+        var css = document.createElement('link');
         css.rel = 'stylesheet';
         css.href = 'framework/codestyles.css';
         css.type = 'text/css';
         document.head.appendChild(css);
-        if(document.body != undefined && document.body != null)
+        var pres = document.getElementsByTagName('pre');
+        for(var i = 0; i < pres.length; i++)
         {
-            pres = document.getElementsByTagName('pre');
-            for(var i = 0; i < pres.length; i++)
+            // class name: 'code-<language>'
+            // 'code-'.length = 5
+            if(pres[i].className.indexOf('code-') === 0 && CodeHighlighter.definitions[pres[i].className.substring(5)] !== undefined)
             {
-                // class name: 'code-<language>'
-                // 'code-'.length = 5
-                if(pres[i].className.indexOf('code-') === 0 && CodeHighlighter.definitions[pres[i].className.substring(5)] != undefined)
-                {
-                    pres[i].innerHTML = CodeHighlighter.highlightCode(pres[i].innerHTML, pres[i].className.substring(5));
-                }
+                pres[i].innerHTML = CodeHighlighter.highlightCode(pres[i].innerHTML, pres[i].className.substring(5));
             }
         }
     },
 
     highlightCode : function(code, language)
     {
-        if(CodeHighlighter.definitions[language] == undefined)
+        if(CodeHighlighter.definitions[language] === undefined)
         {
             return code;
         }
@@ -80,12 +77,14 @@ var CodeHighlighter =
         var beginArray = []; // start index, css class
         var endArray = []; // end index
         // loop through regexes
-        var rules = CodeHighlighter.definitions[language]['rules'];
-        var ignorecase = CodeHighlighter.definitions[language]['ignorecase'];
+        var rules = CodeHighlighter.definitions[language].rules;
+        var ignorecase = CodeHighlighter.definitions[language].ignorecase;
         var i = 1;
+        var running = false;
         do
         {
-            var running = false;
+            running = false;
+            var end;
             // keywords
             for(var c = 0; c < rules.length; c++)
             {
@@ -97,7 +96,7 @@ var CodeHighlighter =
                 }
                 if(rules[c][1] === false) // we have keywords!
                 {
-                    keys = rules[c][2].split(',');
+                    var keys = rules[c][2].split(',');
                     for(var keyi = 0; keyi < keys.length; keyi++)
                     {
                         var start;
@@ -105,7 +104,7 @@ var CodeHighlighter =
                             start = code.toLowerCase().indexOf(keys[keyi]);
                         else
                             start = code.indexOf(keys[keyi]);
-                        var end;
+
                         while(start != -1)
                         {
                             end = start + keys[keyi].length;
@@ -121,15 +120,15 @@ var CodeHighlighter =
                 }
                 else // regex
                 {
-                    gex = new RegExp(rules[c][2]);
+                    var gex = new RegExp(rules[c][2]);
                     gex.ignoreCase = ignorecase;
                     var match = gex.exec(code);
-                    if(match != null)
+                    if(match !== null)
                     {
-                        end = match[0].length + match['index'];
-                        if(!CodeHighlighter.containsPos(beginArray, endArray, [match['index'], end]))
+                        end = match[0].length + match.index;
+                        if(!CodeHighlighter.containsPos(beginArray, endArray, [match.index, end]))
                         {
-                            beginArray[beginArray.length] = [match['index'], rules[c][3]];
+                            beginArray[beginArray.length] = [match.index, rules[c][3]];
                             endArray[endArray.length] = end;
                         }
                     }
