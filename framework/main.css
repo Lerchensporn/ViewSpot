@@ -1,3 +1,20 @@
+a:not(.toc) {
+    font-family: Abel, Metrophobic;
+    padding: 2px;
+}
+
+a {
+    text-decoration: none;
+}
+
+.toc {
+    color: black;
+}
+
+section {
+    display: none;
+}
+
 pre, pre *
 {
     font-family: "Inconsolata", "Courier New";
@@ -10,7 +27,7 @@ pre, pre *
     padding: 1px;
 }
 
-*
+*, a .toc
 {
     margin: 0px;
    /* padding: 1px; */

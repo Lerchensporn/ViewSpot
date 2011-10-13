@@ -63,6 +63,18 @@ function onready()
     }
 }
 
+function tableOfContents()
+{
+    var scripts = document.getElementsByTagName('script');
+    var current = scripts[scripts.length-1];
+
+    insertReadyCallback(function() {
+        var toc = document.createElement('ul');
+        toc.innerHTML = instance.getToc();
+        current.parentNode.insertBefore(toc, current);
+    });
+}
+
 function Settings()
 {
     var self = this;
@@ -128,13 +140,14 @@ function Settings()
         document is ready.*/
     self.setCurrent = function(settings)
     {
+        var scripts = document.getElementsByTagName('script');
+        var cur = scripts[scripts.length - 1];
+        var rootDiv = cur.parentNode;
+        while (rootDiv.parentNode !== document.body) {
+            rootDiv = rootDiv.parentNode;
+        }
+
         insertReadyCallback(function() {
-            var scripts = document.getElementsByTagName('script');
-            var cur = scripts[scripts.length - 1];
-            var rootDiv = cur.parentNode;
-            while (rootDiv.parentNode !== document.body) {
-                rootDiv = rootDiv.parentNode;
-            }
             for (var i = 0; i < instance.slides.length; ++i) {
                 if (instance.slides[i].div == rootDiv) {
                     self._setForSlide(i, settings);
@@ -249,6 +262,7 @@ function WebSlider()
 
         pushReadyCallback(parseDom);
         pushReadyCallback(config.commit);
+        pushReadyCallback(parseSections);
         pushReadyCallback(init);
         onready();
 
@@ -278,6 +292,8 @@ function WebSlider()
     self.menuul = null;
 
     self.frame = 0;
+
+    self.sections = [];
 
     var console = null;
 
@@ -313,6 +329,60 @@ function WebSlider()
 
             tmpslide.div = children[i];
             self.slides.push(tmpslide);
+        }
+    }
+
+    // <script>tableOfContents();</script>
+    self.getToc = function()
+    {
+        // if a subsection has no parent section, it is treated as a section
+        var html = '';
+        var subbing = 0;
+
+        var ahref = function() { return '<li><a class="toc" href="javascript:instance.gotoSlide(' +  index + ');">'; };
+
+        for (var i = 0; i < self.sections.length; ++i) {
+            var index = self.sections[i].slideIndex;
+            if (i > 0 && self.sections[i].type == 'subsection' && self.sections[i-1].type == 'section') {
+                subbing += 1;
+                html += '<ul>' + ahref(index) + self.sections[i].title + '</a></li>';
+            }
+            else if (i > 0 && self.sections[i].type == 'section' && self.sections[i-1].type == 'subsection') {
+                subbing -= 1;
+                html += '</ul>' + ahref(index) + self.sections[i].title + '</a></li>';
+            }
+            else {
+                html += '<li>' + ahref(index) + self.sections[i].title + '</a></li>';
+            }
+        }
+
+        for (i = 0; i < subbing; ++i) {
+            html += '</ul>';
+        }
+
+        return html;
+    }
+
+    function parseSections()
+    {
+        var sec = document.getElementsByTagName('section');
+        for (var i = 0; i < sec.length; ++i) {
+            self.sections[i] = { title : sec[i].innerHTML };
+            var rootDiv = sec[i].parentNode;
+            while (rootDiv.parentNode != document.body) {
+                rootDiv = rootDiv.parentNode;
+            }
+            for (var k = 0; k < self.slides.length; ++k) {
+                if (self.slides[k].div == rootDiv) {
+                    self.sections[i].slideIndex = k;
+                }
+            }
+            if (sec[i].className == 'subsection') {
+                self.sections[i].type = 'subsection';
+            }
+            else {
+                self.sections[i].type = 'section';
+            }
         }
     }
 
