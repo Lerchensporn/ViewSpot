@@ -1,91 +1,79 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script type="text/javascript">
-theme = "latex";
-</script>
-<script type="text/javascript" src="framework/core.js"></script>
+    <title>Indigoide Farbstoffe</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <script type="text/javascript" src="framework/core.js"> </script>
+    <script>
+        config.setGlobal({ layout : { footerRight : 'Indigoide Farbstoffe', footerLeft : 'Autor' } });
+        config.setForSlide(1, {layout : {footer : false }});
+    </script>
 </head>
 <body>
-    <div class="first" id="main">
-        <h1 id="ani">Pr&auml;sentation</h1>
-        Maxwellsche Gleichungen:
-        \[  \begin{aligned}
-        \color{red}\nabla \times \vec{\mathbf{B}} -\, \frac1c\, \frac{\partial\vec{\mathbf{E}}}{\partial t} &amp; = \frac{4\pi}{c}\vec{\mathbf{j}} \\   \nabla \cdot \vec{\mathbf{E}} &amp; = 4 \pi \rho \\
-        \nabla \times \vec{\mathbf{E}}\, +\, \frac1c\, \frac{\partial\vec{\mathbf{B}}}{\partial t} &amp; = \vec{\mathbf{0}} \\
-        \nabla \cdot \vec{\mathbf{B}} &amp; = 0 \end{aligned}
-        \]
-        <div class="notes">
-        Dies ist eine Notiz, falls das Ged&auml;chtnis mal versagen sollte.
-        <ul>
-            <li>Lorem ipsum</li>
-            <li>dolor sit amet</li>
-            <li>consectetuer ... oder so.</li>
-        </ul>
+    <div>
+        <div style="text-align:center;margin-top:11%">
+            <div class="theorem" style="font-size:120%">Indigoide Farbstoffe</div>
+            Vortrag des Vortragenden<br/><br/>
+            <img height="300" src="http://upload.wikimedia.org/wikipedia/commons/c/cb/Indigofera_tinctoria_Taub115a.png" alt="Blume"/>
         </div>
+        <div class="notes">
+            Indigoide Farbstoffe
+            <br/>
+            <ul>
+                <li>Anwendung Chromophormodell auf Farbstoffklasse</li>
+                <li>ausgewählte Vertreter</li>
+                <li>Bedeutung als Färbemittel für Textilien am Beispiel Indigo</li>
+                <li>Küpenfärberei</li>
+                <li>weitere praktisch bedeutsame indigoide Farbstoffe</li>
+                <li>Ersatz durch Indanthrenfarbstoffe</li>
+            </ul>
+        </div>
+    </div>
 
+    <div id="main">
+        <h1>Gliederung</h1>
+        <ol>
+            <li>Geschichte</li>
+            <li>Indigoide Farbstoffe</li>
+            <li>Chemische Grundlagen</li>
+            <li>Eigenschaften</li>
+            <li>Vertreter</li>
+            <li>Indigo</li>
+            <li>Thioindigo</li>
+            <li>Küpenfärberei</li>
+            <li>Indanthrenfarbstoffe</li>
+        </ol>
     </div>
     <div>
-        <h1>Code</h1>
-        <pre class="code-js">
-        // test
-        function watch()
-        {
-            var open;
-            open = openUrEyes();
-            if(open === true)
-                alert('watching var if true or so ...');
-            else
-                alert("do not sleep");
-        }
-        </pre>
+        <h1>Geschichte</h1>
+        <ul>
+            <li>Bla</li>
+        </ul>
     </div>
     <div>
-        <h1>Table of contents</h1>
-        <script>// tableOfContents(); </script>
+        <h1>Vertreter</h1>
+        Purpur, Indigokarmin, Indirubin,
+        <img height="320" src="http://upload.wikimedia.org/wikipedia/commons/b/b1/Indigo_dyes.svg"/>
     </div>
-    <div id="canada">
-      <script>
-      window.addEventListener('load', function(){
-         instance.slideById('canada').addAnimators
-         (
-            new Animator('l1', Effects.writeText, { aniTime : 500 , id : 'this'}),
-            new Animator('l2', Effects.writeText, { aniTime : 500 , id : 'this'}),
-            new Animator('l3', Effects.writeText, { aniTime : 500 , id : 'this'})
-          //  new Animator('lid->li', FrameBuilder.ulnimator, { }),
-         //   AnimationBuilder.ulli('uli', { rules : '' }, { aniTime : 100, id  : 'uli' }),
-          //  new Animator(function() { gotoFrame('this'); })
-         );
-         }, false);
-        </script>
-      <h1 id="sz">Schlagzeile</h1>
-      <div class="theorem">
-          <h2>Die Punkte</h2>
-          <ul>
-              <li id="l1">Punkt 1</li>
-              <li id="l2">Punkt 2</li>
-              <li id="l3">Punkt 3</li>
-          </ul>
-      </div>
-      <div class="notes">
-        Besonders auf die Punkte eingehen!
-      </div>
+    <div>
+        <h1>Indanthrenfarbstoffe</h1>
+        <img src="http://upload.wikimedia.org/wikipedia/commons/4/48/Indanthren.svg"/>
     </div>
-    <div style="text-align:center">
-        <h1>Filmbeispiel</h1>
-        <video src="../Media/big_buck_bunny_720p_stereo.ogg" width="500" controls="true">
-        </video>
-        <div class="notes">
-            Der Film ist im ogg-Format.
-        </div>
+    <div>
+        <h1>Quellen</h1>
+        <ul id="quellen">
+            <li>C. Mortimer, U. Müller: <i>Das Basiswissen der Chemie.</i> 9. Auflage, Thieme-Verlag, Stuttgart 2007, Seite 604.</li>
+            <li>E. Breitmaier, G. Jung: <i>Organische Chemie.</i> 6. Auflage, Thieme-Verlag, Stuttgart 2009, Seite 742&nbsp;ff.</li>
+            <li>W. Herbst, K. Hunger: <i>Industrielle Organische Pigmente.</i> 2. Auflage, VCH, Weinheim 1995, Seite 497&nbsp;ff.</i></li>
+            <li><a href="http://de.wikipedia.org/wiki/Indigo">http://de.wikipedia.org/wiki/Indigo</a></li>
+            <li><a href="http://www.dutly.ch/indigohtml/indigo1.html">http://www.dutly.ch/indigohtml/indigo1.html</a></li>
+            <li><a href="http://www1.tu-darmstadt.de/fb/ch/cfs/Material_Freitag/Synthetische_Farbstoffe.pdf">http://www1.tu-darmstadt.de/fb/ch/cfs/Material_Freitag/Synthetische_Farbstoffe.pdf</a></li>
+            <li><a href="http://www.chids.de/dachs/expvortr/412IndigoideFarbstoffe_Meier_Scan.pdf">http://www.chids.de/dachs/expvortr/412IndigoideFarbstoffe_Meier_Scan.pdf</a></li>
+            <li><a href="http://www.alles-sauber.com/PDF/Fachbeitraege/Indigo%20und%20indigoide%20Farbstoffe.pdf">http://www.alles-sauber.com/PDF/Fachbeitraege/Indigo%20und%20indigoide%20Farbstoffe.pdf</a></li>
+        </ul>
     </div>
-    <div class="first" id="letzte">
-        <h1>Schluss</h1>
-        Danke f&uuml;r die Aufmerksamkeit, falls vorhanden.
-        <div class="notes">
-            Und los! Die Stra&szlig;enbahn f&auml;hrt gleich.
-        </div>
-    </div>
+<style>
+#quellen * {font-size: 16pt;}
+</style>
 </body>
 </html>
-

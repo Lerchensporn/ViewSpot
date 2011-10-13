@@ -1,20 +1,16 @@
 Interesting ideas:
-* provide for example Python scripts that do important tasks:
+* provide Python scripts that do important tasks:
     - select only the files needed for the presentation
     - compress these files into a single html file for easy transport
         - pictures can be stored base64 encoded in html
         - other files are included as javascript strings?
-    - reduce file size by removing whitespaces and so on
+    - reduce file size by removing whitespaces
     - encode all videos to both h264 and ogg/webm for browser support
 * animations with canvas element
+* program to make the presentation portable:
+    - store the fonts in the presentation and use css font-face
+    - download all pictures
 
-Next steps
-* finish the presenter console
-* clean up context menu and slide effects
-* implement animations
-.
-.
-.
 * compatibility to at least the newest Firefox, Chrome, Opera, (IE, Safari)
 * compatibility to older browser versions?
 

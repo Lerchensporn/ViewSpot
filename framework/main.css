@@ -28,20 +28,20 @@ li
 html, body
 {
     height: 100%;
+    width: 100%;
     padding: 0px;
+    overflow: hidden;
 }
 
 body
 {
-    overflow: hidden;
-    margin: 0px;
     background-color: #557;
 }
 
 .menuul, .menuul ul
 {
     white-space: nowrap;
-    position: relative;
+    position: absolute;
     color: white;
     float: left;
     background-color: darkgrey;
@@ -53,16 +53,13 @@ body
 .menuul li
 {
     list-style: none;
+    /* if a style sets the li background to an svg */
+    background: none;
     font-size: 12pt;
     cursor: pointer;
     margin: 0px;
     background-color: #666;
     padding: 3px;
-    -moz-user-select: -moz-none;
-    -khtml-user-select: none;
-    -webkit-user-select: none;
-    -o-user-select: none;
-    user-select: none;
 }
 
 .menuul li:hover
@@ -112,10 +109,6 @@ body
 {
     background-color: white;
     position: absolute;
-    height: 100%;
-    left: 50%;
-    margin-left: -512px;
-    width: 1024px;
     overflow: hidden;
 }
 
@@ -146,15 +139,15 @@ body
 .notesdiv
 {
     position: absolute;
-    font-size: 70%;
-    left: 55%;
+    font-size: 60%;
+    left: 50%;
     padding: 10px;
     top: 5%;
     border-radius: 10px;
     background-color: #345;
     color: #ddd;
     height: 65%;
-    width: 500px;
+    width: 600px;
 }
 
 #slidesbutton, #notesbutton
