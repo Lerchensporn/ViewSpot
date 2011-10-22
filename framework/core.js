@@ -1,107 +1,444 @@
-// optional modules: mathjax, code highlighter
+var Theme = {};
+var ws = function() {
 
-var defaultSettings = 
-{
-    pageDimensions : [1024, 768],
-  //  transition : Sliding.slideAlpha,
-    outerColor : 'black',
-    layout : { footer : true }
-};
+    "use strict";
 
-if (!theme) {
-    var theme = 'latex';
-}
-
-var readycbs = [];
-var modules = ['mathjax', 'highlighter'];
-var config = new Settings();
-var instance = new WebSlider();
-
-
-/*
-
-settings: global, but locally changable
-local settings (per slide)
-
-settings: layout (colors ...)
-          usage/keys
-          frame size
-          transition
-          
-
-animations
-
-*/
-
-/** Insert a callback before the last callback in the list. */
-function insertReadyCallback(callback)
-{
-    readycbs[readycbs.length] = readycbs[readycbs.length - 1];
-    readycbs[readycbs.length - 2] = callback; // -2 bcz length increased in line above
-}
-
-/** Append a callback to the list. */
-function pushReadyCallback(callback)
-{
-    readycbs[readycbs.length] = callback;
-}
-
-/** Executes the callbacks in the readycbs array when the DOM is ready. */
-function onready()
-{
-    var anoncb = function() {
-        for (var i = 0; i < readycbs.length; ++i) {
-            readycbs[i]();
-        }
+    var _ws = { config : {} };
+    var modules = ['mathjax', 'highlighter'];
+    var defaultSettings = {
+        pageDimensions : [1024, 768],
+        outerColor : 'black',
+        theme : 'latex-style',
+        cursorHideTimeout : 1000,
+        layout : { footer : true }
     };
-    if (window.addEventListener) {
-        // loads much faster if there are large pictures
-        window.addEventListener('DOMContentLoaded', anoncb, false);
-    }
-    else {
-        window.addEventListener('load', anoncb, false);
-    }
-}
+    var slides = [];
+    var slideNumber;
+    var mouseX = 0;
+    var mouseY = 0;
+    var curTout;
+    var otherWindow;
+    var windowChild;
+    var menuul = null;
+    var sections = [];
+    var sync = false;
+    var globalSettings = defaultSettings;
+    var slideSettings = [];
+    var readyFuncs = { parse : [], script : [], finish : [] };  // callbacks to run when DOM is ready
 
-function tableOfContents()
-{
-    var scripts = document.getElementsByTagName('script');
-    var current = scripts[scripts.length-1];
+    /* ---------------------------- API methods ----------------------------------- */
 
-    insertReadyCallback(function() {
-        var toc = document.createElement('ul');
-        toc.innerHTML = instance.getToc();
-        current.parentNode.insertBefore(toc, current);
-    });
-}
+    /** Sets whether the presentation is synchronized between windows. */
+    _ws.setSync = function(boolval) {
+        sync = boolval;
+    };
 
-function Settings()
-{
-    var self = this;
+    _ws.getCurrentSlide = function() {
+        return slides[slideNumber];
+    };
 
-    self.slideSettings = [];
+    /** Set the modules to load with the presentation.
+        @param mods An array of strings that specity the modules. */
+    _ws.loadModules = function(mods) {
+        modules = mods;
+    };
 
-    self.globalSettings = defaultSettings;
+    /** Get the current slide. */
+    _ws.getCurrentSlide = function() {
+        return slides[slideNumber];
+    };
+
+    /** Get all slides of the presentation.. */
+    _ws.getSlides = function() {
+        return slides;
+    };
+
+    _ws.getSections = function() {
+        return sections;
+    };
+
+    /** Generates a table of contents formatted as a nested <ul> list and
+        inserts it before the calling script element. */
+    _ws.tableOfContents = function() {
+        var scripts = document.getElementsByTagName('script');
+        var current = scripts[scripts.length - 1];
+
+        readyFuncs.script.push(function() {
+            var toc = document.createElement('ul');
+            toc.innerHTML = _ws.getTocMarkup();
+            current.parentNode.insertBefore(toc, current);
+        });
+    };
+
+    // XXX it is possible that a config.* function is called in only one window due to user interaction
+
+    /** When called in a slide div, set the settings for the current slide when the
+        document is ready.*/
+    _ws.config.setCurrent = function(settings) {
+        var scripts = document.getElementsByTagName('script');
+        var cur = scripts[scripts.length - 1];
+        var rootDiv = cur.parentNode;
+        while (rootDiv.parentNode !== document.body) {
+            rootDiv = rootDiv.parentNode;
+        }
+
+        readyFuncs.script.push(function() {
+            for (var i = 0; i < slides.length; ++i) {
+                if (slides[i].div === rootDiv) {
+                    setConfig(i, settings);
+                }
+            }
+        });
+    };
+
+    /** Sets the settings for each slide that has the specified class name
+        when the document is ready. */
+    _ws.config.setForClass = function(className, settings) {
+        readyFuncs.script.push(function() {
+            for (var i = 0; i < slides.length; ++i) {
+                var split = slides[i].div.className.split(' ');
+                if (split.indexOf(className) !== -1) {
+                    setConfig(i, settings);
+                }
+            }
+        });
+    };
+
+    /** Sets the global settings when the document is ready. */
+    _ws.config.setGlobal = function(settings) {
+        readyFuncs.script.push(function() {
+            globalSettings = mergeArrays(globalSettings, settings);
+            for (var i = 0; i < slides.length; ++i) {
+                setConfig(i, slideSettings[i]);
+            }
+        });
+    };
 
     /** Sets the slide settings for the slide with number `index`. */
-    self.setForSlide = function(index, settings)
-    {
-        insertReadyCallback(function() { self._setForSlide(index-1, settings); });
+    _ws.config.setForSlide = function(index, settings) {
+        readyFuncs.script.push(function() { setConfig(index - 1, settings); });
     };
+
+    /** Switch to another slide.
+     * @param num The index of the slide to go to.
+     * @param effect Function callback Sliding effect */
+    _ws.gotoSlide; // defined dynamically
+
+    /** Go to the next slide. */
+    _ws.gotoNext = function() {
+        //syncCall('gotoNext', arguments);
+        if (slides[slideNumber].animationsComplete() === false) {
+            slides[slideNumber].nextAnimation();
+        }
+        else {
+            slides[slideNumber].reset();
+            _ws.gotoSlide(slideNumber + 1, null);
+        }
+    };
+
+    /** Go to the previous slide. */
+    _ws.gotoPrevious = function() {
+        //syncCall('gotoPrevious', arguments);
+        if (slides[slideNumber].animIndex > 0) {
+            slides[slideNumber].undoAnimation();
+        }
+        else {
+            slides[slideNumber].reset();
+            _ws.gotoSlide(slideNumber - 1, null);
+        }
+    };
+
+    _ws.getTocMarkup = function() {
+        // if a subsection has no parent section, it is treated as a section
+        var html = '';
+        var subbing = 0;
+
+        var ahref = function() { return '<li><a class="toc" href="javascript:ws.gotoSlide(' +  index + ');">'; };
+
+        for (var i = 0; i < sections.length; ++i) {
+            var index = sections[i].slideIndex;
+            if (i > 0 && sections[i].type === 'subsection' && sections[i-1].type === 'section') {
+                subbing += 1;
+                html += '<ul>' + ahref(index) + sections[i].title + '</a></li>';
+            }
+            else if (i > 0 && sections[i].type === 'section' && sections[i-1].type === 'subsection') {
+                subbing -= 1;
+                html += '</ul>' + ahref(index) + sections[i].title + '</a></li>';
+            }
+            else {
+                html += '<li>' + ahref(index) + sections[i].title + '</a></li>';
+            }
+        }
+
+        for (i = 0; i < subbing; ++i) {
+            html += '</ul>';
+        }
+
+        return html;
+    };
+
+    /* ----------------------------- Slide Setup ---------------------------------- */
+
+    function setup() {
+        document.head.innerHTML += '<link rel="stylesheet" href="framework/main.css" type="text/css" />';
+
+        readyFuncs.parse = [parseDom, defaultConfig, parseSections];
+        readyFuncs.finish = [init];
+        onready();
+
+        document.onkeydown = keyPress; // XXX rename
+        document.onmousemove = mouseMove;
+        document.onclick = mouseClick;
+    }
+
+    function parseDom() {
+        var children = document.body.getElementsByTagName('div');
+        var index = 0;
+        for (var i = 0; i < children.length; i++) {
+            if (children[i].parentNode !== document.body) {
+                continue;
+            }
+            var tmpslide = new Slide();
+            children[i].className = 'slide';
+
+            tmpslide.div = children[i];
+            tmpslide.index = index;
+            slides[index] = tmpslide;
+            ++index;
+        }
+    }
+
+    /* Sets the slide settings to the default/global ones if the settings are still undefined. */
+    function defaultConfig() {
+        for (var i = 0; i < slides.length; ++i) {
+            if (slides[i].settings === null) {
+                setConfig(i, []);
+            }
+        }
+    }
+
+    function parseSections() {
+        var sec = document.getElementsByTagName('section');
+        for (var i = 0; i < sec.length; ++i) {
+            sections[i] = { title : sec[i].innerHTML };
+            var rootDiv = sec[i].parentNode;
+            while (rootDiv.parentNode !== document.body) {
+                rootDiv = rootDiv.parentNode;
+            }
+            for (var k = 0; k < slides.length; ++k) {
+                if (slides[k].div === rootDiv) {
+                    sections[i].slideIndex = k;
+                }
+            }
+            if (sec[i].className === 'subsection') {
+                sections[i].type = 'subsection';
+            }
+            else {
+                sections[i].type = 'section';
+            }
+        }
+    }
+
+    function init() {
+        document.body.style.backgroundColor = globalSettings.outerColor;
+        var themeDict = [];
+
+        // must know the themeDict length before the next loop start
+        for (var i = 0; i < slides.length; ++i) {
+            if (themeDict.indexOf(slides[i].settings.theme) === -1) {
+                themeDict.push(slides[i].settings.theme);
+            }
+        }
+
+        // executed after all theme scripts have been loaded
+        var createSlides = function() {
+            for (var i = 0; i < slides.length; ++i) {
+                var dim = slides[i].settings.pageDimensions;
+                slides[i].div.style.width = dim[0] + 'px';
+
+                // consider the slide padding
+                slides[i].div.style.width = dim[0] - (slides[i].div.clientWidth - dim[0]) + 'px';
+                slides[i].div.style.height = dim[1] + 'px';
+                slides[i].div.style.display = 'none';
+                var jsname = jsTheme(slides[i].settings.theme);
+                if (typeof Theme[jsname] === 'function') {
+                    slideNumber = i;
+                    Theme[jsname].ws = _ws;
+                    Theme[jsname].ws.mergeArrays = mergeArrays;
+                    Theme[jsname]();
+                }
+            }
+
+            slideNumber = 0;
+            if (window.opener !== null) {
+                otherWindow = window.opener;
+                _ws.setSync(true);
+            }
+            if (window.location.search === '?console') {
+                _ws.gotoSlide = console.gotoSlide;
+                console.guiLayout();
+                window.onresize = console.resize;
+            }
+            else {
+                _ws.gotoSlide = view.gotoSlide;
+                window.onresize = view.resize;
+            }
+            _ws.gotoSlide(0);
+        };
+
+        var loadedCount = 0;
+        for (i = 0; i < themeDict.length; ++i) {
+            var js = document.createElement('script');
+            js.type = 'text/javascript';
+            js.onload = function() {
+                if (++loadedCount === themeDict.length) {
+                    createSlides();
+                }
+            };
+            js.src = 'framework/styles/' + themeDict[i] + '.js';
+
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = 'framework/styles/' + themeDict[i] + '.css';
+
+            // link must be appended before js to ensure that all css styles are loaded
+            // when running createSlides.
+            document.head.appendChild(link);
+            document.head.appendChild(js);
+        }
+
+        for (i = 0; i < modules.length; i++) {
+           var js = document.createElement('script');
+           js.type = 'text/javascript';
+           js.src = 'framework/module.' + modules[i] + '.js';
+           document.head.appendChild(js);
+        }
+    }
+
+    function jsTheme(str) {
+        str = str.toLowerCase();
+        str = str.substr(0, 1).toUpperCase() + str.substr(1);
+        for (var i = 0; i < str.length; ++i) {
+            if (i < str.length - 1 && (str[i] === '-' || str[i] === '_')) {
+                str = str.substr(0, i) + str[i + 1].toUpperCase() + str.substr(i + 2);
+            }
+        }
+        return str;
+    }
+
+    /* rules:
+    */
+
+    function parseData(data) {
+        var from, to;
+        data = trim(data);
+        // TODO remove *all* spaces
+        data = data.split(',');
+        for (var i = 0; i < data.length; ++i) {
+            if (data.substr(0, 1) === '-') {
+                from[i] = 1;
+                data = data.substr(1);
+            }
+            else {
+                var nr = parseInt(data);
+                var len = nr.toString().length;
+                if (len === data.length) {
+                    from[i] = to[i] = nr;
+                    continue;
+                }
+                else if (data.charAt(len - 1) !== '-') {
+                    return false;
+                }
+                else {
+                    from[i] = nr;
+                    data = data.substr(len);
+                }
+            }
+            var nr2 = parseInt(data);
+            if (nr2 === data) {
+                to[i] = nr2;
+            }
+        }
+        return [from, to];
+    }
+
+    function parseOverlays() {
+        for (var i = 0; i < slides.length; ++i) {
+            var elems = slides.children;
+            for (var k = 0; k < elems; ++k) {
+                var val = elems[i].dataAnim;
+                if (typeof val !== 'undefined') {
+                    if (val === '<+->') {
+                        
+                    }
+                //    else if (val === ''
+                }
+            }
+        }
+    }
+
+    /* Executes the callbacks in the readycbs array when the DOM is ready. */
+    function onready() {
+        var cb = function() {
+            for (var i = 0; i < readyFuncs.parse.length; ++i) {
+                readyFuncs.parse[i]();
+            }
+            for (i = 0; i < readyFuncs.script.length; ++i) {
+                readyFuncs.script[i]();
+            }
+            for (i = 0; i < readyFuncs.finish.length; ++i) {
+                readyFuncs.finish[i]();
+            }
+        };
+        if (window.addEventListener) {
+            window.addEventListener('DOMContentLoaded', cb, false);
+        }
+        else {
+            window.addEventListener('load', cb, false);
+        }
+    }
+
+    /* ---------------------------------------------------------------------------- */
+
+    /* If a child/parent window is available, calls the appropriate function of the other window
+       to synchronize the presentation windows. */
+    function syncWindow(func, args) {
+        if (sync === false) {
+            return;
+        }
+
+        // 2nd check: window has been closed
+        if (otherWindow === undefined || otherWindow.ws === undefined) {
+            sync = false;
+            return;
+        }
+
+        otherWindow.ws.setSync(false);
+        otherWindow.ws[func].apply(otherWindow.ws, args);
+        otherWindow.ws.setSync(true);
+    }
+
+    function showSlide(number) {
+        slides[number].div.style.display = 'block';
+    }
+
+    function hideSlide(number) {
+        slides[number].div.style.display = 'none';
+    }
 
     /** Merges multiple settings array. A setting can be overwritten by an
         element that appears later in the parameter list.*/
-    function mergeArrays()
-    {
+    function mergeArrays() {
         // slice to copy value instead of reference
-        var result = Array(arguments[0]).slice();
+        var result = [arguments[0]].slice();
         for (var i = 0; i < arguments.length; ++i) {
             for (var key in arguments[i]) {
-                if (typeof arguments[i][key] == 'object' && key == 'layout') {
+                if (typeof arguments[i][key] === 'object') {
                     // recursion to ensure that all settings stay defined
                     var subargs = [];
                     for (var subi = 0; subi < arguments.length; ++subi) {
-                        if (typeof arguments[subi][key] != 'undefined') {
+                        if (typeof arguments[subi][key] !== 'undefined') {
                             subargs.push(arguments[subi][key]);
                         }
                     }
@@ -115,518 +452,92 @@ function Settings()
         return result;
     }
 
-    self._setForSlide = function(index, settings)
-    {
-        self.slideSettings[index] = settings;
-        var merged = mergeArrays(self.globalSettings, settings);
-        instance.slides[index].settings = merged;
+    function setConfig(index, settings) {
+        slideSettings[index] = settings;
+        var merged = mergeArrays(globalSettings, settings);
+        slides[index].settings = merged;
     }
 
-    /** Sets the settings for each slide that has the specified class name
-        when the document is ready. */
-    self.setForClass = function(className, settings)
+    function Slide()
     {
-        insertReadyCallback(function() {
-            for (var i = 0; i < instance.slides.length; ++i) {
-                split = instance.slides[i].div.className.split(' ');
-                if (split.indexOf(className) !== -1) {
-                    self._setForSlide(i, settings);
-                }
-            }
-        });
-    };
+        var self = this;
 
-    /** When called in a slide div, set the settings for the current slide when the
-        document is ready.*/
-    self.setCurrent = function(settings)
-    {
-        var scripts = document.getElementsByTagName('script');
-        var cur = scripts[scripts.length - 1];
-        var rootDiv = cur.parentNode;
-        while (rootDiv.parentNode !== document.body) {
-            rootDiv = rootDiv.parentNode;
-        }
+        self.div = null;
 
-        insertReadyCallback(function() {
-            for (var i = 0; i < instance.slides.length; ++i) {
-                if (instance.slides[i].div == rootDiv) {
-                    self._setForSlide(i, settings);
-                }
-            }
-        });
-    };
+        self.settings = null;
 
-    /** Sets the global settings when the document is ready. */
-    self.setGlobal = function(settings)
-    {
-        insertReadyCallback(function() {
-            self.globalSettings = mergeArrays(self.globalSettings, settings);
-            for (var i = 0; i < instance.slides.length; ++i) {
-                self._setForSlide(i, self.slideSettings[i]);
-            }
-        });
-    };
-
-    /** Sets the slide settings to the default/global ones if the settings
-        are still undefined. */
-    self.commit = function()
-    {
-        for (var i = 0; i < instance.slides.length; ++i) {
-            if (instance.slides[i].settings === null) {
-                self._setForSlide(i, []);
-            }
-        }
-    };
-}
-
-function Slide()
-{
-    var self = this;
-
-    self.div = null;
-
-    self.settings = null;
-
-    /**
-     * Add animators to this slide. The Animator instances have to be passed
-     * as the function parameters.
-     */
-    self.addAnimators = function()
-    {
-        for (var i = 0; i < arguments.length; i++) {
-            self.animators = self.animators.concat(arguments[i]);
-        }
-    };
-
-    self.nextAnimation = function()
-    {
-        self.animators[self.animIndex].doAnimate();
-        self.animIndex++;
-        if (self.animIndex < self.animators.length) {
-            if (self.animators[self.animIndex].trigger == 'withprevious') {
-                self.nextAnimation();
-            }
-            else if (self.animators[self.animIndex].trigger == 'afterprevious') {
-                self.animators[self.animIndex - 1].onFinished = self.nextAnimation;
-            }
-        }
-    };
-
-    self.undoAnimation = function()
-    {
-        self.animators[self.animIndex].undoAnimate();
-        self.animIndex--;
-    };
-
-    self.backwardAnimation = function()
-    {
-        self.animators[self.animIndex].backwardAnimate();
-        self.animIndex--;
-    };
-
-    self.reset = function()
-    {
-        for(var i = 0; i < self.animIndex; i++) {
-            self.animators[i].undoAnimate();
-            self.animIndex = 0;
-        }
-    };
-
-    self.animationsComplete = function()
-    {
-        return self.animIndex === self.animators.length;
-    };
-
-    self.animIndex = 0;
-
-    self.animators = [];
-}
-
-/** Core functions for the presentation. */
-function WebSlider()
-{
-    var self = this;
-
-    /**
-     * @constructor
-     */
-    function ctor()
-    {
-        document.head.innerHTML += '<link rel="stylesheet" href="framework/main.css" type="text/css" />';
-        document.head.innerHTML += '<link rel="stylesheet" href="framework/styles/' + theme + '-style.css" type="text/css" />';
-
-        var js = document.createElement('script');
-        js.type = 'text/javascript';
-        js.src = 'framework/styles/' + theme + '-style.js';
-        document.head.appendChild(js);
-
-        pushReadyCallback(parseDom);
-        pushReadyCallback(config.commit);
-        pushReadyCallback(parseSections);
-        pushReadyCallback(init);
-        onready();
-
-        document.onkeydown = keyPress;
-        document.onmousemove = mouseMove;
-        document.onclick = mouseClick;
-    }
-
-    ctor();
-
-    /** Array that contains the slides as div elements. */
-    self.slides = [];
-
-    /** Index of the current slide. */
-    self.slideNumber = 0;
-
-    /** Last mouse position. */
-    self.mouseX = 0;
-
-    /** Last mouse position. */
-    self.mouseY = 0;
-
-    /** Timout for cursor hiding. */
-    self.curTout = null;
-
-    /** Context menu control. */
-    self.menuul = null;
-
-    self.frame = 0;
-
-    self.sections = [];
-
-    var console = null;
-
-    /** Gets the current slides object. */
-    self.getCurrent = function()
-    {
-        return self.slides[self.slideNumber];
-    };
-
-    self.slideById = function(id)
-    {
-        for (var i = 0; i < self.slides.length; i++) {
-            if (self.slides[i].div.id === id) {
-                return self.slides[i];
-            }
-        }
-    };
-
-    /**
-     * Called when document is loaded. Analyses the HTML markup, puts slides
-     * into an array and creates their layout.
-     */
-    function parseDom()
-    {
-        var children = document.body.getElementsByTagName('div');
-        for (var i = 0; i < children.length; i++) {
-            if (children[i].parentNode !== document.body) {
-                continue;
-            }
-            var tmpslide = new Slide();
-            children[i].className = 'slide';
-            children[i].style.visibility = 'hidden';
-
-            tmpslide.div = children[i];
-            self.slides.push(tmpslide);
-        }
-    }
-
-    // <script>tableOfContents();</script>
-    self.getToc = function()
-    {
-        // if a subsection has no parent section, it is treated as a section
-        var html = '';
-        var subbing = 0;
-
-        var ahref = function() { return '<li><a class="toc" href="javascript:instance.gotoSlide(' +  index + ');">'; };
-
-        for (var i = 0; i < self.sections.length; ++i) {
-            var index = self.sections[i].slideIndex;
-            if (i > 0 && self.sections[i].type == 'subsection' && self.sections[i-1].type == 'section') {
-                subbing += 1;
-                html += '<ul>' + ahref(index) + self.sections[i].title + '</a></li>';
-            }
-            else if (i > 0 && self.sections[i].type == 'section' && self.sections[i-1].type == 'subsection') {
-                subbing -= 1;
-                html += '</ul>' + ahref(index) + self.sections[i].title + '</a></li>';
-            }
-            else {
-                html += '<li>' + ahref(index) + self.sections[i].title + '</a></li>';
-            }
-        }
-
-        for (i = 0; i < subbing; ++i) {
-            html += '</ul>';
-        }
-
-        return html;
-    }
-
-    function parseSections()
-    {
-        var sec = document.getElementsByTagName('section');
-        for (var i = 0; i < sec.length; ++i) {
-            self.sections[i] = { title : sec[i].innerHTML };
-            var rootDiv = sec[i].parentNode;
-            while (rootDiv.parentNode != document.body) {
-                rootDiv = rootDiv.parentNode;
-            }
-            for (var k = 0; k < self.slides.length; ++k) {
-                if (self.slides[k].div == rootDiv) {
-                    self.sections[i].slideIndex = k;
-                }
-            }
-            if (sec[i].className == 'subsection') {
-                self.sections[i].type = 'subsection';
-            }
-            else {
-                self.sections[i].type = 'section';
-            }
-        }
-    }
-
-    function init()
-    {
-        document.body.style.backgroundColor = config.globalSettings.outerColor;
-        for (i = 0; i < modules.length; i++) {
-           var js = document.createElement('script');
-           js.type = 'text/javascript';
-           js.src = 'framework/module.' + modules[i] + '.js';
-           document.head.appendChild(js);
-        }
-
-        for (var i = 0; i < self.slides.length; ++i) {
-            var dim = self.slides[i].settings.pageDimensions;
-            self.slides[i].div.style.width = dim[0] + 'px';
-
-            // consider the slide padding
-            self.slides[i].div.style.width = dim[0] - (self.slides[i].div.clientWidth - dim[0]) + 'px';
-            self.slides[i].div.style.height = dim[1] + 'px';
-            if (typeof createLayout == 'function') {
-                createLayout(self.slides[i]);
-            }
-        }
-
-        if (window.location.search == '?console') {
-            console = new PresenterConsole(instance);
-            console.gotoSlide(0);
-        }
-        else {
-            window.onresize = resize;
-            self.gotoSlide(0);
-        }
-    }
-
-    /** Called when the window is resized, adjusts the slide size. */
-    function resize()
-    {
-        var height = document.body.clientHeight;
-        var width = document.body.clientWidth;
-
-        var pagewidth = self.slides[self.slideNumber].settings.pageDimensions[0];
-        var pageheight = self.slides[self.slideNumber].settings.pageDimensions[1];
-
-        // get bottleneck
-        var widthratio = width/pagewidth;
-        var heightratio = height/pageheight;
-        var scale = widthratio < heightratio ? widthratio : heightratio;
-        if (scale > 1) {
-            scale = 1;
-        }
-        self.slides[self.slideNumber].div.style.MozTransform = 'scale(' + scale + ')';
-        self.slides[self.slideNumber].div.style.marginTop = '-' + (1-scale)*pageheight/2 + 'px';
-        self.slides[self.slideNumber].div.style.marginLeft =  (width-pagewidth)/2 + 'px';
-    };
-
-    /**
-     * Shows a context menu.
-     * @param keepMenu Whether to keep an already existing menu and only adjust its position.
-     */
-    self.contextMenu = function(keepMenu)
-    {
-        var posx, posy;
-        if (self.mouseX === null) {
-            return;
-        }
-        if (self.menuul !== null) {
-            if (!keepMenu) {
-                document.body.removeChild(self.menuul);
-                self.menuul = null;
-                return;
-            }
-            else if (keepMenu) {
-                posx = self.menuul.style.left;
-                posy = self.menuul.style.top;
-            }
-            document.body.removeChild(self.menuul);
-            self.menuul = null;
-        }
-        else {
-            posx = self.mouseX + "px";
-            posy = self.mouseY + "px";
-        }
-
-        var menuEntries =
-        [
-            ['Next', self.slideNumber < self.slides.length - 1, function() { gotoNext(); self.contextMenu(true); }],
-            ['Previous', self.slideNumber > 0, function() { gotoPrevious(); self.contextMenu(true); }],
-            ['First', self.slideNumber > 0, function() { self.gotoSlide(0); self.contextMenu(true); }],
-            ['Last', self.slideNumber < self.slides.length - 1, function() { self.gotoSlide(self.slides.length - 1); self.contextMenu(true); }],
-            ['Presenter Console',  true, function() { console = new PresenterConsole(self, true); self.contextMenu(false); }],
-            ['Go to',  true, function() { }],
-            'opensubmenu'
-        ];
-
-        var gotofunc = function() { self.gotoSlide(this.innerHTML[0] - 1); };
-        for (var i = 0; i < self.slides.length; ++i) {
-            var title = (i + 1).toString();
-            var h1arr = self.slides[i].div.getElementsByTagName("h1");
-            if (h1arr.length > 0) {
-                title += '&nbsp;' + h1arr[0].innerHTML;
-            }
-            menuEntries[menuEntries.length] = [title, i != self.slideNumber, gotofunc];
-        }
-        menuEntries[menuEntries.length] = 'closesubmenu';
-
-        self.menuul = document.createElement('ul');
-        self.menuul.className = "menuul";
-        self.menuul.style.left = posx;
-        self.menuul.style.top = posy;
-        document.body.appendChild(self.menuul);
-
-        fillMenuUl(self.menuul, menuEntries);
-        setMenuEvents(menuEntries);
-    };
-
-    function setMenuEvents(menuEntries)
-    {
-        for (var i = 0; i < menuEntries.length; i++) {
-            var elem = document.getElementById('cm_' + i.toString());
-            if (elem !== null) {
-                elem.onclick = menuEntries[i][2];
-            }
-        }
-    }
-
-    function fillMenuUl(ul, menuEntries, start)
-    {
-        if (typeof start == 'undefined') {
-            start = 0;
-        }
-
-        for (var cnt = start; cnt < menuEntries.length; cnt++) {
-            if (menuEntries[cnt] == 'closesubmenu') {
-                break;
-            }
-            else if (menuEntries[cnt] == 'opensubmenu') {
-                continue;
-            }
-            var li = document.createElement('li');
-            if (menuEntries[cnt + 1] == 'opensubmenu') {
-                var subul = document.createElement('ul');
-                li.appendChild(subul);
-                fillMenuUl(subul, menuEntries, cnt + 1);
-            }
-            li.className = menuEntries[cnt][1] === true ? '' : 'inactli';
-            li.innerHTML += menuEntries[cnt][0];
-            li.id = 'cm_' + cnt.toString();
-            ul.appendChild(li);
-            if (menuEntries[cnt + 1] == 'opensubmenu') {
-                cnt += 2;
-                var opencount = 1;
-                while (opencount !== 0) {
-                    if (menuEntries[cnt] == 'opensubmenu') {
-                        opencount++;
-                    }
-                    else if (menuEntries[cnt] == 'closesubmenu') {
-                        opencount--;
-                    }
-                    cnt++;
-                }
-            }
-        }
-    }
-
-    /**
-     * Switch to another slide.
-     * @param num The index of the slide to go to.
-     * @param effect Function callback Sliding effect
-     */
-    self.gotoSlide = function(num, effect)
-    {
-        if (num >= 0 && num < self.slides.length) {
-            if (window.location.search == '?console') {
-                console.gotoSlide(num);
-            }
-            else {
-                if (self.slideNumber == num) {
-                    self.slides[num].div.style.visibility = 'visible';
-                }
-                else {
-                    if (effect === undefined || effect === null) {
-                        self.slides[self.slideNumber].div.style.visibility = 'hidden';
-                        self.slides[num].div.style.visibility = 'visible';
-                    }
-                    else {
-                       effect(this, num, self.slideNumber);
-                    }
-                    self.slideNumber = num;
-                }
-                resize();
-            }
-        }
-    };
-
-    /** Go to the next slide. */
-    function gotoNext()
-    {
-        if (self.slides[self.slideNumber].animationsComplete() === false) {
-            self.slides[self.slideNumber].nextAnimation();
-        }
-        else {
-            self.slides[self.slideNumber].reset();
-            self.gotoSlide(self.slideNumber + 1, null);
-        }
-    }
-
-    /** Go to the previous slide. */
-    function gotoPrevious()
-    {
-        if (self.slides[self.slideNumber].animIndex > 0) {
-            self.slides[self.slideNumber].undoAnimation();
-        }
-        else {
-            self.slides[self.slideNumber].reset();
-            self.gotoSlide(self.slideNumber - 1, null);
-        }
-    }
-
-    /**
-     * Default mouseClick handler: Hide context menu if visible.
-     * @param args The mouse event argument.
-     */
-    function mouseClick(args)
-    {
-        // every <li> in context menu has an id that starts with 'cm_'
-        if (self.menuul !== null && args.target.id !== undefined &&
-            args.target.id.substring(0, 3) != 'cm_')
+        /**
+         * Add animators to this slide. The Animator instances have to be passed
+         * as the function parameters.
+         */
+        self.addAnimators = function()
         {
-            document.body.removeChild(self.menuul);
-            self.menuul = null;
+            for (var i = 0; i < arguments.length; i++) {
+                self.animators = self.animators.concat(arguments[i]);
+            }
+        };
+
+        self.nextAnimation = function()
+        {
+            self.animators[self.animIndex].doAnimate();
+            self.animIndex++;
+            if (self.animIndex < self.animators.length) {
+                if (self.animators[self.animIndex].trigger === 'withprevious') {
+                    self.nextAnimation();
+                }
+                else if (self.animators[self.animIndex].trigger === 'afterprevious') {
+                    self.animators[self.animIndex - 1].onFinished = self.nextAnimation;
+                }
+            }
+        };
+
+        self.undoAnimation = function()
+        {
+            self.animators[self.animIndex].undoAnimate();
+            self.animIndex--;
+        };
+
+        self.backwardAnimation = function()
+        {
+            self.animators[self.animIndex].backwardAnimate();
+            self.animIndex--;
+        };
+
+        self.reset = function()
+        {
+            for(var i = 0; i < self.animIndex; i++) {
+                self.animators[i].undoAnimate();
+                self.animIndex = 0;
+            }
+        };
+
+        self.animationsComplete = function()
+        {
+            return self.animIndex === self.animators.length;
+        };
+
+        self.animIndex = 0;
+
+        self.animators = [];
+    }
+
+    /* ------------------------- User interaction --------------------------------- */
+
+    /* Hide context menu if visible. */
+    function mouseClick(args) {
+        // every <li> in context menu has an id that starts with 'cm_'
+        if (menuul !== null && args.target.id !== undefined &&
+            args.target.id.substring(0, 3) !== 'cm_')
+        {
+            document.body.removeChild(menuul);
+            menuul = null;
         }
     }
 
-    /**
-     * Default mouseMove handler for cursor hiding.
-     */
-    function mouseMove(args)
-    {
+    /* For cursor hiding. */
+    function mouseMove(args) {
         // args.clientX und pageX für IE und andere
         // newX und mouseX für Chrome, der bei cursor-Änderung auslöst
-        if (document.body === null) {
-            return;
-        }
         if (!args) {
             args = window.event;
         }
@@ -639,563 +550,355 @@ function WebSlider()
             newX = args.clientX;
             newY = args.clientY;
         }
-        clearTimeout(self.curTout);
-        if (self.mouseX != newX || self.mouseY != newY) {
+        clearTimeout(curTout);
+        if (mouseX !== newX || mouseY !== newY) {
              document.body.style.cursor = "auto";
         }
-        self.mouseX = newX;
-        self.mouseY = newY;
-        self.curTout = setTimeout(function() { document.body.style.cursor = "none"; }, 1000);
+        mouseX = newX;
+        mouseY = newY;
+        curTout = setTimeout(function() { document.body.style.cursor = 'none'; },
+            slides[slideNumber].settings.cursorHideTimeout);
     }
 
-    /** Default keypress handler. Used for context menu and sliding. */
-    function keyPress(ev)
-    {
-        if (ev.target == "INPUT") {
+    function keyPress(ev) {
+        if (ev.target === "INPUT") {
             return;
         }
-        if (ev.keyCode == 32) { // space
-            self.contextMenu(false);
+        if (ev.keyCode === 32) { // space
+            contextMenu(false);
         }
-        else if (ev.keyCode == 39) { // left
-            gotoNext();
+        else if (ev.keyCode === 39) { // right
+            _ws.gotoNext();
         }
-        else if (ev.keyCode == 37) { // right
-            gotoPrevious();
+        else if (ev.keyCode === 37) { // left
+            _ws.gotoPrevious();
         }
 
-        if (ev.keyCode == 32 || ev.keyCode == 38 || ev.keyCode == 40) {
+        if (ev.keyCode === 32 || ev.keyCode === 38 || ev.keyCode === 40) {
             // eat the key to avoid scrolling
             return false;
         }
     }
-}
 
-/**
- * A presenter screen with additional information, which are only visible to the presenter.
- * @param webslider The WebSlider instance of this presentation.
- * @param newWindow If true, the presenter screen will be started in a new window.
- */
-function PresenterConsole(webslider, newWindow)
-{
-    var startTime = null;
-
-    var paused = 0;
-
-    var timerRunning = true;
-
-    var showNotes = false;
-
-    var notesdiv = null;
-
-    var self = this;
-
-    function ctor()
-    {
-        if (newWindow !== undefined && newWindow === true) {
-            openNewWindow();
+    /* ------------------------- End User interaction --------------------------------- */
+    /**
+     * Shows a context menu.
+     * @param keepMenu Whether to keep an already existing menu and only adjust its position.
+     */
+    function contextMenu(keepMenu) {
+        var posx, posy;
+        if (mouseX === null) {
             return;
         }
-        var cbar = document.createElement('div');
-        cbar.style.textAlign = 'center';
-        cbar.style.bottom = '0px';
-        cbar.style.position = 'absolute';
-        cbar.style.width = '100%';
-
-        // blur, because space key would press button again
-        cbar.innerHTML =
-            '<div id="controls" style="margin:auto;display:table">' +
-            '   <div style="display:table-row;height:100%">' +
-            '       <div><span>' + getClockHtml('&ndash;', '0:00') +
-            '           </span><a id="reset">Reset</a>' +
-            '           <a id="pause">Pause</a>' +
-            '       </div>' +
-            '       <div>' +
-            '           <button id="notesbutton">Notes</button>' +
-            '       </div>' +
-            '       <div><button id="slidesbutton" onclick="javascript:this.blur();">Slides</button></div>' +
-            '   </div>' +
-            '</div>';
-        document.body.appendChild(cbar);
-        document.getElementById('notesbutton').onclick = function()
-        {
-           showNotes = !showNotes;
-           self.gotoSlide(webslider.slideNumber);
-           this.blur();
-        };
-
-        document.getElementById('reset').onclick = resetTimer;
-        document.getElementById('pause').onclick = startStop;
-        document.getElementById('reset').href = '#';
-        document.getElementById('pause').href = '#';
-
-        window.onresize = resize;
-
-        setInterval(updateTime, 1000);
-    }
-
-    ctor();
-
-    function getClockHtml(string1, string2)
-    {
-        return '<span id="clocktime">' + string1 + '</span>' +
-               '     <span id="time">' + string2 + '</span>';
-    }
-
-    function resize()
-    {
-    }
-
-    function openNewWindow()
-    {
-        return window.open("main.html?console", "Zweitfenster", "status=yes,menubar=yes,screenX=" + screen.availWidth +
-            ",screenY=0,height=" + screen.availHeight + ",width=" + screen.availWidth);
-    }
-
-    this.gotoSlide = function(num)
-    {
-        if (window.opener !== null) {
-            window.opener.instance.gotoSlide(num);
-        }
-        webslider.slides[webslider.slideNumber].div.style.visibility = 'hidden';
-        if (webslider.slideNumber < webslider.slides.length - 1) {
-            webslider.slides[webslider.slideNumber + 1].div.style.visibility = 'hidden';
-        }
-        webslider.slides[num].div.style.visibility = 'visible';
-        if (showNotes === false) {
-            if (notesdiv !== null) {
-                document.body.removeChild(notesdiv);
-                notesdiv = null;
-            }
-            webslider.slides[num].div.style.left = '-10%';
-            webslider.slides[num].div.style.MozTransform = 'scale(0.6)';
-            webslider.slides[num].div.style.WebkitTransform = 'scale(0.6)';
-            webslider.slides[num].div.style.top = '-10%'; // -20 + 15
-        }
-        else {
-            webslider.slides[num].div.style.left = '-15%';
-            webslider.slides[num].div.style.MozTransform = webslider.slides[num].div.style.WebkitTransform = 'scale(0.5)';
-            webslider.slides[num].div.style.top = '-15%';
-            if (notesdiv === null) {
-                notesdiv = document.createElement('div');
-            }
-            notesdiv.className = 'notesdiv';
-            var notes = webslider.slides[num].div.getElementsByClassName('notes');
-            if (notes.length > 0) {
-                notesdiv.innerHTML = notes[0].innerHTML;
-            }
-            document.body.appendChild(notesdiv);
-        }
-        if (num < webslider.slides.length - 1) {
-            if (showNotes === false) {
-                webslider.slides[num + 1].div.style.visibility = 'visible';
-                webslider.slides[num + 1].div.style.left = '35%';
-                webslider.slides[num + 1].div.style.top = '-20%'; // -30 + 15
-                webslider.slides[num + 1].div.style.MozTransform = webslider.slides[num + 1].div.style.WebkitTransform = 'scale(0.4)';
-            }
-            else
-            {
-            }
-        }
-        webslider.slideNumber = num;
-    };
-
-    function resetTimer()
-    {
-        startTime = null;
-        paused = 0;
-        document.getElementById('time').innerHTML = '0:00';
-    }
-
-    function updateTime()
-    {
-        // Uhr
-        var now = new Date();
-
-        var clockstring = pad2two(now.getHours()) + ':' + pad2two(now.getMinutes()) + ':' + pad2two(now.getSeconds());
-
-        if (timerRunning === false) {
-            document.getElementById('clocktime').innerHTML = clockstring;
-        }
-        else {
-            if (startTime === null) {
-                startTime = now;
-            }
-            var diff = new Date(now.getTime() + paused - startTime.getTime());
-            var timestring = (diff.getHours()*60 - 60 + diff.getMinutes()).toString() + ':' + pad2two(diff.getSeconds());
-
-            // change parent html to be synchronous
-            document.getElementById('clocktime').parentNode.innerHTML = getClockHtml(clockstring, timestring);
-        }
-    }
-
-    function startStop()
-    {
-        if (timerRunning === false) {
-            document.getElementById('pause').innerHTML = 'Pause';
-            timerRunning = true;
-        }
-        else {
-            if (startTime !== null) {
-                paused += (new Date()).getTime() - startTime;
-                startTime = null;
-            }
-            timerRunning = false;
-            document.getElementById('pause').innerHTML = 'Resume';
-        }
-    }
-
-    function pad2two(digit)
-    {
-        return (digit.toString().length == 1 ? '0' + digit.toString() : digit.toString());
-    }
-}
-
-/** Basic animation functions. */
-var AniBase =
-{
-    veryfastSpeed: 100,
-
-    fastSpeed : 200,
-
-    moderateSpeed : 500,
-
-    slowSpeed: 1000,
-
-    veryslowSpeed : 2000,
-
-    /** Linear progress. */
-    animatorEase : function(progress)
-    {
-        return progress;
-    },
-
-    animatorSin : function(progress)
-    {
-        // a sine square function hill goes from 0 to pi/2, maximum is still 1
-        return Math.pow(Math.sin(progress*Math.PI/2), 2);
-    },
-
-    /*
-     * Stops an animation started by startAnimation(...).
-     * @param aniObject The return value of startAnimation(...).
-     */
-    stopAnimation : function(aniObject)
-    {
-        clearInterval(aniObject.timer);
-        if (aniObject.cleanfunc !== null) {
-            aniObject.cleanfunc();
-        }
-    },
-
-    /**
-     * Starts an animation.
-     * @param bodyfunc Function callback that sets the animated properties after each every elapsed interval.
-     * @param cleanfunc Function callback that is executed after the animation stops or is stopped manually.
-     * @param start Initial value of the animated property.
-     * @param end Final value of the animated property.
-     * @valfunc Function callback that returns the animation process depending on the elapsed time.
-     * @return Object instance with the information necessary to stop the animation.
-     */
-    startAnimation : function(bodyfunc, cleanfunc, start, end, anitime, valfunc)
-    {
-        var aniObject = {};
-        aniObject.cleanfunc = cleanfunc;
-        startTime = new Date().getTime();
-        bodyfunc(0);
-        aniObject.timer = setInterval(function()
-        {
-            var deltaT = (new Date()).getTime() - startTime;
-            if (deltaT >= anitime) {
-                // clean animation end
-                bodyfunc(end);
-                AniBase.stopAnimation(aniObject);
+        if (menuul !== null) {
+            if (!keepMenu) {
+                document.body.removeChild(menuul);
+                menuul = null;
                 return;
             }
-            bodyfunc(start + (end-start)*valfunc(deltaT/anitime));
-        }, 10);
-        return aniObject;
-    }
-};
-
-/** Functions for slide effects. */
-var Sliding =
-{
-    /** The current animator object. */
-    slideAnim : null,
-
-    /** Animate transparency. */
-    slideAlpha : function(slides, num, currentSlide)
-    {
-        Sliding.startSlideAnimation(null, function(value)
-        {
-            slides.slides[currentSlide].div.style.opacity = (1-value).toString();
-            slides.slides[num].div.style.opacity = value.toString();
-            slides.slides[num].div.style.visibility = 'visible';
-        },
-        function()
-        {
-            slides.slides[currentSlide].div.style.opacity = '';
-            slides.slides[num].div.style.opacity = '';
-            slides.slides[currentSlide].div.style.visibility = 'hidden';
-        }, 0, 1, 200, AniBase.animatorEase);
-    },
-
-    startSlideAnimation : function(prepare, bodyfunc, cleanfunc, start, end, anitime, valfunc)
-    {
-        if (Sliding.slideAnim !== null) {
-            AniBase.stopAnimation(Sliding.slideAnim);
-        }
-        if (prepare !== null) {
-            prepare();
-        }
-        Sliding.slideAnim = AniBase.startAnimation(bodyfunc, function() { cleanfunc(); Sliding.slideAnim = null; } , start, end, anitime, valfunc);
-    },
-
-    slideHorizontal : function(slides, num, currentSlide)
-    {
-        // left: 50% is the middle
-        var sign = (num > currentSlide) ? 1 : -1;
-        Sliding.startSlideAnimation(
-        function()
-        {
-            slides.slides[num].div.style.visibility = 'visible';
-            slides.slides[currentSlide].div.style.zIndex = '1';
-        },
-        function(value)
-        {
-            slides.slides[currentSlide].div.style.marginLeft = -sign*value - 512 + 'px';
-        },
-        function()
-        {
-            slides.slides[currentSlide].div.style.visibility = 'hidden';
-            slides.slides[currentSlide].div.style.marginLeft = slides.slides[currentSlide].div.style.zIndex = '';
-        },
-        0, 1024, 1000, AniBase.animatorSin);
-    },
-
-    setCrossBrowserCss : function(element, prop, css)
-    {
-        // border-radius
-        // transform
-        if (prop == 'transform') {
-            element.style.MozTransform = css;
-            element.style.WebkitTransform = css;
-            element.style.OTransform = css;
-            // IE?
-        }
-    },
-
-    matrix : function(x1, x2, x3, x4, x5, x6)
-    {
-        // normal browsers:
-        return 'matrix(' + x1 + ',' + x2 + ',' + x3 + ',' + x4 + ',' + x5 + ',' + x6 + ')';
-    },
-
-    /** Spin around the y-axis while changing the slide. */
-    slideRotate : function(slides, num, currentSlide)
-    {
-        Sliding.startSlideAnimation(
-        function()
-        {
-            slides.slides[currentSlide].div.style.zIndex = '1';
-            slides.slides[num].div.style.visibility = 'visible';
-        },
-        function(value)
-        {
-            if (value < 0)
-            {
-                slides.slides[currentSlide].div.style.zIndex = '';
-                slides.slides[num].div.style.zIndex = '1';
+            else if (keepMenu) {
+                posx = menuul.style.left;
+                posy = menuul.style.top;
             }
-            setCrossBrowserCss(slides.current, 'transform', matrix(value, 0, 0, 1, 0, 0));
-            setCrossBrowserCss(slides.slides[num], 'transform', matrix(-value, 0, 0, 1, 0, 0));
-        },
-        function()
-        {
-            setCrossBrowserCss(slides.current, 'transform', '');
-            setCrossBrowserCss(slides.slides[num], 'transform', '');
-            slides.slides[num].div.style.zIndex = '';
-            slides.slides[currentSlide].div.style.zIndex = '';
-            slides.slides[currentSlide].div.style.visibility = 'hidden';
-        },
-        1, -1, 1000, AniBase.animatorSin);
-    }
-};
-
-var AnimationFactory =
-{
-
-}
-
-/** Animation effects. */
-var Effects =
-{
-    /** Writes the letters of an element one after another. */
-    writeText : function(oldElement, element, progress, args)
-    {
-        var text = oldElement.innerHTML;
-
-        // consider spaces, otherwise the animation looks choppy
-        var spaces = 0;
-        for (var i = 0; i < text.length; i++) {
-            if (text[i] == ' ') {
-                spaces++;
-            }
-        }
-
-        var letters = Math.round((text.length - spaces)*progress);
-        var nonspaces = 0; var i = 0;
-        while (nonspaces != letters) {
-            if (text[i] !== ' ') {
-                nonspaces++;
-            }
-            i++;
-        }
-
-        element.innerHTML = text.substring(0, i) + '<span style="visibility: hidden">' + text.substring(i) + '</span>';
-    },
-
-    /** Changes the css style. This is no continuous animation. */
-    changeStyle : function(oldElement, element, progress, args)
-    {
-        element.cssText = (progress < 0.5 ? oldElement.cssText : args.newCss);
-    }
-};
-
-/**
- * Defines an object animation.
- * @param selector The selector for DOM elements.
- *  Rules:
- *  .class ... select by class name
- *  #id ... select by id NOTE: this will be the only option at first
- *  #id->child(n) ... nth child
- *  h1 ... by tag name
- * @param config Configuration array.
- * @param callback Function callback that does the animation.
- */
-
-// NOTE: are the selector rules necessary?
-function Animator(selector, callback, config)
-{
-    /*
-    * config: {aniTime : AniBase.fastSpeed, timeOffset : 10, args : { xpath : [], ypath : [] } }
-    */
-    var self = this;
-
-    self.config = {};
-
-    self.onFinished = function(){};
-
-    self.aniTime = 0;
-
-    self.callback = null;
-
-    self.timeOffset = 0;
-
-    self.trigger = '';
-
-    self.selector = '';
-
-    var element = null;
-
-    var oldElement = null;
-
-    self.args = null;
-
-    self.completed = false;
-
-    var animator = null;
-
-    /** @constructor */
-    function ctor(selector, callback, config)
-    {
-        self.element = document.getElementById(selector);
-        self.selector = selector;
-        self.oldElement = copyObject(self.element);
-        self.callback = callback;
-
-        if (config.aniTime !== undefined) {
-            self.aniTime = config.aniTime;
-        }
-
-        if (config.timeOffset !== undefined) {
-            self.timeOffset = config.timeOffset;
-        }
-
-        if (config.trigger !== undefined) {
-            self.trigger = config.trigger;
-        }
-
-        if (config.args !== undefined) {
-            self.args = config.args;
-        }
-    }
-
-    function copyObject(obj)
-    {
-        var newElement = { };
-        for (var key in obj) {
-            newElement[key] = obj[key];
-        }
-        return newElement;
-    }
-
-    ctor(selector, callback, config);
-
-    self.doAnimate = function()
-    {
-        _animate(true);
-    };
-    // NOTE: oldElement
-    function _animate(forwards)
-    {
-        if (self.aniTime === 0) {
-            self.callback(self.oldElement, self.element, forwards === true ? 1 : 0, self.args);
+            document.body.removeChild(menuul);
+            menuul = null;
         }
         else {
-            animator = AniBase.startAnimation(function(value)
-            {
-                self.callback(self.oldElement, document.getElementById(self.selector), value, self.args);
-            },
-            function(){ self.onFinished(); }, forwards === true ? 0 : 1, forwards === true ? 1 : 0, self.aniTime, AniBase.animatorSin);
+            posx = mouseX + "px";
+            posy = mouseY + "px";
         }
-        self.completed = (forwards === true);
+
+        var menuEntries = [
+            ['Next', slideNumber < slides.length - 1, function() { _ws.gotoNext(); contextMenu(true); }],
+            ['Previous', slideNumber > 0, function() { _ws.gotoPrevious(); contextMenu(true); }],
+            ['First', slideNumber > 0, function() { _ws.gotoSlide(0); contextMenu(true); }],
+            ['Last', slideNumber < slides.length - 1, function() { _ws.gotoSlide(slides.length - 1); contextMenu(true); }],
+            ['Presenter Console',  true, function() { openNewWindow(); contextMenu(false); }],
+            ['Go to',  true, function() { }],
+            'opensubmenu'
+        ];
+
+        var gotofunc = function() { _ws.gotoSlide(this.innerHTML[0] - 1); };
+        for (var i = 0; i < slides.length; ++i) {
+            var title = (i + 1).toString();
+            var h1arr = slides[i].div.getElementsByTagName("h1");
+            if (h1arr.length > 0) {
+                title += '&nbsp;' + h1arr[0].innerHTML;
+            }
+            menuEntries.push([title, i !== slideNumber, gotofunc]);
+        }
+
+        menuEntries.push('closesubmenu');
+
+        menuul = document.createElement('ul');
+        menuul.className = "menuul";
+        menuul.style.left = posx;
+        menuul.style.top = posy;
+        document.body.appendChild(menuul);
+
+        fillMenuUl(menuul, menuEntries);
+        setMenuEvents(menuEntries);
     }
 
-    /** Animates backwards, use to reset an animated object. */
-    self.backwardAnimate = function()
-    {
-        _animate(false);
-    };
+    function setMenuEvents(menuEntries) {
+        for (var i = 0; i < menuEntries.length; i++) {
+            var elem = document.getElementById('cm_' + i.toString());
+            if (elem !== null) {
+                elem.onclick = menuEntries[i][2];
+            }
+        }
+    }
 
-    /** Finish the animation now. */
-    self.forceComplete = function()
+    function openNewWindow() {
+        otherWindow = window.open('main.html?console', 'Presentation Screen &ndash ' + document.title,
+            'status=yes,menubar=yes,screenX=' + screen.availWidth +
+            '*,screenY=0,height=' + screen.availHeight + ',width=' + screen.availWidth);
+        _ws.setSync(true);
+    }
+
+    function fillMenuUl(ul, menuEntries, start)
     {
-        if (self.completed === false) {
-            self.abort();
-            if (self.aniTime === 0) {
-                self.callback(self.oldElement, self.element, self.args);
+        if (typeof start === 'undefined') {
+            start = 0;
+        }
+
+        for (var cnt = start; cnt < menuEntries.length; cnt++) {
+            if (menuEntries[cnt] === 'closesubmenu') {
+                break;
+            }
+            else if (menuEntries[cnt] === 'opensubmenu') {
+                continue;
+            }
+            var li = document.createElement('li');
+            if (menuEntries[cnt + 1] === 'opensubmenu') {
+                var subul = document.createElement('ul');
+                li.appendChild(subul);
+                fillMenuUl(subul, menuEntries, cnt + 1);
+            }
+            li.className = menuEntries[cnt][1] === true ? '' : 'inactli';
+            li.innerHTML += menuEntries[cnt][0];
+            li.id = 'cm_' + cnt.toString();
+            ul.appendChild(li);
+            if (menuEntries[cnt + 1] === 'opensubmenu') {
+                cnt += 2;
+                var opencount = 1;
+                while (opencount !== 0) {
+                    if (menuEntries[cnt] === 'opensubmenu') {
+                        opencount++;
+                    }
+                    else if (menuEntries[cnt] === 'closesubmenu') {
+                        opencount--;
+                    }
+                    cnt++;
+                }
+            }
+        }
+    }
+
+    /* ------------------------------- Normal view -------------------------------- */
+
+    var view = function() {
+        var _view = {};
+        _view.gotoSlide = function(num, effect) {
+            syncWindow('gotoSlide', arguments);
+            if (num >= 0 && num < slides.length) {
+                if (window.location.search === '?console') {
+                    console.gotoSlide(num);
+                }
+                else {
+                    var oldsn = slideNumber;
+                    slideNumber = num;
+
+                    // resize before showing the slide, else
+                    // it can look blurry at first
+                    _view.resize();
+                    if (oldsn === num) {
+                        showSlide(num);
+                    }
+                    else {
+                        if (typeof effect === 'undefined' || effect === null) {
+                            hideSlide(oldsn);
+                            showSlide(num);
+                        }
+                        else {
+                           effect(this, num, oldsn);
+                        }
+                    }
+                }
+            }
+        };
+
+        /* Called when the window is resized, adjusts the slide size. */
+        _view.resize = function() {
+            var height = document.body.clientHeight;
+            var width = document.body.clientWidth;
+
+            var pagewidth = slides[slideNumber].settings.pageDimensions[0];
+            var pageheight = slides[slideNumber].settings.pageDimensions[1];
+
+            var scale = Math.min(width/pagewidth, height/pageheight);
+            if (scale > 1) {
+                scale = 1;
+            }
+            slides[slideNumber].div.style.MozTransform = 'scale(' + scale + ')';
+            slides[slideNumber].div.style.marginTop = '-' + (1-scale)*pageheight/2 + 'px';
+            slides[slideNumber].div.style.marginLeft =  (width-pagewidth)/2 + 'px';
+        }
+
+        return _view;
+    }();
+
+    /* ----------------------------- End Normal view ------------------------------ */
+
+    /* ------------------------------- Console ------------------------------------ */
+    var console = function() {
+        var _console = {};
+        var startTime = null;
+        var paused = 0;
+        var timerRunning = true;
+        var showNotes = false;
+        var notesdiv = null;
+
+        _console.guiLayout = function() {
+            var cbar = document.createElement('div');
+            cbar.style.textAlign = 'center';
+            cbar.style.bottom = '0px';
+            cbar.style.position = 'absolute';
+            cbar.style.width = '100%';
+
+            // blur, because space key would press button again
+            cbar.innerHTML =
+                '<div id="controls" style="margin:auto;display:table">' +
+                '   <div style="display:table-row;height:100%">' +
+                '       <div><span>' + getClockHtml('&ndash;', '0:00') +
+                '           </span><a id="reset">Reset</a>' +
+                '           <a id="pause">Pause</a>' +
+                '       </div>' +
+                '       <div>' +
+                '           <button id="notesbutton">Notes</button>' +
+                '       </div>' +
+                '       <div><button id="slidesbutton" onclick="javascript:this.blur();">Slides</button></div>' +
+                '   </div>' +
+                '</div>';
+            document.body.appendChild(cbar);
+            document.getElementById('notesbutton').onclick = function() {
+               showNotes = !showNotes;
+               _console.gotoSlide(slideNumber);
+               this.blur();
+            };
+
+            document.getElementById('reset').onclick = resetTimer;
+            document.getElementById('pause').onclick = startStop;
+            document.getElementById('reset').href = '#';
+            document.getElementById('pause').href = '#';
+
+            setInterval(updateTime, 1000);
+        };
+
+        function getClockHtml(string1, string2) {
+            return '<span id="clocktime">' + string1 + '</span>' +
+                   '     <span id="time">' + string2 + '</span>';
+        }
+
+        _console.resize = function() {
+        };
+
+        _console.gotoSlide = function(num) {
+            syncWindow('gotoSlide', arguments);
+            if (num >= slides.length || num < 0) {
+                return;
+            }
+            hideSlide(slideNumber);
+            if (slideNumber < slides.length - 1) {
+                hideSlide(slideNumber + 1);
+            }
+            showSlide(num);
+            if (showNotes === false) {
+                if (notesdiv !== null) {
+                    document.body.removeChild(notesdiv);
+                    notesdiv = null;
+                }
+                slides[num].div.style.left = '-10%';
+                slides[num].div.style.MozTransform = 'scale(0.6)';
+                slides[num].div.style.WebkitTransform = 'scale(0.6)';
+                slides[num].div.style.top = '-10%'; // -20 + 15
             }
             else {
-                self.callback(self.oldElement, self.element, 1, self.args);
+                slides[num].div.style.left = '-15%';
+                slides[num].div.style.MozTransform = slides[num].div.style.WebkitTransform = 'scale(0.5)';
+                slides[num].div.style.top = '-15%';
+                if (notesdiv === null) {
+                    notesdiv = document.createElement('div');
+                }
+                notesdiv.className = 'notesdiv';
+                var notes = slides[num].div.getElementsByClassName('notes');
+                if (notes.length > 0) {
+                    notesdiv.innerHTML = notes[0].innerHTML;
+                }
+                document.body.appendChild(notesdiv);
+            }
+            if (num < slides.length - 1) {
+                if (showNotes === false) {
+                    showSlide(num + 1);
+                    slides[num + 1].div.style.left = '35%';
+                    slides[num + 1].div.style.top = '-20%'; // -30 + 15
+                    slides[num + 1].div.style.MozTransform = slides[num + 1].div.style.WebkitTransform = 'scale(0.4)';
+                }
+                else {
+                }
+            }
+            slideNumber = num;
+        };
+
+        function resetTimer() {
+            startTime = null;
+            paused = 0;
+            document.getElementById('time').innerHTML = '0:00';
+        }
+
+        function updateTime() {
+            // Uhr
+            var now = new Date();
+
+            var clockstring = pad2two(now.getHours()) + ':' + pad2two(now.getMinutes()) + ':' + pad2two(now.getSeconds());
+
+            if (timerRunning === false) {
+                document.getElementById('clocktime').innerHTML = clockstring;
+            }
+            else {
+                if (startTime === null) {
+                    startTime = now;
+                }
+                var diff = new Date(now.getTime() + paused - startTime.getTime());
+                var timestring = (diff.getHours()*60 - 60 + diff.getMinutes()).toString() + ':' + pad2two(diff.getSeconds());
+
+                // change parent html to be synchronous
+                document.getElementById('clocktime').parentNode.innerHTML = getClockHtml(clockstring, timestring);
             }
         }
-    };
 
-    /** Aborts the current animation and sets to the final animation state. */
-    // NOTE: backwards and forwards
-    self.abort = function()
-    {
-        if (self.animator !== null) {
-            AniBase.stopAnimation(self.animator);
-            self.completed = true;
+        function startStop() {
+            if (timerRunning === false) {
+                document.getElementById('pause').innerHTML = 'Pause';
+                timerRunning = true;
+            }
+            else {
+                if (startTime !== null) {
+                    paused += (new Date()).getTime() - startTime;
+                    startTime = null;
+                }
+                timerRunning = false;
+                document.getElementById('pause').innerHTML = 'Resume';
+            }
         }
-    };
 
-    self.undoAnimate = function()
-    {
-        self.element = self.oldElement;
-        self.completed = false;
-    };
-}
+        function pad2two(digit) {
+            return (digit.toString().length === 1 ? '0' + digit.toString() : digit.toString());
+        }
+
+        return _console;
+    }();
+
+    setup();
+    return _ws;
+}();

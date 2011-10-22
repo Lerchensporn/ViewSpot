@@ -15,20 +15,17 @@ section {
     display: none;
 }
 
-pre, pre *
-{
+pre, pre * {
     font-family: "Inconsolata", "Courier New";
     font-size: 18pt;
 }
 
-.MathJax_MathML
-{
+.MathJax_MathML {
     /* mathjax bug? */
     padding: 1px;
 }
 
-*, a .toc
-{
+*, a .toc {
     margin: 0px;
    /* padding: 1px; */
     font-size: 24pt;
@@ -36,27 +33,23 @@ pre, pre *
     outline: none;
 }
 
-li
-{
+li {
     margin: 0.4em;
     margin-left: 1em;
 }
 
-html, body
-{
+html, body {
     height: 100%;
     width: 100%;
     padding: 0px;
     overflow: hidden;
 }
 
-body
-{
+body {
     background-color: #557;
 }
 
-.menuul, .menuul ul
-{
+.menuul, .menuul ul {
     white-space: nowrap;
     position: absolute;
     color: white;
@@ -67,8 +60,7 @@ body
     margin: 0px;
 }
 
-.menuul li
-{
+.menuul li {
     list-style: none;
     /* if a style sets the li background to an svg */
     background: none;
@@ -79,25 +71,21 @@ body
     padding: 3px;
 }
 
-.menuul li:hover
-{
+.menuul li:hover {
     background-color: #333;
 }
 
-.menuul li:last-child
-{
+.menuul li:last-child {
     border-bottom-left-radius: 5px;
     border-bottom-right-radius: 5px;
 }
 
-.menuul li:first-child
-{
+.menuul li:first-child {
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
 }
 
-.menuul li ul
-{
+.menuul li ul {
     display: none;
     padding: 0px;
     margin: -3px;
@@ -105,46 +93,39 @@ body
     border-top-left-radius: 0px;
 }
 
-.menuul li ul li:first-child
-{
+.menuul li ul li:first-child {
     border-top-left-radius: 0px;
 }
 
-.inactli
-{
+.inactli {
     color: #aaa;
 }
 
-.menuul li:hover ul
-{
+.menuul li:hover ul {
     position: absolute;
     left: 100%;
     display: block;
 }
 
-.slide
-{
+.slide {
     background-color: white;
     position: absolute;
     overflow: hidden;
 }
 
-#clocktime
-{
+#clocktime {
     font-size: 60%;
     display: block;
 }
 
-#reset, #pause
-{
+#reset, #pause {
     text-decoration: none;
     color: white;
     font-size: 30%;
     font-family: Sans;
 }
 
-#time
-{
+#time {
     margin-bottom: -21px;
     margin-top: -5px;
     color: #4f0;
@@ -153,8 +134,7 @@ body
     display: block;
 }
 
-.notesdiv
-{
+.notesdiv {
     position: absolute;
     font-size: 60%;
     left: 50%;
@@ -167,8 +147,7 @@ body
     width: 600px;
 }
 
-#slidesbutton, #notesbutton
-{
+#slidesbutton, #notesbutton {
     font-size: 50%;
     outline: none;
     width: 50px;
@@ -182,8 +161,7 @@ body
     border-radius: 5px;
 }
 
-#controls div div
-{
+#controls div div {
     background-color: #345;
     display: table-cell;
     vertical-align: middle;
@@ -191,37 +169,30 @@ body
     padding: 5px;
 }
 
-#controls div:first-child
-{
+#controls div:first-child {
     border-top-left-radius: 10px;
 }
 
-#controls div:last-child
-{
+#controls div:last-child {
     border-top-right-radius: 10px;
 }
 
-#notesbutton:hover, #slidesbutton:hover
-{
+#notesbutton:hover, #slidesbutton:hover {
     background-color: #134;
 }
 
-#notesbutton:active, #slidesbutton:active
-{
+#notesbutton:active, #slidesbutton:active {
     border: 1px inset;
 }
 
-#notesbutton::-moz-focus-inner, #slidesbutton::-moz-focus-inner
-{
+#notesbutton::-moz-focus-inner, #slidesbutton::-moz-focus-inner {
     border: none;
 }
 
-.notesdiv *
-{
+.notesdiv * {
     font-size: 100%;
 }
 
-.notes
-{
+.notes {
     display: none;
 }

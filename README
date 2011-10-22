@@ -1,12 +1,24 @@
 Interesting ideas:
 * provide Python scripts that do important tasks:
     - select only the files needed for the presentation
-    - compress these files into a single html file for easy transport
+    - (unimportant) compress these files into a single html file for easy transport
         - pictures can be stored base64 encoded in html
         - other files are included as javascript strings?
+        - canvas needed for font-face
     - reduce file size by removing whitespaces
     - encode all videos to both h264 and ogg/webm for browser support
-* animations with canvas element
+* diagrams with SVG
+    - Raphael library
+    - matplotlib
+    - own tool?
+* code highlighter
+    - only support most 50 important languages?
+    a) parse > 500 vim syntax files and generate json
+        - complicated
+        - big file size (some MB) when supporting all languages
+    b) keyword and simple regex highlighter
+    - line numbers
+    - define generic generic elements → highlighting styles
 * program to make the presentation portable:
     - store the fonts in the presentation and use css font-face
     - download all pictures

@@ -1,0 +1,57 @@
+== User API ==
+Prefix: ws
+
+ws.setSync()
+ws.loadModules(modules)
+ws.tableOfContents()
+ws.gotoSlide(index)
+ws.gotoNext()
+ws.gotoPrevious()
+ws.getSections()
+ws.getCurrentSlide();
+
+Structure object:
+.type
+.title
+.slideIndex
+
+ws.config.setCurrent(settings)
+ws.config.setGlobal(settings)
+ws.config.setForSlide(index, settings)
+ws.config.setForClass(className, settings)
+
+ws.getSlides()
+
+Slide object:
+.getSlideIndex()
+.getSettings()
+.div
+.animations
+
+ws.Sliding.slide*(slides, num, currentSlide)
+ws.Animations.animator*(progress)
+
+
+=== Overlays ===
+* use the data-anim tag to describe the overlay
+* allow too fancy animations in data-anim?
+* divide frame selection and animation
+
+=== Advanced animations ===
+
+<ul class="" data-anim="pause">
+    <li data-anim="1-3"><span style="bla" data-anim="">hu</span></li>
+    <li data-anim="+-"></li>
+    <li data-anim="flyin,500ms,left"></li>
+    <li data-anim=""></li>
+</ul>
+<img src="" id="imid"/>
+<script>
+    ws.id('imid').animate(function() { ... }, 500, easeAround);
+</script>
+
+syntax:
+ data-anim="flyin(fast)"
+
+== Style API ==
+* full user API

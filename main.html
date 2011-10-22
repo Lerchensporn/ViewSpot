@@ -5,8 +5,8 @@
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <script type="text/javascript" src="framework/core.js"> </script>
     <script>
-        config.setGlobal({ layout : { footerRight : 'Indigoide Farbstoffe', footerLeft : 'Autor' } });
-        config.setForSlide(1, {layout : {footer : false }});
+        ws.config.setGlobal({ layout : { footerRight : 'Indigoide Farbstoffe', footerLeft : 'Autor' } });
+        ws.config.setForSlide(1, {layout : {footer : false }});
     </script>
 </head>
 <body>
@@ -29,10 +29,9 @@
             </ul>
         </div>
     </div>
-
     <div id="main">
         <h1>Gliederung</h1>
-        <script> tableOfContents(); </script>
+        <script> ws.tableOfContents(); </script>
         <ol>
             <li>Geschichte</li>
             <li>Indigoide Farbstoffe</li>
@@ -46,7 +45,7 @@
         </ol>
     </div>
     <div>
-        <section id="geschichte">Geschichte</section>
+        <section>Geschichte</section>
         <h1>Geschichte</h1>
         <ul>
             <li>Bla</li>
