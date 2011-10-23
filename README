@@ -23,6 +23,8 @@ Interesting ideas:
     - store the fonts in the presentation and use css font-face
     - download all pictures
 
+* JSXGraph plugin!
+
 * compatibility to at least the newest Firefox, Chrome, Opera, (IE, Safari)
 * compatibility to older browser versions?
 

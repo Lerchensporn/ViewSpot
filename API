@@ -8,7 +8,8 @@ ws.gotoSlide(index)
 ws.gotoNext()
 ws.gotoPrevious()
 ws.getSections()
-ws.getCurrentSlide();
+ws.getCurrentSlide()
+ws.getSections()
 
 Structure object:
 .type
