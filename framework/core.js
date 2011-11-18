@@ -16,6 +16,7 @@ var ws = function() {
     var slideNumber;
     var mouseX = 0;
     var mouseY = 0;
+    var enableResizing = true;
     var curTout;
     var otherWindow;
     var windowChild;
@@ -157,20 +158,19 @@ var ws = function() {
         var html = '';
         var subbing = 0;
 
-        var ahref = function() { return '<li><a class="toc" href="javascript:ws.gotoSlide(' +  index + ');">'; };
-
+        var ahref = function() { return '<li><span class="link" onclick="javascript:ws.gotoSlide(' +  index + ');">'; };
         for (var i = 0; i < sections.length; ++i) {
             var index = sections[i].slideIndex;
             if (i > 0 && sections[i].type === 'subsection' && sections[i-1].type === 'section') {
                 subbing += 1;
-                html += '<ul>' + ahref(index) + sections[i].title + '</a></li>';
+                html += '<ul>' + ahref(index) + sections[i].title + '</span></li>';
             }
             else if (i > 0 && sections[i].type === 'section' && sections[i-1].type === 'subsection') {
                 subbing -= 1;
-                html += '</ul>' + ahref(index) + sections[i].title + '</a></li>';
+                html += '</ul>' + ahref(index) + sections[i].title + '</span></li>';
             }
             else {
-                html += '<li>' + ahref(index) + sections[i].title + '</a></li>';
+                html += ahref(index) + sections[i].title + '</span></li>';
             }
         }
 
@@ -292,15 +292,6 @@ var ws = function() {
 
         var loadedCount = 0;
         for (i = 0; i < themeDict.length; ++i) {
-            var js = document.createElement('script');
-            js.type = 'text/javascript';
-            js.onload = function() {
-                if (++loadedCount === themeDict.length) {
-                    createSlides();
-                }
-            };
-            js.src = 'framework/styles/' + themeDict[i] + '.js';
-
             var link = document.createElement('link');
             link.rel = 'stylesheet';
             link.type = 'text/css';
@@ -309,7 +300,21 @@ var ws = function() {
             // link must be appended before js to ensure that all css styles are loaded
             // when running createSlides.
             document.head.appendChild(link);
-            document.head.appendChild(js);
+
+            if (fileExists('framework/styles/' + themeDict[i] + '.js')) {
+                var js = document.createElement('script');
+                js.type = 'text/javascript';
+                js.onload = function() {
+                    if (++loadedCount === themeDict.length) {
+                        createSlides();
+                    }
+                };
+                js.src = 'framework/styles/' + themeDict[i] + '.js';
+                document.head.appendChild(js);
+            }
+            else {
+                createSlides();
+            }
         }
 
         for (i = 0; i < modules.length; i++) {
@@ -317,6 +322,18 @@ var ws = function() {
            js.type = 'text/javascript';
            js.src = 'framework/module.' + modules[i] + '.js';
            document.head.appendChild(js);
+        }
+    }
+
+    function fileExists(filename) {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.open('GET', filename, false);
+        try {
+            xmlhttp.send(null);
+            return true;
+        }
+        catch (e) {
+            return false;
         }
     }
 
@@ -421,6 +438,25 @@ var ws = function() {
         otherWindow.ws.setSync(false);
         otherWindow.ws[func].apply(otherWindow.ws, args);
         otherWindow.ws.setSync(true);
+    }
+
+    function printLayout() {
+        alert(1);
+        for (var i = 0; i < slides.length; ++i) {
+            _ws.gotoSlide(i);
+            if (i > 0)
+                showSlide(i-1);
+            slideNumber = i;
+            enableResizing = false;
+            slides[i].div.style.MozTransform = '';
+            slides[i].div.style.WebkitTransform = '';
+            slides[i].div.style.position = 'relative';
+            slides[i].div.style.marginLeft = '0px';
+            slides[i].div.style.marginTop = '0px';
+            if (i !== slides.length - 1) slides[i].div.style.pageBreakAfter = 'always';
+        }
+        document.body.style.overflow = 'scroll';
+        document.body.style.height = '1000px';
     }
 
     function showSlide(number) {
@@ -734,6 +770,9 @@ var ws = function() {
 
         /* Called when the window is resized, adjusts the slide size. */
         _view.resize = function() {
+            if (enableResizing === false) {
+                return;
+            }
             var height = document.body.clientHeight;
             var width = document.body.clientWidth;
 

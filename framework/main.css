@@ -1,18 +1,19 @@
-a:not(.toc) {
+a {
     font-family: Abel, Metrophobic;
     padding: 2px;
-}
-
-a {
     text-decoration: none;
 }
 
-.toc {
-    color: black;
+.link {
+    cursor: pointer;
 }
 
 section {
     display: none;
+}
+
+h1 section {
+    display: block;
 }
 
 pre, pre * {
@@ -28,7 +29,6 @@ pre, pre * {
 *, a .toc {
     margin: 0px;
    /* padding: 1px; */
-    font-family: "Linux Biolinum";
     outline: none;
 }
 
@@ -42,11 +42,11 @@ html, body {
     font-size: 24pt;
     width: 100%;
     padding: 0px;
-    overflow: hidden;
 }
 
 body {
     background-color: #557;
+    overflow: hidden;
 }
 
 .menuul, .menuul ul {
