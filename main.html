@@ -16,7 +16,7 @@ h1 {
     padding-bottom: 0px;
     margin-bottom: 40px;
     background: -moz-linear-gradient(left, #dfe4f0, #d7e7ff);
-    box-shadow: 10px 10px 10px #dfe4f0;
+    box-shadow: 0 10px 10px #dfe4f0;
 }
 
 .slide {
@@ -28,7 +28,6 @@ h1 {
 }
 
 ul {
-    list-style-type:square;
     padding-left:0px;
 }
 
@@ -37,12 +36,22 @@ ul {
     padding-left: 30px;
     font-family: 'open sans';
     background-color: white;
-    box-shadow: 0 0 5px 5px white;
+    box-shadow: 0 0px 5px 5px white;
     position: absolute;
     left:0px;
     top: 100px;
     font-size: 20pt;
-    width: 100%;
+    width: 80%;
+    border-top-right-radius: 40px;
+    border-bottom-right-radius: 40px;
+}
+
+dt {
+    font-weight: bold;
+}
+
+dd {
+    padding-left: 40px;
 }
 
 .title h2 {
@@ -59,7 +68,7 @@ ul {
 </head>
 <body>
     <div>
-        <img style="opacity:0.7;margin-left:200px;margin-top:280px" src="large.png"/>
+        <img style="opacity:0.5;margin-left:235px;margin-top:280px" src="large.png"/>
         <div class="title">
             <h2>The Ozone Hole</h2>
             Andreas Becker, Ralf Hänschke, Lina Klatt, Elisabeth Thiele<br/>
@@ -94,7 +103,18 @@ ul {
         <h1><section>The Ozone Hole</section></h1> <!-- Andreas -->
         <ul>
             <li>the ozone depletion remains stable</li>
+            <li>release of ozone depleting chemicals is reduced</li>
         </ul>
+        <table style="margin-top:40px;margin-left:100px;width:80%">
+            <tr>
+                <td><img src="earth1979-t.png"></img></td>
+                <td><img src="earth1980-t.png"></img></td>
+                <td><img src="earth1992-t.png"></img></td>
+                <td><img src="earth2010-t.png"></img></td>
+                <td><img src="earth2011-t.png"></img></td>
+            </tr>
+        </table>
+        <object style="margin-top:30px;margin-left:170px" data="dia.svg" type="image/svg+xml" id="svg"></object>
     </div>
     <div>
         <h1><section>Atmospheric Chemistry</section></h1> <!-- Ralf -->
@@ -111,7 +131,7 @@ ul {
         </ul>
     </div>
     <div>
-        <h1>Polar nights</h1>
+        <h1><section>Polar Nights</section></h1>
         <ul>
             <li>polar stratosphery clouds (PCS):<br/>
                 crystals of H<sub>2</sub>SO<sub>4</sub> and HNO<sub>3</sub> arise in the winter months<br/>
@@ -122,19 +142,61 @@ ul {
             <li>more chlorine is activated</li>
             <li>end of night: UV rays cleave free chlorine compounds</li>
         </ul><br/>
-        <img src="http://upload.wikimedia.org/wikipedia/commons/0/09/Arctic_stratospheric_cloud.jpg" style="width:400px;margin-left:270px;opacity:0.8;box-shadow: 0px 0px 7px 0px black;"/>
+        <img src="cloud.jpg" style="width:400px;margin-left:270px;opacity:0.8;box-shadow: 0px 0px 7px 0px black;"/>
     </div>
     <div>
-        <h1><section>Ozone depleting chemicals</section></h1> <!-- Elisabeth --> <!-- Krankheiten? -->
+        <h1><section>Ozone Depleting Chemicals</section></h1>
+        <ul>
+            <li>CFC was contained in sprays, refrigerants</li>
+            <li>halon: fire extinguishants</li>
+            <li>methyl bromide: antibiotic gas for quarantine or to make food sterile</li>
+            <li>great decrease due to political activity</li>
+        </ul>
+        <img style="margin-left: 170px;margin-top:30px" src="stat.png" />
+    </div>
+    <div>
+        <h1><section>Effects on Life</section></h1>
+        <ul>
+            <li>higher UV radiation exposure because of ozone hole<br/>→ effects on plants, bacteria and animals</li>
+            <li>death of phytoplankton</li>
+            <li>high-energy rays are mutagens (cancer)</li>
+            <li>UV rays harm eyes and skin, sunburn is more likely</li>
+        </ul>
+        <img style="margin-left:240px;box-shadow: 0 0 7px 0 black;height:300px;margin-top:50px" src="cancer.jpg"/>
     </div>
     <div>
         <h1><section>Political Interaction</section></h1> <!-- Lina -->
-        <div class="notes">
-            Montreal-Protokoll
-        </div>
+        <dl>
+            <dt>Vienna Convention on the Law of Treaties (VCLT)</dt>
+            <dd>
+                <ul><li>treaty according to international law </li>
+                <li>opened for signature on 22. May 1969</li></ul>
+            </dd>
+            <dt>Montreal Protocol (appendant to the VCLT)</dt>
+            <dd>
+                <ul><li>opened for signature on 16. September 1987</li>
+                <li>entered into force on 01. January 1989</li></ul>
+            </dd>
+            <dt>Kyoto Protocol</dt>
+            <dd>
+                <ul><li>specifies which states have to keep which amounts</li>
+                <li>adopted on 11. December 1997</li>
+                <li>entered into force on 16. February 2005</li>
+                <li>the only exception are the USA</li></ul>
+            </dd>
+        </dl>
     </div>
     <div>
-        <h1><section>Future prospects</section></h1>
+        <h1><section>Future Prospects</section></h1>
+        <dl>
+            <dt>Different opinions</dt>
+            <dd>
+                <ul><li>2002 report from Japan → ozone hole will be closed 2040</li>
+                <li>other results indicate no improvement till 2065</li>
+                <li>diverse prospects for different ozone holes (e.&thinsp;g. Antarctic and Europe)</li></ul>
+            </dd>
+        </dl>
+        <img style="margin-left:240px;margin-top:10px" src="engeltrans.png"/>
     </div>
     <div>
         <h1>Sources</h1>
@@ -143,8 +205,11 @@ ul {
             <li>http://www.umweltbundesamt.de/produkte/fckw/halone.htm</li>
             <li>http://www.lfu.bayern.de/umweltwissen/doc/uw_48_ozonschicht_ozonloch.pdf</li>
             <li>http://meteoros.de/psc/psc.htm</li>
-            <li>http://www.umweltlexikon-online.de/RUBwerkstoffmaterialsubstanz/FCKW.php</li>
+            <li>http://www.environment.gov.au/atmosphere/ozone/ods/methylbromide/index.html</li>
+            <li>http://www.umweltlexikon-online.de/RUBwerkstoffmaterialsubstanz/FCKW.php<br/><br/></li>
             <li>http://upload.wikimedia.org/wikipedia/commons/0/09/Arctic_stratospheric_cloud.jpg</li>
+            <li>http://grenzgaenge.files.wordpress.com/2010/01/d_blauer-engel.jpg</li>
+            <li>http://www.afeas.org/img/table/odp2007-web.png</li>
         </ul>
     </div>
 </body>

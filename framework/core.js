@@ -287,7 +287,12 @@ var ws = function() {
                 _ws.gotoSlide = view.gotoSlide;
                 window.onresize = view.resize;
             }
-            _ws.gotoSlide(0);
+
+            var slidenum = readCookie('slide');
+            if (slidenum === null) {
+                slidenum = 0;
+            }
+            _ws.gotoSlide(slidenum);
         };
 
         var loadedCount = 0;
@@ -422,6 +427,26 @@ var ws = function() {
 
     /* ---------------------------------------------------------------------------- */
 
+    function setCookie(name, value) {
+        // expires after one day
+        var expires = new Date((new Date()).getTime() + 86400000);
+        document.cookie = name.toString() + '=' + value.toString() + '; expires=' + expires.toGMTString();
+    }
+
+    function readCookie(name) {
+        var items = document.cookie.split(';');
+        for (var i = 0; i < items.length; ++i) {
+            var eq = items[i].indexOf('=');
+            if (eq === -1) {
+                continue;
+            }
+            else if (items[i].substr(0, eq).trim() === name) {
+                return items[i].substr(eq + 1).trim();
+            }
+        }
+        return null;
+    }
+
     /* If a child/parent window is available, calls the appropriate function of the other window
        to synchronize the presentation windows. */
     function syncWindow(func, args) {
@@ -438,25 +463,6 @@ var ws = function() {
         otherWindow.ws.setSync(false);
         otherWindow.ws[func].apply(otherWindow.ws, args);
         otherWindow.ws.setSync(true);
-    }
-
-    function printLayout() {
-        alert(1);
-        for (var i = 0; i < slides.length; ++i) {
-            _ws.gotoSlide(i);
-            if (i > 0)
-                showSlide(i-1);
-            slideNumber = i;
-            enableResizing = false;
-            slides[i].div.style.MozTransform = '';
-            slides[i].div.style.WebkitTransform = '';
-            slides[i].div.style.position = 'relative';
-            slides[i].div.style.marginLeft = '0px';
-            slides[i].div.style.marginTop = '0px';
-            if (i !== slides.length - 1) slides[i].div.style.pageBreakAfter = 'always';
-        }
-        document.body.style.overflow = 'scroll';
-        document.body.style.height = '1000px';
     }
 
     function showSlide(number) {
@@ -741,31 +747,36 @@ var ws = function() {
         var _view = {};
         _view.gotoSlide = function(num, effect) {
             syncWindow('gotoSlide', arguments);
-            if (num >= 0 && num < slides.length) {
-                if (window.location.search === '?console') {
-                    console.gotoSlide(num);
+
+            num = parseInt(num);
+
+            if (num < 0) {
+                num = 0;
+            }
+            else if (num >= slides.length) {
+                num = slides.length - 1;
+            }
+
+            var oldsn = slideNumber;
+            slideNumber = num;
+
+            // resize before showing the slide, else
+            // it can look blurry at first
+            _view.resize();
+            if (oldsn === num) {
+                showSlide(num);
+            }
+            else {
+                if (typeof effect === 'undefined' || effect === null) {
+                    hideSlide(oldsn);
+                    showSlide(num);
                 }
                 else {
-                    var oldsn = slideNumber;
-                    slideNumber = num;
-
-                    // resize before showing the slide, else
-                    // it can look blurry at first
-                    _view.resize();
-                    if (oldsn === num) {
-                        showSlide(num);
-                    }
-                    else {
-                        if (typeof effect === 'undefined' || effect === null) {
-                            hideSlide(oldsn);
-                            showSlide(num);
-                        }
-                        else {
-                           effect(this, num, oldsn);
-                        }
-                    }
+                   effect(this, num, oldsn);
                 }
             }
+
+            setCookie('slide', num);
         };
 
         /* Called when the window is resized, adjusts the slide size. */
@@ -892,6 +903,8 @@ var ws = function() {
                 }
             }
             slideNumber = num;
+
+            setCookie('slide', num);
         };
 
         function resetTimer() {
