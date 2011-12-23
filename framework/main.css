@@ -1,7 +1,7 @@
 a {
-    font-family: Abel, Metrophobic;
     padding: 2px;
     text-decoration: none;
+    color: inherit;
 }
 
 .link {
@@ -12,8 +12,18 @@ section {
     display: none;
 }
 
+h1 {
+    font-size: 28pt;
+    padding-top: 15px;
+    padding-left: 30px;
+    padding-right: 30px;
+    margin-left: -40px;
+    margin-right: -40px;
+    margin-bottom: 25px;
+}
+
 h1 section {
-    display: block;
+    display: inherit;
 }
 
 pre, pre * {
@@ -26,75 +36,75 @@ pre, pre * {
     padding: 1px;
 }
 
-*, a .toc {
+* {
     margin: 0px;
-   /* padding: 1px; */
-    outline: none;
+    padding: 0px;
+}
+
+ul {
+    margin-left: 1.5em;
+}
+
+.slide > ul {
+    margin: 0.3em;
+    margin-left: 4px;
 }
 
 li {
-    margin: 0.4em;
-    margin-left: 1em;
+    margin: 0.2em;
+    margin-left: 0.8em;
 }
 
 html, body {
     height: 100%;
-    font-size: 24pt;
+    font-size: 20pt;
     width: 100%;
     padding: 0px;
 }
 
 body {
-    background-color: #557;
+    background-color: black;
     overflow: hidden;
 }
 
 .menuul, .menuul ul {
+    -moz-user-select: none;
+    z-index: 1;
     white-space: nowrap;
     position: absolute;
-    color: white;
-    float: left;
-    background-color: darkgrey;
-    border-radius: 5px;
+    color: black;
     padding: 0px;
     margin: 0px;
+    background-color: #f0f0f0;
+    box-shadow: 0px 0px 3px 1px #aaa;
+}
+
+.menuarrow {
+    background: url(styles/pics/li-triangle.svg) no-repeat right;
 }
 
 .menuul li {
     list-style: none;
     /* if a style sets the li background to an svg */
-    background: none;
-    font-size: 12pt;
+    font-size: 11pt;
     cursor: pointer;
     margin: 0px;
-    background-color: #666;
     padding: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+    min-width: 100px;
 }
 
 .menuul li:hover {
-    background-color: #333;
-}
-
-.menuul li:last-child {
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-}
-
-.menuul li:first-child {
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+    background-color: #d0d0df;
 }
 
 .menuul li ul {
+    z-index: 0;
     display: none;
     padding: 0px;
-    margin: -3px;
-    margin-left: 0px;
-    border-top-left-radius: 0px;
-}
-
-.menuul li ul li:first-child {
-    border-top-left-radius: 0px;
+    margin: -2px;
+    margin-left: 2px;
 }
 
 .inactli {
@@ -111,6 +121,8 @@ body {
     background-color: white;
     position: absolute;
     overflow: hidden;
+    padding-left: 40px;
+    padding-right: 40px;
 }
 
 #clocktime {

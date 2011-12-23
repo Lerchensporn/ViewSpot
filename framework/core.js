@@ -1,14 +1,12 @@
-var Theme = {};
 var ws = function() {
 
     "use strict";
 
     var _ws = { config : {} };
-    var modules = ['mathjax', 'highlighter'];
+    var modules = ['module.mathjax', 'module.highlighter', 'module.controls', 'module.fullthemes'];
     var defaultSettings = {
         pageDimensions : [1024, 768],
         outerColor : 'black',
-        theme : 'latex-style',
         cursorHideTimeout : 1000,
         layout : { footer : true }
     };
@@ -20,6 +18,7 @@ var ws = function() {
     var curTout;
     var otherWindow;
     var windowChild;
+    var isLaserMouse = false;
     var menuul = null;
     var sections = [];
     var sync = false;
@@ -181,6 +180,11 @@ var ws = function() {
         return html;
     };
 
+    _ws.setLaserMouse = function(on) {
+        isLaserMouse = (on === true);
+        document.body.style.cursor = (on ? 'crosshair' : 'default');
+    };
+
     /* ----------------------------- Slide Setup ---------------------------------- */
 
     function setup() {
@@ -190,7 +194,7 @@ var ws = function() {
         readyFuncs.finish = [init];
         onready();
 
-        document.onkeydown = keyPress; // XXX rename
+        document.onkeydown = keyDown;
         document.onmousemove = mouseMove;
         document.onclick = mouseClick;
     }
@@ -247,10 +251,14 @@ var ws = function() {
         document.body.style.backgroundColor = globalSettings.outerColor;
         var themeDict = [];
 
-        // must know the themeDict length before the next loop start
         for (var i = 0; i < slides.length; ++i) {
-            if (themeDict.indexOf(slides[i].settings.theme) === -1) {
-                themeDict.push(slides[i].settings.theme);
+            if (typeof slides[i].settings.css !== 'undefined') {
+                var css = slides[i].settings.css;
+                for (var k = 0; k < css.length; ++k) {
+                    if (themeDict.indexOf(css[k]) === -1) {
+                        themeDict.push(css[k]);
+                    }
+                }
             }
         }
 
@@ -264,12 +272,16 @@ var ws = function() {
                 slides[i].div.style.width = dim[0] - (slides[i].div.clientWidth - dim[0]) + 'px';
                 slides[i].div.style.height = dim[1] + 'px';
                 slides[i].div.style.display = 'none';
-                var jsname = jsTheme(slides[i].settings.theme);
-                if (typeof Theme[jsname] === 'function') {
-                    slideNumber = i;
-                    Theme[jsname].ws = _ws;
-                    Theme[jsname].ws.mergeArrays = mergeArrays;
-                    Theme[jsname]();
+                var theme = slides[i].settings.setupSlide;
+                if (typeof theme !== 'undefined') {
+                    var callback;
+                    if (typeof theme === 'string') {
+                        callback = ws.fullthemes[jsTheme(theme)];
+                    }
+                    else if (typeof theme === 'function') {
+                        callback = theme;
+                    }
+                    callback(slides[i]);
                 }
             }
 
@@ -287,41 +299,37 @@ var ws = function() {
                 _ws.gotoSlide = view.gotoSlide;
                 window.onresize = view.resize;
             }
-            _ws.gotoSlide(0);
+
+            var slidenum = readCookie('slide');
+            if (slidenum === null) {
+                slidenum = 0;
+            }
+            _ws.gotoSlide(slidenum);
         };
 
         var loadedCount = 0;
-        for (i = 0; i < themeDict.length; ++i) {
+        for (var i = 0; i < themeDict.length; ++i) {
             var link = document.createElement('link');
             link.rel = 'stylesheet';
             link.type = 'text/css';
-            link.href = 'framework/styles/' + themeDict[i] + '.css';
+            link.href = 'framework/' + themeDict[i] + '.css';
 
             // link must be appended before js to ensure that all css styles are loaded
             // when running createSlides.
             document.head.appendChild(link);
-
-            if (fileExists('framework/styles/' + themeDict[i] + '.js')) {
-                var js = document.createElement('script');
-                js.type = 'text/javascript';
-                js.onload = function() {
-                    if (++loadedCount === themeDict.length) {
-                        createSlides();
-                    }
-                };
-                js.src = 'framework/styles/' + themeDict[i] + '.js';
-                document.head.appendChild(js);
-            }
-            else {
-                createSlides();
-            }
         }
 
-        for (i = 0; i < modules.length; i++) {
-           var js = document.createElement('script');
-           js.type = 'text/javascript';
-           js.src = 'framework/module.' + modules[i] + '.js';
-           document.head.appendChild(js);
+        // third party themes can be loaded as a module
+        for (var i = 0; i < modules.length; ++i) {
+            var js = document.createElement('script');
+            js.type = 'text/javascript';
+            js.onload = function() {
+                if (++loadedCount === modules.length) {
+                    createSlides();
+                }
+            };
+            js.src = 'framework/' + modules[i] + '.js';
+            document.head.appendChild(js);
         }
     }
 
@@ -421,6 +429,26 @@ var ws = function() {
     }
 
     /* ---------------------------------------------------------------------------- */
+
+    function setCookie(name, value) {
+        // expires after one day
+        var expires = new Date((new Date()).getTime() + 86400000);
+        document.cookie = name.toString() + '=' + value.toString() + '; expires=' + expires.toGMTString();
+    }
+
+    function readCookie(name) {
+        var items = document.cookie.split(';');
+        for (var i = 0; i < items.length; ++i) {
+            var eq = items[i].indexOf('=');
+            if (eq === -1) {
+                continue;
+            }
+            else if (items[i].substr(0, eq).trim() === name) {
+                return items[i].substr(eq + 1).trim();
+            }
+        }
+        return null;
+    }
 
     /* If a child/parent window is available, calls the appropriate function of the other window
        to synchronize the presentation windows. */
@@ -591,16 +619,19 @@ var ws = function() {
             newY = args.clientY;
         }
         clearTimeout(curTout);
-        if (mouseX !== newX || mouseY !== newY) {
-             document.body.style.cursor = "auto";
+        if (isLaserMouse === false) {
+            if (mouseX !== newX || mouseY !== newY) {
+                 document.body.style.cursor = 'auto';
+            }
+
+            curTout = setTimeout(function() { document.body.style.cursor = 'none'; },
+                slides[slideNumber].settings.cursorHideTimeout);
         }
         mouseX = newX;
         mouseY = newY;
-        curTout = setTimeout(function() { document.body.style.cursor = 'none'; },
-            slides[slideNumber].settings.cursorHideTimeout);
     }
 
-    function keyPress(ev) {
+    function keyDown(ev) {
         if (ev.target === "INPUT") {
             return;
         }
@@ -653,7 +684,11 @@ var ws = function() {
             ['Previous', slideNumber > 0, function() { _ws.gotoPrevious(); contextMenu(true); }],
             ['First', slideNumber > 0, function() { _ws.gotoSlide(0); contextMenu(true); }],
             ['Last', slideNumber < slides.length - 1, function() { _ws.gotoSlide(slides.length - 1); contextMenu(true); }],
-            ['Presenter Console',  true, function() { openNewWindow(); contextMenu(false); }],
+            ['Console',  true, function() { openNewWindow(); contextMenu(false); }],
+            ['Laser mouse (' + (isLaserMouse ? 'on)' : 'off)'), true, function() {
+                _ws.setLaserMouse(!isLaserMouse);
+                this.innerHTML = (isLaserMouse ? 'Laser mouse (on)' : 'Laser mouse (off)');
+            }],
             ['Go to',  true, function() { }],
             'opensubmenu'
         ];
@@ -713,9 +748,10 @@ var ws = function() {
             if (menuEntries[cnt + 1] === 'opensubmenu') {
                 var subul = document.createElement('ul');
                 li.appendChild(subul);
+                li.className = 'menuarrow';
                 fillMenuUl(subul, menuEntries, cnt + 1);
             }
-            li.className = menuEntries[cnt][1] === true ? '' : 'inactli';
+            li.className += menuEntries[cnt][1] === true ? '' : 'inactli';
             li.innerHTML += menuEntries[cnt][0];
             li.id = 'cm_' + cnt.toString();
             ul.appendChild(li);
@@ -741,31 +777,36 @@ var ws = function() {
         var _view = {};
         _view.gotoSlide = function(num, effect) {
             syncWindow('gotoSlide', arguments);
-            if (num >= 0 && num < slides.length) {
-                if (window.location.search === '?console') {
-                    console.gotoSlide(num);
+
+            num = parseInt(num);
+
+            if (num < 0) {
+                num = 0;
+            }
+            else if (num >= slides.length) {
+                num = slides.length - 1;
+            }
+
+            var oldsn = slideNumber;
+            slideNumber = num;
+
+            // resize before showing the slide, else
+            // it can look blurry at first
+            _view.resize();
+            if (oldsn === num) {
+                showSlide(num);
+            }
+            else {
+                if (typeof effect === 'undefined' || effect === null) {
+                    hideSlide(oldsn);
+                    showSlide(num);
                 }
                 else {
-                    var oldsn = slideNumber;
-                    slideNumber = num;
-
-                    // resize before showing the slide, else
-                    // it can look blurry at first
-                    _view.resize();
-                    if (oldsn === num) {
-                        showSlide(num);
-                    }
-                    else {
-                        if (typeof effect === 'undefined' || effect === null) {
-                            hideSlide(oldsn);
-                            showSlide(num);
-                        }
-                        else {
-                           effect(this, num, oldsn);
-                        }
-                    }
+                   effect(this, num, oldsn);
                 }
             }
+
+            setCookie('slide', num);
         };
 
         /* Called when the window is resized, adjusts the slide size. */
@@ -780,13 +821,12 @@ var ws = function() {
             var pageheight = slides[slideNumber].settings.pageDimensions[1];
 
             var scale = Math.min(width/pagewidth, height/pageheight);
-            if (scale > 1) {
-                scale = 1;
-            }
+            var marginTop = (scale - 1) * pageheight / 2;
+
             slides[slideNumber].div.style.WebkitTransform = 'scale(' + scale + ')';
             slides[slideNumber].div.style.MozTransform = 'scale(' + scale + ')';
-            slides[slideNumber].div.style.marginTop = '-' + (1-scale)*pageheight/2 + 'px';
-            slides[slideNumber].div.style.marginLeft =  (width-pagewidth)/2 + 'px';
+            slides[slideNumber].div.style.marginTop = marginTop + 'px';
+            slides[slideNumber].div.style.marginLeft =  (width - pagewidth) / 2 + 'px';
         }
 
         return _view;
@@ -892,6 +932,7 @@ var ws = function() {
                 }
             }
             slideNumber = num;
+            setCookie('slide', num);
         };
 
         function resetTimer() {
