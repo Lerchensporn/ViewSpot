@@ -132,7 +132,7 @@ var ws = function() {
         }
         else {
             slides[slideNumber].reset();
-            _ws.gotoSlide(slideNumber + 1, null);
+            _ws.gotoSlide(slideNumber + 1);
         }
     };
 
@@ -144,7 +144,7 @@ var ws = function() {
         }
         else {
             slides[slideNumber].reset();
-            _ws.gotoSlide(slideNumber - 1, null);
+            _ws.gotoSlide(slideNumber - 1);
         }
     };
 
@@ -173,7 +173,7 @@ var ws = function() {
             }
         }
 
-        for (i = 0; i < subbing; ++i) {
+        for (var i = 0; i < subbing; ++i) {
             html += '</ul>';
         }
 
@@ -207,7 +207,12 @@ var ws = function() {
                 continue;
             }
             var tmpslide = new Slide();
-            children[i].className = 'slide';
+            if (children[i].className === '') {
+                children[i].className = 'slide';
+            }
+            else {
+                children[i].className += ' slide';
+            }
 
             tmpslide.div = children[i];
             tmpslide.index = index;
@@ -272,6 +277,7 @@ var ws = function() {
                 slides[i].div.style.width = dim[0] - (slides[i].div.clientWidth - dim[0]) + 'px';
                 slides[i].div.style.height = dim[1] + 'px';
                 slides[i].div.style.display = 'none';
+
                 var theme = slides[i].settings.setupSlide;
                 if (typeof theme !== 'undefined') {
                     var callback;
@@ -488,7 +494,7 @@ var ws = function() {
     }
 
     function showSlide(number) {
-        slides[number].div.style.display = 'block';
+        slides[number].div.style.display = '';
     }
 
     function hideSlide(number) {
@@ -526,8 +532,7 @@ var ws = function() {
         slides[index].settings = merged;
     }
 
-    function Slide()
-    {
+    function Slide() {
         var self = this;
 
         self.div = null;
@@ -593,17 +598,27 @@ var ws = function() {
 
     /* Hide context menu if visible. */
     function mouseClick(args) {
-        // every <li> in context menu has an id that starts with 'cm_'
-        if (menuul !== null && args.target.id !== undefined &&
-            args.target.id.substring(0, 3) !== 'cm_')
-        {
-            document.body.removeChild(menuul);
-            menuul = null;
+        if (menuul === null) {
+            return;
         }
+        var parentNode = args.target;
+        while (parentNode !== document.body) {
+            if (parentNode === menuul) {
+                return;
+            }
+            parentNode = parentNode.parentNode;
+        }
+        document.body.removeChild(menuul);
+        menuul = null;
     }
 
     /* For cursor hiding. */
     function mouseMove(args) {
+        if (typeof slides[slideNumber] === 'undefined') {
+            // do not fill the error console with trash
+            return;
+        }
+
         // args.clientX und pageX für IE und andere
         // newX und mouseX für Chrome, der bei cursor-Änderung auslöst
         if (!args) {
@@ -693,20 +708,20 @@ var ws = function() {
             'opensubmenu'
         ];
 
-        var gotofunc = function() { _ws.gotoSlide(this.innerHTML[0] - 1); };
+        var gotofunc = function() { _ws.gotoSlide(this.firstChild.value - 1); };
         for (var i = 0; i < slides.length; ++i) {
             var title = (i + 1).toString();
-            var h1arr = slides[i].div.getElementsByTagName("h1");
+            var h1arr = slides[i].div.getElementsByTagName('h1');
             if (h1arr.length > 0) {
                 title += '&nbsp;' + h1arr[0].innerHTML;
             }
-            menuEntries.push([title, i !== slideNumber, gotofunc]);
+            menuEntries.push(['<input type="hidden" value="' + (i + 1) + '"/>' + title, i !== slideNumber, gotofunc]);
         }
 
         menuEntries.push('closesubmenu');
 
         menuul = document.createElement('ul');
-        menuul.className = "menuul";
+        menuul.className = 'menuul';
         menuul.style.left = posx;
         menuul.style.top = posy;
         document.body.appendChild(menuul);
@@ -731,8 +746,7 @@ var ws = function() {
         _ws.setSync(true);
     }
 
-    function fillMenuUl(ul, menuEntries, start)
-    {
+    function fillMenuUl(ul, menuEntries, start) {
         if (typeof start === 'undefined') {
             start = 0;
         }
@@ -775,7 +789,7 @@ var ws = function() {
 
     var view = function() {
         var _view = {};
-        _view.gotoSlide = function(num, effect) {
+        _view.gotoSlide = function(num) {
             syncWindow('gotoSlide', arguments);
 
             num = parseInt(num);
@@ -797,13 +811,8 @@ var ws = function() {
                 showSlide(num);
             }
             else {
-                if (typeof effect === 'undefined' || effect === null) {
-                    hideSlide(oldsn);
-                    showSlide(num);
-                }
-                else {
-                   effect(this, num, oldsn);
-                }
+                hideSlide(oldsn);
+                showSlide(num);
             }
 
             setCookie('slide', num);

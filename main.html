@@ -8,25 +8,27 @@
         ws.config.setGlobal({
             layout : { footerRight : 'Indigoide Farbstoffe', footerLeft : 'Autor' },
             footer : { },
-            css : [ 'style.ozone' ]
         });
-        ws.config.setForSlide(1, {layout : {footer : false }});
 
         ws.config.setGlobal({
             setupSlide : function(slide) {
-                ws.controls.miniframes(slide);
-                ws.controls.footer(slide);
-                slide.div.innerHTML += '<div style="bottom:10px;right:40px;position:absolute;font-size:12pt">' +
-                    'Copyleft woho</div>';
+                if (slide.index === 0) {
+                    return;
+                }
+                slide.div.innerHTML += 
+                    '<div style="color:#888;bottom:10px;font-size:12pt;position:absolute"><span style="float:left;">\
+                         </span>\
+                         <span style="float:left;padding-left:160px">Indigoide Farbstoffe</span>\
+                         <span style="float:left;padding-left:210px">' + (slide.index + 1) +  '/' + ws.getSlides().length +  '</span>\
+                     </div>';
         }});
 
     </script>
 </head>
 <body>
     <div>
-        <div style="text-align:center;margin-top:11%">
-            <div class="theorem" style="font-size:120%">Indigoide Farbstoffe</div>
-            Vortrag des Vortragenden<br/><br/>
+        <div style="text-align:center;margin-top:14%">
+            <div style="font-size:120%;border-top:1px solid #d0d0d0;border-bottom:1px solid #d0d0d0;background-color: #f0f0f0;padding:15px;margin:30px"><b>Indigoide Farbstoffe</b></div>
             <img height="300" src="http://upload.wikimedia.org/wikipedia/commons/c/cb/Indigofera_tinctoria_Taub115a.png" alt="Blume"/>
         </div>
         <div class="notes">
@@ -44,39 +46,166 @@
     </div>
     <div id="main">
         <h1>Gliederung</h1>
-        BlaBla
         <script> ws.tableOfContents(); </script>
-        BlaBla
     </div>
     <div>
-    <section>Geschichte</section>
-        <h1>Geschichte</h1>
+        <h1>Indigo</h1>
+        <img src="Indigo_plant_extract_sample.jpg" style="float:right;padding-right:50px;height:200px"/>
         <ul>
-            <li>Bla</li>
+            <li>fast wasserunlösliches Pigment</li>
+            <li>nach außen wirken nur van-der-Waals-Kräfte</li>
+            <li>Absorptionsmaximum bei 606&thinsp;nm in Ethanol</li>
+            <li>sublimiert ab 300&thinsp;°C, zersetzt sich ab 390&thinsp;°C</li>
+        </ul>
+        <div style="text-align:center"><br/><br/><img src="indigo.svg" height="200"/></div>
+    </div>
+    <div>
+        <h1><section>Geschichte</section></h1>
+        <img src="isatis-tinctoria364.jpg" height="200"/>
+        <ul>
+            <li>indikanhaltige Pflanzen: Färberwaid und Indigopflanze</li>
+            <li>wichtiger Industriezweig im Mittelalter (12.–17. Jh.)</li>
+            <li>verschiedene Verfahren zur Küpenfärberei</li>
+        </ul>
+        <b>Synthese:</b>
+        <ul>
+            <li>1865–1883 Strukturauflärung durch Adolf von Baeyer</li>
+            <li>1890: Zwei Synthesen von Karl Heumann</li>
         </ul>
     </div>
     <div>
-        <section>Section</section>
-        <section>Vertreter</section>
-        <h1>Vertreter</h1>
-        Purpur, Indigokarmin, Indirubin,
-        <img height="320" src="http://upload.wikimedia.org/wikipedia/commons/b/b1/Indigo_dyes.svg"/>
+        <h1>Herstellung von Indigo
+            <div class="subtitle"><span style="vertical-align:7%">&#x25b8;</span> Zweite Heumannsche Synthese</div>
+        </h1>
+        <img style="width:95%;padding:20px" src="indigosynthese.svg" />
+    </div>
+    <div>
+        <h1>Herstellung von Indigo
+            <div class="subtitle"><span style="vertical-align:7%">&#x25b8;</span> Heumann-Pfleger-Verfahren</div>
+        </h1>
+        <img style="padding-left:100px;padding-top:50px" src="heumann-pfleger.svg" />
+    </div>
+    <div>
+        <h1>Herstellung von Indigo
+            <div class="subtitle"><span style="vertical-align:7%">&#x25b8;</span> Aus natürlichen Ausgangsstoffen</div>
+        </h1>
+        <ul>
+        </ul>
+        <div style="text-align:center"><br/><img src="indikan.svg" height="200" /></div>
+    </div>
+    <div>
+        <h1>Küpenfärberei</h1>
+         <ul>
+            <li>Küpenfarbstoff: wasserunlöslicher Pigmentfarbstoff</li>
+            <li>Verküpen: Farbstoff wasserlöslich machen (z.&thinsp;B. mit Natriumdithionit)</li>
+            <li>Flotte/Küpe: wässrige Lösung des Leukofarbstoffs</li>
+         </ul>
+    </div>
+    <div>
+        <h1>Küpenfärberei mit Indigo</h1>
+        <ul>
+            <li>Leukoindigo ist farblos und wasserlöslich</li>
+            <li>Natriumdithionit verursacht Umweltprobleme</li>
+        </ul><br/><br/>
+        <img src="leuko.svg" height="175" />
+    </div>
+    <div>
+        <h1><section>Indigoide Farbstoffe</section></h1>
+        <b>Def.: </b> Farbmittel mit dem gleichen Chromophor wie Indigo
+        <img height="170" style="float:right;margin-top:10px" src="http://upload.wikimedia.org/wikipedia/commons/b/b1/Indigo_dyes.svg"/>
+        <ul style="list-style-type:none;margin-left:0px">
+            <li style="margin-left:0px">Indigoderivate:
+                <ul>
+                    <li>Substitution der Stickstoffatome</li>
+                    <li>Pro Benzolring 4 mögliche Reste</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div>
+        <h1>Anwendung indigoider Farbstoffe</h1>
+        <div class="theorem">
+            <h2>Indigo</h2>
+            Farbe für Jeans, Zusatz zu Anstrichfarben, Pigment für Industrilacke
+        </div>
+        <div class="theorem">
+            <h2>Purpur, 6-6'-Dibromindigo (violett)</h2>
+            historisch als teures Farbmittel verwendet, heute zu Restaurationszwecken
+        </div>
+        <div class="theorem">
+            <h2>Thioindigo, Pigment Red 88 (rotviolett)</h2>
+            PVC-Färbung, Pigment in Autolacken, Pulverlacke, Druckfarbe für Verpackungen/Plakate
+        </div>
+        <div class="theorem">
+            <h2>Thioindigo, Pigment Red 181 (blaustichig-rot)</h2>
+            Färbung von Polystyrol, Zahnpasta, Kosmetika
+        </div>
+    </div>
+    <div>
+        <h1>Anwendung indigoider Farbstoffe</h1>
+
+        <div class="theorem">
+            <img style="float:right;padding:10px;" src="http://upload.wikimedia.org/wikipedia/commons/7/79/Indirubin_Structural_Formulae_V-1.png" height="150"/>
+            <h2>Indirubin (rot)</h2>
+            Medikament gegen Leukämie und Krebs, wenig farbecht
+            <br style="clear:both"/>
+        </div>
+        <div class="theorem">
+            <h2>Indigokarmin/Indigotin</h2>
+            <img style="float:right;padding:10px;" src="http://upload.wikimedia.org/wikipedia/commons/4/4d/Indigo_carmine.svg" height="150"/>
+            blaue Lebensmittelfarbe (Essen, Futter, Arzneimittel)
+            <br style="clear:both"/>
+        </div>
+
+        <div class="theorem">
+            <h2>5,5'-Dibrom-4,4'-dichlor-indigo</h2>
+            Nachweisprodukt bei Bestimmung der Glucuronidase-Aktivität mit X-Gluc
+        </div>
     </div>
     <div>
         <h1>Indanthrenfarbstoffe</h1>
-        <img src="http://upload.wikimedia.org/wikipedia/commons/4/48/Indanthren.svg"/>
+        <ul>
+            <li>sehr hochwertiger Farbstoff mit hoher Echtheit</li>
+            <li>Synthese: oxidative Dimerisierung von Aminoanthrachinon</li>
+            <li>Kristallmodifikationen $\alpha, \beta, \gamma, \delta$</li>
+            <li>Anwendung: Ersatz für Indigo und Kupferphthalocyanin in Autolacken, Industrielacken</li>
+        </ul><br/>
+        <div style="vertical-align:bottom;text-align:center">
+            <figure style="display:table-cell;padding-left:100px;padding-right:50px">
+                <img height="250" src="http://upload.wikimedia.org/wikipedia/commons/4/48/Indanthren.svg"/><br/>
+                <figcaption><small>Indanthron</small></figcaption>
+            </figure>
+            <figure style="display:table-cell;padding-right:100px;padding-left:50px">
+                <img height="150" src="anthrachinon.svg"/><br/>
+                <figcaption><small>Anthrachinon</small></figcaption>
+            </figure>
+        </div>
     </div>
     <div>
         <h1>Quellen</h1>
         <ul id="quellen">
             <li>C. Mortimer, U. Müller: <i>Das Basiswissen der Chemie.</i> 9. Auflage, Thieme-Verlag, Stuttgart 2007, Seite 604.</li>
-            <li>E. Breitmaier, G. Jung: <i>Organische Chemie.</i> 6. Auflage, Thieme-Verlag, Stuttgart 2009, Seite 742&nbsp;ff.</li>
             <li>W. Herbst, K. Hunger: <i>Industrielle Organische Pigmente.</i> 2. Auflage, VCH, Weinheim 1995, Seite 497&nbsp;ff.</i></li>
-            <li><a href="http://de.wikipedia.org/wiki/Indigo">http://de.wikipedia.org/wiki/Indigo</a></li>
-            <li><a href="http://www.dutly.ch/indigohtml/indigo1.html">http://www.dutly.ch/indigohtml/indigo1.html</a></li>
-            <li><a href="http://www1.tu-darmstadt.de/fb/ch/cfs/Material_Freitag/Synthetische_Farbstoffe.pdf">http://www1.tu-darmstadt.de/fb/ch/cfs/Material_Freitag/Synthetische_Farbstoffe.pdf</a></li>
-            <li><a href="http://www.chids.de/dachs/expvortr/412IndigoideFarbstoffe_Meier_Scan.pdf">http://www.chids.de/dachs/expvortr/412IndigoideFarbstoffe_Meier_Scan.pdf</a></li>
-            <li><a href="http://www.alles-sauber.com/PDF/Fachbeitraege/Indigo%20und%20indigoide%20Farbstoffe.pdf">http://www.alles-sauber.com/PDF/Fachbeitraege/Indigo%20und%20indigoide%20Farbstoffe.pdf</a></li>
+            <li>Lueger, Otto: <i>Lexikon der gesamten Technik und ihrer Hilfswissenschaften</i>, Bd. 5, Stuttgart/Leipzig 1907, S. 172&ndash;176. <span style="color:grey">(http://www.zeno.org/nid/2000604901Xi)</span><br/><br/></li>
+            <li>http://de.wikipedia.org/wiki/Indigo</li>
+            <li>http://www.g-o.de/wissen-aktuell-13478-2011-05-25.html</li>
+            <li>http://www.dutly.ch/indigohtml/indigo1.html</li>
+            <li>http://www1.tu-darmstadt.de/fb/ch/cfs/Material_Freitag/Synthetische_Farbstoffe.pdf</li>
+            <li>http://www.chids.de/dachs/expvortr/412IndigoideFarbstoffe_Meier_Scan.pdf</li>
+            <li>http://www.alles-sauber.com/PDF/Fachbeitraege/Indigo%20und%20indigoide%20Farbstoffe.pdf</li>
+            <li>http://www.tcm.phy.cam.ac.uk/~cjp20/old/lectures/topic1.pdf</li>
+            <li>http://www.chab.ethz.ch/publicrelations/publikationen/molmix/mm01/mm01-indigo.pdf</li>
+            <li>http://daten.didaktikchemie.uni-bayreuth.de/umat/indigo/indigo.htm</li>
+            <li>http://www.chids.de/dachs/expvortr/735Textilfaerberei_Behrmann.doc</li>
+            <li>http://chemiedidaktik-graz.at/content/pdf/indigo.pdf</li>
+            <li>http://www.chemie.uni-duesseldorf.de/Faecher/Organische_Chemie/Studium/Biologie/Dokumente/Bio08-Vor/Zusatzinfo-2.pdf</li>
+        </ul>
+    </div>
+    <div>
+        <h1>Bildquellen</h1>
+        <ul>
+            <li>http://luirig.altervista.org/cpm/albums/bot-037/isatis-tinctoria364.jpg</li>
+            <li>http://upload.wikimedia.org/wikipedia/commons/1/18/Indigo_plant_extract_sample.jpg</li>
         </ul>
     </div>
 <style>

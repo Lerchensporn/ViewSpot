@@ -4,42 +4,46 @@ ws.controls = function() {
 
     var _controls = { };
 
+    loadCss();
+
+    function loadCss() {
+        var css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.href = 'framework/controls.css';
+        document.head.appendChild(css);
+    }
+
     _controls.sidebar = function(slide) {
         sidebardiv = document.createElement('div');
-        sidebardiv.style.width = '200px';
-        sidebardiv.style.backgroundColor = 'blue';
-        sidebardiv.style.height = '100%';
-        if (typeof layout.author !== 'undefined') {
+        sidebardiv.className = 'sidebar';
+
+        if (typeof slide.settings.sidebar !== 'undefined' && slide.settings.sidebar.author !== 'undefined') {
             sidebardiv.innerHTML += '<span>' + layout.author + '</span>';
         }
-        if (typeof layout.title !== 'undefined') {
+        if (typeof slide.settings.sidebar !== 'undefined' && typeof slide.settings.sidebar.title !== 'undefined') {
             sidebardiv.innerHTML += '<span>' + layout.title + '</span>';
         }
         sidebardiv.innerHTML += '<ul>' + ws.getTocMarkup() + '</ul>';
+
+        dockdiv(sidebardiv, slide, 'left');
     };
 
     _controls.footer = function(slide) {
         footerdiv = document.createElement('div');
         footerdiv.style.padding = '10px';
         footerdiv.style.fontSize = '18px';
-        if (typeof slide.settings.footer.text !== 'undefined') {
+        if (typeof slide.settings.footer !== 'undefined' && typeof slide.settings.footer.text !== 'undefined') {
             footerdiv.innerHTML = slide.settings.footer.text;
         }
         else {
             footerdiv.innerHTML = 'Set your footer text.';
         }
-        dockdiv(footerdiv, slide.div, false);
+        dockdiv(footerdiv, slide, 'bottom');
     };
 
     _controls.miniframes = function(slide) {
         var minidiv = document.createElement('div');
-        minidiv.style.backgroundColor = '#d2d3ff';
-        minidiv.style.fontSize = '12pt';
-        minidiv.style.boxShadow = '0px 0px 10px 0px #d4deff';
-        minidiv.style.zIndex = '1';
-        minidiv.style.paddingLeft = '10px';
-        minidiv.style.paddingRight = '10px';
-        minidiv.style.color = '#bbb';
+        minidiv.className = 'miniframe';
 
         var html = '';
         var sections = ws.getSections();
@@ -78,22 +82,61 @@ ws.controls = function() {
         }
         minidiv.innerHTML = '<table style="table-layout:fixed;width:100%;padding-left:8px;padding-right:8px;padding-top:1px"><tr>' + html + '</tr></table>';
 
-        dockdiv(minidiv, slide.div, true);
+        dockdiv(minidiv, slide, 'top');
     };
 
-    function dockdiv(div, slidediv, isTop) {
-        var padding = parseInt(document.defaultView.getComputedStyle(slidediv, null).getPropertyValue('padding-left'));
+    function dockdiv(div, slide, loc) {
+        var padding = parseInt(document.defaultView.getComputedStyle(slide.div, null).getPropertyValue('padding-left'));
         div.style.marginLeft = -padding + 'px';
         div.style.marginRight = -padding + 'px';
         div.style.position = 'relative';    // to show box-shadow
-        if (isTop) {
-            slidediv.insertBefore(div, slidediv.firstChild);
+        if (loc === 'top') {
+            slide.div.insertBefore(div, slide.div.firstChild);
         }
-        else {
+        else if (loc === 'bottom') {
             div.style.position = 'absolute';
             div.style.width = '100%';
             div.style.bottom = '0px';
-            slidediv.appendChild(div);
+            slide.div.appendChild(div);
+        }
+        else if (loc === 'left' || loc === 'right') {
+            var width = 200;
+
+            div.style.cssFloat = loc;
+            div.style.width = width + 'px';
+            div.style.height = '100%';
+
+            var container = document.createElement('div');
+            container.style.width = (slide.settings.pageDimensions[0] - width - 2 * padding) + 'px';
+
+            if (loc === 'left') {
+                container.style.cssFloat = 'left';
+                container.style.marginLeft = padding + 'px';
+                container.style.paddingLeft = padding + 'px';
+            }
+
+            container.innerHTML = slide.div.innerHTML;
+
+            slide.div.innerHTML = '';
+
+            slide.div.appendChild(div);
+            slide.div.appendChild(container);
+        }
+        else if (loc === 'right') {
+            var width = 200;
+
+            div.style.cssFloat = 'right';
+            div.style.width = width + 'px';
+            div.style.height = '100%';
+
+            var container = document.createElement('div');
+            container.style.width = (slide.settings.pageDimensions[0] - width - 2 * padding) + 'px';
+            container.innerHTML = slide.div.innerHTML;
+
+            slide.div.innerHTML = '';
+
+            slide.div.appendChild(div);
+            slide.div.appendChild(container);
         }
     }
 

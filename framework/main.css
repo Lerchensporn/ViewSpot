@@ -1,3 +1,30 @@
+/* Classes for user controlled design. */
+
+.subtitle {
+    font-size: 60%;
+    vertical-align: 7%;
+    padding-top: -5px;
+    padding-left: 15px;
+}
+
+.theorem {
+    box-shadow: 4px 4px 4px #d0d0d0;
+    border-top: 1px solid #d0d0d0;
+    border-left: 1px solid #d0d0d0;
+    background-color: #f0f0f0;
+    padding: 10px;
+    padding-left: 15px;
+    margin-bottom: 20px;
+}
+
+.theorem h2 {
+    margin: -10px;
+    padding: 10px;
+}
+
+/****************/
+
+
 a {
     padding: 2px;
     text-decoration: none;
@@ -13,7 +40,7 @@ section {
 }
 
 h1 {
-    font-size: 28pt;
+    font-size: 26pt;
     padding-top: 15px;
     padding-left: 30px;
     padding-right: 30px;
@@ -22,8 +49,12 @@ h1 {
     margin-bottom: 25px;
 }
 
-h1 section {
-    display: inherit;
+h2 {
+    font-size: 20pt;
+}
+
+h1 section, .menuul section {
+    display: inline;
 }
 
 pre, pre * {
@@ -57,7 +88,6 @@ li {
 
 html, body {
     height: 100%;
-    font-size: 20pt;
     width: 100%;
     padding: 0px;
 }
@@ -65,6 +95,10 @@ html, body {
 body {
     background-color: black;
     overflow: hidden;
+}
+
+.menuul {
+    font-size: 11pt;
 }
 
 .menuul, .menuul ul {
@@ -85,14 +119,10 @@ body {
 
 .menuul li {
     list-style: none;
-    /* if a style sets the li background to an svg */
-    font-size: 11pt;
     cursor: pointer;
     margin: 0px;
     padding: 3px;
-    padding-left: 5px;
-    padding-right: 5px;
-    min-width: 100px;
+    padding-left: 3px;
 }
 
 .menuul li:hover {
@@ -118,6 +148,8 @@ body {
 }
 
 .slide {
+    font-family: 'open sans';
+    font-size: 20pt;
     background-color: white;
     position: absolute;
     overflow: hidden;
