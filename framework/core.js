@@ -3,7 +3,7 @@ var ws = function() {
     "use strict";
 
     var _ws = { config : {} };
-    var modules = ['module.jsxgraph', 'module.mathjax', 'module.controls', 'module.fullthemes', 'module.shjs'];
+    var modules = ['module.jsxgraph', 'module.mathjax', 'module.controls', 'module.fullthemes', 'module.shjs', 'module.jqplot'];
     var defaultSettings = {
         pageDimensions : [1024, 768],
         outerColor : 'black',
@@ -41,6 +41,7 @@ var ws = function() {
 
     /** Set the modules to load with the presentation.
         @param mods An array of strings that specity the modules. */
+    // FIXME integrate in config.setGlobal
     _ws.loadModules = function(mods) {
         modules = mods;
     };
@@ -167,6 +168,13 @@ var ws = function() {
     _ws.module = {
         loadScript : function(filename, onload) {
             moduleScriptLoader.appendScript(filename, onload);
+        },
+        loadCSS : function(filename) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = filename;
+            document.head.appendChild(link);
         }
     };
 
@@ -206,7 +214,7 @@ var ws = function() {
     /* ----------------------------- Slide Setup ---------------------------------- */
 
     function setup() {
-        document.head.innerHTML += '<link rel="stylesheet" href="framework/main.css" type="text/css" />';
+        _ws.module.loadCSS('framework/main.css');
 
         readyFuncs.parse = [parseDom, defaultConfig, parseSections];
         readyFuncs.finish = [init];
@@ -361,26 +369,21 @@ var ws = function() {
             }
         }
 
-        var loadedCount = 0;
         for (var i = 0; i < themeDict.length; ++i) {
-            var link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.type = 'text/css';
-            link.href = 'framework/' + themeDict[i] + '.css';
-
             // link must be appended before js to ensure that all css styles are loaded
             // when running createSlides.
-            document.head.appendChild(link);
+            _ws.module.loadCSS('framework/' + themeDict[i] + '.css');
         }
 
         moduleScriptLoader = ScriptLoader();
-        moduleScriptLoader.onload = modulesLoaded;
-        moduleScriptLoader.onload = modulesLoaded;
+        moduleScriptLoader.onload = function () {
+            modulesLoaded();
+            createSlides();
+            loaded = true;
+        };
         var loader = ScriptLoader();
         loader.onload = function() {
             moduleScriptLoader.load();
-            createSlides();
-            loaded = true;
         };
         for (var i = 0; i < modules.length; ++i) {
             loader.appendScript('framework/' + modules[i] + '.js');
@@ -514,7 +517,6 @@ var ws = function() {
     }
 
     function printLayout() {
-        alert(1);
         for (var i = 0; i < slides.length; ++i) {
             _ws.gotoSlide(i);
             if (i > 0)

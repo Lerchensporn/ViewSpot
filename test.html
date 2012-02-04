@@ -3,11 +3,15 @@
 <head>
     <title>Developer testing</title>
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-    <script type="text/javascript" src="framework/core.js"> </script>
+    <script type="text/javascript" src="framework/core.js"></script>
+    <script>    ws.config.setGlobal({
+        css : [ 'stye.ozone' ],
+        })
+    </script>
 </head>
 <body>
     <div>
-        <h1>Syntax highlighting</h1>
+        <h1>SHJS plugin (syntax highlighting)</h1>
         <pre style="border: 1px dashed black;padding:10px" class="sh_cpp">
 #include &lt;stdio.h&gt;
 
@@ -17,7 +21,7 @@ int main(int argc, char **argv) {
 }        </pre>
     </div>
     <div>
-        <h1>JSXGraph example</h1>
+        <h1>JSXGraph plugin</h1>
         <div id="jxgbox" class="jxgbox" style="width:500px; height:500px;"></div>
         <script>
     ws.ready(function() {
@@ -29,19 +33,32 @@ var A  = brd.create('point', [0,0]),
     a1 = brd.create('segment', [A,B], {name:'a1', withLabel:true}),
     a2 = brd.create('segment', [B,C], {name:'a2', withLabel:true}),
     a3 = brd.create('segment', [C,A], {name:'a3', withLabel:true}),
-    c1 = brd.create('circle', 
+    c1 = brd.create('circle',
             [A, 
              function(){ var r1 = (C.Dist(A)-B.Dist(C)+A.Dist(B))/2.0;
                         return r1; }
             ]);
-    c2 = brd.create('circle', 
+    c2 = brd.create('circle',
             [B, 
              function(){ return A.Dist(B)-c1.Radius(); }
             ]);
-    c3 = brd.create('circle', 
+    c3 = brd.create('circle',
             [C, 
              function(){ return B.Dist(C)-c2.Radius(); }
             ]);});
+        </script>
+    </div>
+    <div>
+        <h1>jqPlot plugin</h1>
+        <div id="jqplot" style="width:700px;height:500px;margin-left:110px;margin-top:50px"></div>
+        <script>
+            ws.ready(function() {
+                var options = {
+                    grid : { shadow : false },
+                    seriesDefaults : { shadow: false, markerOptions : { shadow : false }}
+                };
+                $.jqplot('jqplot', [[[1, 2],[3,5.12],[5,13.1],[7,33.6],[9,85.9],[11,219.9]]], options);
+            });
         </script>
     </div>
 </body>
