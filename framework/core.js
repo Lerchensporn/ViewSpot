@@ -3,7 +3,7 @@ var ws = function() {
     "use strict";
 
     var _ws = { config : {} };
-    var modules = ['module.mathjax', 'module.highlighter', 'module.controls', 'module.fullthemes'];
+    var modules = ['module.jsxgraph', 'module.mathjax', 'module.controls', 'module.fullthemes', 'module.shjs'];
     var defaultSettings = {
         pageDimensions : [1024, 768],
         outerColor : 'black',
@@ -12,6 +12,7 @@ var ws = function() {
     };
     var slides = [];
     var slideNumber;
+    var loaded = false;
     var mouseX = 0;
     var mouseY = 0;
     var enableResizing = true;
@@ -20,11 +21,12 @@ var ws = function() {
     var windowChild;
     var isLaserMouse = false;
     var menuul = null;
+    var moduleScriptLoader;
     var sections = [];
     var sync = false;
     var globalSettings = defaultSettings;
     var slideSettings = [];
-    var readyFuncs = { parse : [], script : [], finish : [] };  // callbacks to run when DOM is ready
+    var readyFuncs = { parse : [], script : [], finish : [], modulesLoaded : [] };  // callbacks to run when DOM is ready
 
     /* ---------------------------- API methods ----------------------------------- */
 
@@ -68,6 +70,16 @@ var ws = function() {
             toc.innerHTML = _ws.getTocMarkup();
             current.parentNode.insertBefore(toc, current);
         });
+    };
+
+    /** Executes the given function when the document and all the modules are loaded. */
+    _ws.ready = function(func) {
+        if (loaded === false) {
+            readyFuncs.modulesLoaded.push(func);
+        }
+        else {
+            func();
+        }
     };
 
     // XXX it is possible that a config.* function is called in only one window due to user interaction
@@ -152,6 +164,12 @@ var ws = function() {
         return '<span style="cursor:pointer;' + style + '" onclick="ws.gotoSlide(' + index + ')">' + title + '</span>';
     };
 
+    _ws.module = {
+        loadScript : function(filename, onload) {
+            moduleScriptLoader.appendScript(filename, onload);
+        }
+    };
+
     _ws.getTocMarkup = function() {
         // if a subsection has no parent section, it is treated as a section
         var html = '';
@@ -182,7 +200,7 @@ var ws = function() {
 
     _ws.setLaserMouse = function(on) {
         isLaserMouse = (on === true);
-        document.body.style.cursor = (on ? 'crosshair' : 'default');
+        document.body.style.cursor = (isLaserMouse ? 'crosshair' : 'default');
     };
 
     /* ----------------------------- Slide Setup ---------------------------------- */
@@ -252,6 +270,82 @@ var ws = function() {
         }
     }
 
+    function createSlides() {
+        for (var i = 0; i < slides.length; ++i) {
+            var dim = slides[i].settings.pageDimensions;
+            slides[i].div.style.width = dim[0] + 'px';
+
+            // consider the slide padding
+            slides[i].div.style.width = dim[0] - (slides[i].div.clientWidth - dim[0]) + 'px';
+            slides[i].div.style.height = dim[1] + 'px';
+            slides[i].div.style.display = 'none';
+
+            var themeCallback = slides[i].settings.setupSlide;
+            if (typeof themeCallback === 'function') {
+                themeCallback(slides[i]);
+            }
+        }
+
+        slideNumber = 0;
+        if (window.opener !== null) {
+            otherWindow = window.opener;
+            _ws.setSync(true);
+        }
+        if (window.location.search === '?console') {
+            _ws.gotoSlide = console.gotoSlide;
+            console.guiLayout();
+            window.onresize = console.resize;
+        }
+        else {
+            _ws.gotoSlide = view.gotoSlide;
+            window.onresize = view.resize;
+        }
+
+        var slidenum = readCookie('slide');
+        if (slidenum === null) {
+            slidenum = 0;
+        }
+        _ws.gotoSlide(slidenum);
+    };
+
+    var ScriptLoader = function() {
+        var _sl = { };
+        var scriptlist = [];
+        var loadedCount = 0;
+        var loading = false;
+
+        _sl.onload = function() { };
+
+        _sl.appendScript = function(filename, onload) {
+            if (loading) {
+                throw 'The load function was already called.';
+            }
+            var js = document.createElement('script');
+            js.type = 'text/javascript';
+            js.src = filename;
+            if (typeof onload !== 'undefined') {
+                js.addEventListener('load', onload, false);
+            }
+            js.addEventListener('load', onScriptLoad, false);
+            scriptlist.push(js);
+        };
+
+        _sl.load = function() {
+            loading = true;
+            for (var i = 0; i < scriptlist.length; ++i) {
+                document.head.appendChild(scriptlist[i]);
+            }
+        };
+
+        function onScriptLoad() {
+            if (++loadedCount === scriptlist.length) {
+                _sl.onload();
+            }
+        }
+
+        return _sl;
+    };
+
     function init() {
         document.body.style.backgroundColor = globalSettings.outerColor;
         var themeDict = [];
@@ -267,52 +361,6 @@ var ws = function() {
             }
         }
 
-        // executed after all theme scripts have been loaded
-        var createSlides = function() {
-            for (var i = 0; i < slides.length; ++i) {
-                var dim = slides[i].settings.pageDimensions;
-                slides[i].div.style.width = dim[0] + 'px';
-
-                // consider the slide padding
-                slides[i].div.style.width = dim[0] - (slides[i].div.clientWidth - dim[0]) + 'px';
-                slides[i].div.style.height = dim[1] + 'px';
-                slides[i].div.style.display = 'none';
-
-                var theme = slides[i].settings.setupSlide;
-                if (typeof theme !== 'undefined') {
-                    var callback;
-                    if (typeof theme === 'string') {
-                        callback = ws.fullthemes[jsTheme(theme)];
-                    }
-                    else if (typeof theme === 'function') {
-                        callback = theme;
-                    }
-                    callback(slides[i]);
-                }
-            }
-
-            slideNumber = 0;
-            if (window.opener !== null) {
-                otherWindow = window.opener;
-                _ws.setSync(true);
-            }
-            if (window.location.search === '?console') {
-                _ws.gotoSlide = console.gotoSlide;
-                console.guiLayout();
-                window.onresize = console.resize;
-            }
-            else {
-                _ws.gotoSlide = view.gotoSlide;
-                window.onresize = view.resize;
-            }
-
-            var slidenum = readCookie('slide');
-            if (slidenum === null) {
-                slidenum = 0;
-            }
-            _ws.gotoSlide(slidenum);
-        };
-
         var loadedCount = 0;
         for (var i = 0; i < themeDict.length; ++i) {
             var link = document.createElement('link');
@@ -325,17 +373,24 @@ var ws = function() {
             document.head.appendChild(link);
         }
 
-        // third party themes can be loaded as a module
+        moduleScriptLoader = ScriptLoader();
+        moduleScriptLoader.onload = modulesLoaded;
+        moduleScriptLoader.onload = modulesLoaded;
+        var loader = ScriptLoader();
+        loader.onload = function() {
+            moduleScriptLoader.load();
+            createSlides();
+            loaded = true;
+        };
         for (var i = 0; i < modules.length; ++i) {
-            var js = document.createElement('script');
-            js.type = 'text/javascript';
-            js.onload = function() {
-                if (++loadedCount === modules.length) {
-                    createSlides();
-                }
-            };
-            js.src = 'framework/' + modules[i] + '.js';
-            document.head.appendChild(js);
+            loader.appendScript('framework/' + modules[i] + '.js');
+        }
+        loader.load();
+    }
+
+    function modulesLoaded() {
+        for (var i = 0; i < readyFuncs.modulesLoaded.length; ++i) {
+            readyFuncs.modulesLoaded[i]();
         }
     }
 
@@ -349,17 +404,6 @@ var ws = function() {
         catch (e) {
             return false;
         }
-    }
-
-    function jsTheme(str) {
-        str = str.toLowerCase();
-        str = str.substr(0, 1).toUpperCase() + str.substr(1);
-        for (var i = 0; i < str.length; ++i) {
-            if (i < str.length - 1 && (str[i] === '-' || str[i] === '_')) {
-                str = str.substr(0, i) + str[i + 1].toUpperCase() + str.substr(i + 2);
-            }
-        }
-        return str;
     }
 
     /* rules:
@@ -426,12 +470,7 @@ var ws = function() {
                 readyFuncs.finish[i]();
             }
         };
-        if (window.addEventListener) {
-            window.addEventListener('DOMContentLoaded', cb, false);
-        }
-        else {
-            window.addEventListener('load', cb, false);
-        }
+        window.addEventListener('DOMContentLoaded', cb, false);
     }
 
     /* ---------------------------------------------------------------------------- */

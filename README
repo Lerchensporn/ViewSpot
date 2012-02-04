@@ -11,19 +11,9 @@ Interesting ideas:
     - Raphael library
     - matplotlib
     - own tool?
-* code highlighter
-    - only support most 50 important languages?
-    a) parse > 500 vim syntax files and generate json
-        - complicated
-        - big file size (some MB) when supporting all languages
-    b) keyword and simple regex highlighter
-    - line numbers
-    - define generic generic elements → highlighting styles
 * program to make the presentation portable:
     - store the fonts in the presentation and use css font-face
     - download all pictures
-
-* JSXGraph plugin!
 
 * compatibility to at least the newest Firefox, Chrome, Opera, (IE, Safari)
 * compatibility to older browser versions?
