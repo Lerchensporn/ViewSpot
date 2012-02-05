@@ -24,6 +24,12 @@
 
 /****************/
 
+.mozillaShadowFix {
+    border-style: solid;
+    border-width: 1px;
+    z-index: -1;
+    position: absolute;
+}
 
 a {
     padding: 2px;

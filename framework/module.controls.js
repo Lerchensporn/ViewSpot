@@ -4,19 +4,11 @@ ws.controls = function() {
 
     var _controls = { };
 
-    loadCss();
-
-    function loadCss() {
-        var css = document.createElement('link');
-        css.rel = 'stylesheet';
-        css.href = 'framework/controls.css';
-        document.head.appendChild(css);
-    }
+    ws.module.loadCSS('framework/controls.css');
 
     _controls.sidebar = function(slide) {
-        sidebardiv = document.createElement('div');
+        var sidebardiv = document.createElement('div');
         sidebardiv.className = 'sidebar';
-
         if (typeof slide.settings.sidebar !== 'undefined' && slide.settings.sidebar.author !== 'undefined') {
             sidebardiv.innerHTML += '<span>' + layout.author + '</span>';
         }
@@ -46,38 +38,33 @@ ws.controls = function() {
         minidiv.className = 'miniframe';
 
         var html = '';
-        var sections = ws.getSections();
+        var sections = ws.getSections(true);
+        var slideslist = ws.getSlides();
         for (var i = 0; i < sections.length; ++i) {
-            var stroke;
-            if (slide.index >= sections[i].slideIndex &&
-                (i === sections.length - 1 || slide.index <= sections[i + 1].slideIndex)) {
-                stroke = 'black';
+            var sectionClass;
+            var sectionEnd = (i < sections.length - 1  ? sections[i + 1].slideIndex : slideslist.length);
+            if (slide.index >= sections[i].slideIndex && slide.index < sectionEnd) {
+                sectionClass = 'sectionActive';
             }
             else {
-                stroke = '#bbb';
+                sectionClass = 'sectionInactive';
             }
-            if (i === sections.length - 1) {
-                html += '<td style="text-align:right">';
-            }
-            else if (i > 0) {
-                html += '<td style="text-align:center">';
+
+            if (i === sections.length - 1 && i > 0) {
+                html += '<td style="float:right">';
             }
             else {
                 html += '<td>';
             }
-            html += ws.slideHref(sections[i].slideIndex, sections[i].title,
-                'font-size:11pt;font-family:Droid Sans;color:' + stroke);
-            if (sections[i].type === 'section') {
-                ++i;
-                html += '<br/><svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="12">';
-                for (var circi = i; circi < sections.length && sections[circi].type === 'subsection'; ++circi) {
-                    var fill = (slide.index === sections[circi].slideIndex ? stroke : 'transparent');
-                    html += '<circle style="cursor:pointer;stroke-width:1.2px" onclick="ws.gotoSlide(' + sections[circi].slideIndex + ')" cx="'
-                        + (12*(circi - i) + 5.5) + '" cy="5" r="4.5" fill="' + fill + '" stroke="' + stroke + '"/>';
-                }
-                i = circi - 1;
-                html += '</svg>';
+
+            html += '<span class="' + sectionClass + '" onclick="ws.gotoSlide(' + sections[i].slideIndex + ')">' + sections[i].title + '</span>';
+            html += '<br/><svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="12">';
+            for (var circi = sections[i].slideIndex; circi < sectionEnd; ++circi) {
+                var circleClass = (slide.index === slideslist[circi].index ? 'circleActive' : 'circleInactive');
+                html += '<circle class="' + sectionClass + ' ' + circleClass +
+                        '" onclick="ws.gotoSlide(' + slideslist[circi].index + ')" cx="' + (12*(circi - sections[i].slideIndex) + 6.5) + '" cy="5" r="4.5"/>';
             }
+            html += '</svg>';
             html += '</td>';
         }
         minidiv.innerHTML = '<table style="table-layout:fixed;width:100%;padding-left:8px;padding-right:8px;padding-top:1px"><tr>' + html + '</tr></table>';

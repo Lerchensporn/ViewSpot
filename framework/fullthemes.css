@@ -1,0 +1,36 @@
+.latex h1 {
+    background-color: #b33333;
+    color: white;
+    padding: 4px;
+    padding-left: 20px;
+    box-shadow: 0px 0px 4px 4px #b33333;
+}
+
+.latex .miniframe {
+    background-color: black;
+    color: white;
+    padding-bottom: 3px;
+    margin-top: -3px;
+    z-index: -1;
+}
+
+.latex .circleActive {
+    stroke: white;
+    fill: white;
+}
+
+.latex .circleInactive.sectionActive {
+    stroke: white;
+}
+
+.latex .circleInactive.sectionInactive {
+    stroke: #bbb;
+}
+
+.latex .sectionActive {
+    color: white;
+}
+
+.latex .sectionInactive {
+    color: #bbb;
+}

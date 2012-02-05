@@ -1,9 +1,9 @@
 var ws = function() {
 
-    "use strict";
+    'use strict';
 
     var _ws = { config : {} };
-    var modules = ['module.jsxgraph', 'module.mathjax', 'module.controls', 'module.fullthemes', 'module.shjs', 'module.jqplot'];
+    var modules = ['jsxgraph', 'mathjax', 'controls', 'fullthemes', 'shjs', 'jqplot', 'flot'];
     var defaultSettings = {
         pageDimensions : [1024, 768],
         outerColor : 'black',
@@ -56,7 +56,16 @@ var ws = function() {
         return slides;
     };
 
-    _ws.getSections = function() {
+    _ws.getSections = function(noSubsections) {
+        if (typeof noSubsections !== 'undefined' && noSubsections === true) {
+            var nosubs = [];
+            for (var i = 0; i < sections.length; ++i) {
+                if (sections[i].type === 'section') {
+                    nosubs.push(sections[i]);
+                }
+            }
+            return nosubs;
+        }
         return sections;
     };
 
@@ -159,10 +168,6 @@ var ws = function() {
             slides[slideNumber].reset();
             _ws.gotoSlide(slideNumber - 1);
         }
-    };
-
-    _ws.slideHref = function(index, title, style) {
-        return '<span style="cursor:pointer;' + style + '" onclick="ws.gotoSlide(' + index + ')">' + title + '</span>';
     };
 
     _ws.module = {
@@ -386,7 +391,7 @@ var ws = function() {
             moduleScriptLoader.load();
         };
         for (var i = 0; i < modules.length; ++i) {
-            loader.appendScript('framework/' + modules[i] + '.js');
+            loader.appendScript('framework/module.' + modules[i] + '.js');
         }
         loader.load();
     }
@@ -534,8 +539,49 @@ var ws = function() {
         document.body.style.height = '1000px';
     }
 
+    function mozillaShadowFix(elem) {
+        var divlist = elem.getElementsByTagName('div');
+        var absdiv;
+        var found = false;
+        for (var i = 0; i < divlist.length; ++i) {
+            if (divlist[i].className === 'mozillaShadowFix') {
+                absdiv = divlist[i];
+                found = true;
+            }
+        }
+        if (! found) {
+            absdiv = document.createElement('div');
+            absdiv.className = 'mozillaShadowFix';
+        }
+
+        var computed = document.defaultView.getComputedStyle(elem, null);
+
+        var paddingTop = parseInt(computed.getPropertyValue('padding-top'));
+        var paddingBottom = parseInt(computed.getPropertyValue('padding-bottom'));
+        var paddingLeft = parseInt(computed.getPropertyValue('padding-left'));
+        var paddingRight = parseInt(computed.getPropertyValue('padding-right'));
+
+        absdiv.style.marginTop = -1 - paddingTop + 'px';
+        absdiv.style.marginBottom = - paddingBottom + 'px';
+        absdiv.style.marginLeft = -1 - paddingLeft + 'px';
+        absdiv.style.marginRight = - paddingRight + 'px';
+
+        absdiv.style.height = parseInt(computed.getPropertyValue('height')) + paddingTop + paddingBottom + 'px';
+        absdiv.style.width = parseInt(computed.getPropertyValue('width')) + paddingLeft + paddingRight + 'px';
+
+        absdiv.style.borderColor = computed.getPropertyValue('background-color');
+
+        if (! found) {
+            elem.insertBefore(absdiv, elem.firstChild);
+        }
+    }
+
     function showSlide(number) {
         slides[number].div.style.display = '';
+        var h1list = slides[number].div.getElementsByTagName('h1');
+        if (h1list.length > 0) {
+            mozillaShadowFix(h1list[0]);
+        }
     }
 
     function hideSlide(number) {
