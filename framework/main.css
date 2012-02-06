@@ -13,21 +13,20 @@
     border-left: 1px solid #d0d0d0;
     background-color: #f0f0f0;
     padding: 10px;
-    padding-left: 15px;
     margin-bottom: 20px;
 }
 
 .theorem h2 {
     margin: -10px;
-    padding: 10px;
+    margin-bottom: 20px;
+    padding: 5px;
+    padding-left: 10px;
+    font-variant: normal;
 }
 
 /****************/
 
-.mozillaShadowFix {
-    border-style: solid;
-    border-width: 1px;
-    z-index: -1;
+.mozfix {
     position: absolute;
 }
 
@@ -56,7 +55,7 @@ h1 {
 }
 
 h2 {
-    font-size: 20pt;
+    font-size: 100%;
 }
 
 h1 section, .menuul section {
@@ -155,7 +154,7 @@ body {
 
 .slide {
     font-family: 'open sans';
-    font-size: 20pt;
+    font-size: 18pt;
     background-color: white;
     position: absolute;
     overflow: hidden;

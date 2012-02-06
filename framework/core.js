@@ -8,7 +8,6 @@ var ws = function() {
         pageDimensions : [1024, 768],
         outerColor : 'black',
         cursorHideTimeout : 1000,
-        layout : { footer : true }
     };
     var slides = [];
     var slideNumber;
@@ -148,7 +147,6 @@ var ws = function() {
 
     /** Go to the next slide. */
     _ws.gotoNext = function() {
-        //syncCall('gotoNext', arguments);
         if (slides[slideNumber].animationsComplete() === false) {
             slides[slideNumber].nextAnimation();
         }
@@ -160,7 +158,6 @@ var ws = function() {
 
     /** Go to the previous slide. */
     _ws.gotoPrevious = function() {
-        //syncCall('gotoPrevious', arguments);
         if (slides[slideNumber].animIndex > 0) {
             slides[slideNumber].undoAnimation();
         }
@@ -179,6 +176,9 @@ var ws = function() {
             link.rel = 'stylesheet';
             link.type = 'text/css';
             link.href = filename;
+            link.onload = function() {
+                mozShadowFix(document.body);
+            };
             document.head.appendChild(link);
         }
     };
@@ -291,7 +291,7 @@ var ws = function() {
             // consider the slide padding
             slides[i].div.style.width = dim[0] - (slides[i].div.clientWidth - dim[0]) + 'px';
             slides[i].div.style.height = dim[1] + 'px';
-            slides[i].div.style.display = 'none';
+            slides[i].div.style.visibility = 'hidden';
 
             var themeCallback = slides[i].settings.setupSlide;
             if (typeof themeCallback === 'function') {
@@ -345,6 +345,10 @@ var ws = function() {
 
         _sl.load = function() {
             loading = true;
+            if (scriptlist.length === 0) {
+                _sl.onload();
+                return;
+            }
             for (var i = 0; i < scriptlist.length; ++i) {
                 document.head.appendChild(scriptlist[i]);
             }
@@ -375,8 +379,6 @@ var ws = function() {
         }
 
         for (var i = 0; i < themeDict.length; ++i) {
-            // link must be appended before js to ensure that all css styles are loaded
-            // when running createSlides.
             _ws.module.loadCSS('framework/' + themeDict[i] + '.css');
         }
 
@@ -400,6 +402,8 @@ var ws = function() {
         for (var i = 0; i < readyFuncs.modulesLoaded.length; ++i) {
             readyFuncs.modulesLoaded[i]();
         }
+
+        mozShadowFix(document.body);
     }
 
     function fileExists(filename) {
@@ -521,71 +525,74 @@ var ws = function() {
         otherWindow.ws.setSync(true);
     }
 
-    function printLayout() {
-        for (var i = 0; i < slides.length; ++i) {
-            _ws.gotoSlide(i);
-            if (i > 0)
-                showSlide(i-1);
-            slideNumber = i;
-            enableResizing = false;
-            slides[i].div.style.MozTransform = '';
-            slides[i].div.style.WebkitTransform = '';
-            slides[i].div.style.position = 'relative';
-            slides[i].div.style.marginLeft = '0px';
-            slides[i].div.style.marginTop = '0px';
-            if (i !== slides.length - 1) slides[i].div.style.pageBreakAfter = 'always';
+    /* Workaround for a firefox bug that creates lines around blocks when scale and box-shadow are applied.
+       A div with the same position and size (minus 1 px border) is laid under the actual element and the
+       shadow is applied to the div instead of the overlying element. */
+    function mozShadowElement(elem) {
+        if (elem.className === 'mozfix') {
+            return;
         }
-        document.body.style.overflow = 'scroll';
-        document.body.style.height = '1000px';
-    }
+        var computed = window.getComputedStyle(elem, null);
+        var shadowid = elem.getAttribute('data-shadowid');
+        if (computed.getPropertyValue('box-shadow') == 'none' && shadowid === null) {
+            return;
+        }
 
-    function mozillaShadowFix(elem) {
-        var divlist = elem.getElementsByTagName('div');
         var absdiv;
-        var found = false;
-        for (var i = 0; i < divlist.length; ++i) {
-            if (divlist[i].className === 'mozillaShadowFix') {
-                absdiv = divlist[i];
-                found = true;
+        if (shadowid !== null) {
+            absdiv = document.getElementById(shadowid);
+        }
+        if (shadowid === null) {
+            absdiv = document.createElement('div');
+            absdiv.className = 'mozfix';
+        }
+
+        var cssLength = function(prop) {
+            return parseInt(computed.getPropertyValue(prop));
+        };
+
+        var dir = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+        for (var i = 0; i < dir.length; ++i) {
+            var prop = 'border-' + dir[i] + '-radius';
+            var radius = computed.getPropertyValue(prop);
+            if (radius !== '0px') {
+                absdiv.style.setProperty(prop, radius, null);
             }
         }
-        if (! found) {
-            absdiv = document.createElement('div');
-            absdiv.className = 'mozillaShadowFix';
-        }
 
-        var computed = document.defaultView.getComputedStyle(elem, null);
-
-        var paddingTop = parseInt(computed.getPropertyValue('padding-top'));
-        var paddingBottom = parseInt(computed.getPropertyValue('padding-bottom'));
-        var paddingLeft = parseInt(computed.getPropertyValue('padding-left'));
         var paddingRight = parseInt(computed.getPropertyValue('padding-right'));
 
-        absdiv.style.marginTop = -1 - paddingTop + 'px';
-        absdiv.style.marginBottom = - paddingBottom + 'px';
-        absdiv.style.marginLeft = -1 - paddingLeft + 'px';
-        absdiv.style.marginRight = - paddingRight + 'px';
+        absdiv.style.marginTop = cssLength('margin-top') + 1 + 'px';
+        absdiv.style.marginLeft = cssLength('margin-left') + 1 + 'px';
 
-        absdiv.style.height = parseInt(computed.getPropertyValue('height')) + paddingTop + paddingBottom + 'px';
-        absdiv.style.width = parseInt(computed.getPropertyValue('width')) + paddingLeft + paddingRight + 'px';
+        absdiv.style.height = cssLength('height') + cssLength('padding-top') + cssLength('padding-bottom') - 2 + 'px';
+        absdiv.style.width = cssLength('width') + cssLength('padding-left') + cssLength('padding-right') - 2 + 'px';
 
-        absdiv.style.borderColor = computed.getPropertyValue('background-color');
+        if (shadowid === null) {
+            absdiv.style.boxShadow = computed.getPropertyValue('box-shadow');
+            elem.style.boxShadow = 'none';
+            absdiv.id = 'mozfix' + Math.floor(Math.random() * 10000000000); // TODO make it really unique
+            elem.setAttribute('data-shadowid', absdiv.id);
+            elem.parentNode.insertBefore(absdiv, elem);
+        }
+        else if (computed.getPropertyValue('box-shadow') !== 'none') {
+            absdiv.style.boxShadow = computed.getPropertyValue('box-shadow');
+        }
+    }
 
-        if (! found) {
-            elem.insertBefore(absdiv, elem.firstChild);
+    function mozShadowFix(rootNode) {
+        var all = rootNode.querySelectorAll('*');
+        for (var i = 0; i < all.length; ++i) {
+            mozShadowElement(all[i]);
         }
     }
 
     function showSlide(number) {
-        slides[number].div.style.display = '';
-        var h1list = slides[number].div.getElementsByTagName('h1');
-        if (h1list.length > 0) {
-            mozillaShadowFix(h1list[0]);
-        }
+        slides[number].div.style.visibility = '';
     }
 
     function hideSlide(number) {
-        slides[number].div.style.display = 'none';
+        slides[number].div.style.visibility = 'hidden';
     }
 
     /** Merges multiple settings array. A setting can be overwritten by an

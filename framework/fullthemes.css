@@ -2,6 +2,7 @@
     background-color: #b33333;
     color: white;
     padding: 4px;
+    margin-bottom: 35px;
     padding-left: 20px;
     box-shadow: 0px 0px 4px 4px #b33333;
 }
@@ -33,4 +34,18 @@
 
 .latex .sectionInactive {
     color: #bbb;
+}
+
+.latex .theorem {
+    border: none;
+    border-radius: 15px;
+    background-color: #f3eaea;
+}
+
+.latex .theorem h2 {
+    color: white;
+    box-shadow: 0px 4px 4px 0px #862626;
+    border-top-right-radius: 15px;
+    border-top-left-radius: 15px;
+    background-color: #862626;
 }
