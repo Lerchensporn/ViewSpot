@@ -1,3 +1,14 @@
+.latex .title {
+    background-color: #b33333;
+    padding: 10px;
+    font-size: 26pt;
+    text-align: center;
+    border-radius: 20px;
+    color: white;
+    margin-top: 100px;
+    box-shadow: 4px 4px 3px 2px #bbb, 0 0 2px 2px #b33333;
+}
+
 .latex h1 {
     background-color: #b33333;
     color: white;
@@ -12,6 +23,7 @@
     color: white;
     padding-bottom: 3px;
     margin-top: -3px;
+    box-shadow: 0px -3px 3px 5px black;
     z-index: -1;
 }
 
@@ -48,4 +60,43 @@
     border-top-right-radius: 15px;
     border-top-left-radius: 15px;
     background-color: #862626;
+}
+
+/*****************************************************************************/
+
+.ozone h1 {
+    padding: 5px;
+    margin-left: -40px;
+    font-size: 28pt;
+    padding-left: 20px;
+    padding-bottom: 0px;
+    margin-bottom: 40px;
+    background: -moz-linear-gradient(left, #dfe4f0, #d7e7ff);
+    background: -webkit-linear-gradient(left, #dfe4f0, #d7e7ff);
+    box-shadow: 0px 0px 10px 10px #dfe4f0;
+}
+
+.ozone .slide {
+    font-family: 'open sans';
+    padding-left: 40px;
+    color: #00415c;
+    background: -moz-linear-gradient(-45deg, #e2faef, #e5e5ff);
+    background: -webkit-linear-gradient(-45deg, #e2faef, #e5e5ff);
+}
+
+.ozone ul {
+    list-style-type:square;
+    padding-left:0px;
+}
+
+.ozone .title {
+    padding: 15px 50px 15px 60px;
+    background-color: white;
+    border-radius: 20px;
+    box-shadow: 0 0 5px 5px white;
+    margin-left: -70px;
+    margin-top: 100px;
+    font-size: 30pt;
+    float: left;
+    font-weight: bold;
 }

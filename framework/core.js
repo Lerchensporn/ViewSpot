@@ -176,9 +176,6 @@ var ws = function() {
             link.rel = 'stylesheet';
             link.type = 'text/css';
             link.href = filename;
-            link.onload = function() {
-                mozShadowFix(document.body);
-            };
             document.head.appendChild(link);
         }
     };
@@ -568,6 +565,8 @@ var ws = function() {
         absdiv.style.height = cssLength('height') + cssLength('padding-top') + cssLength('padding-bottom') - 2 + 'px';
         absdiv.style.width = cssLength('width') + cssLength('padding-left') + cssLength('padding-right') - 2 + 'px';
 
+        absdiv.style.zIndex = computed.getPropertyValue('z-index');
+
         if (shadowid === null) {
             absdiv.style.boxShadow = computed.getPropertyValue('box-shadow');
             elem.style.boxShadow = 'none';
@@ -589,6 +588,7 @@ var ws = function() {
 
     function showSlide(number) {
         slides[number].div.style.visibility = '';
+        mozShadowFix(document.body);
     }
 
     function hideSlide(number) {
