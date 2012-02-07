@@ -2,7 +2,6 @@
 Prefix: ws
 
 ws.setSync()
-ws.loadModules(modules)
 ws.tableOfContents()
 ws.gotoSlide(index)
 ws.gotoNext()
@@ -10,11 +9,8 @@ ws.gotoPrevious()
 ws.getSections()
 ws.getCurrentSlide()
 ws.getSections()
-
-Structure object:
-.type
-.title
-.slideIndex
+ws.module.loadScript()
+ws.module.loadCSS()
 
 ws.config.setCurrent(settings)
 ws.config.setGlobal(settings)
@@ -23,36 +19,61 @@ ws.config.setForClass(className, settings)
 
 ws.getSlides()
 
-Slide object:
-.getSlideIndex()
-.getSettings()
-.div
-.animations
-
-ws.Sliding.slide*(slides, num, currentSlide)
-ws.Animations.animator*(progress)
-
 
 === Overlays ===
-* use the data-anim tag to describe the overlay
-* allow too fancy animations in data-anim?
-* divide frame selection and animation
+* frame based
+* use the data-ani tag to describe the overlay
+* different css styles
+* allow javascript actions
+* at first no support for animations
+* default class .hide
 
-=== Advanced animations ===
+=== Syntax ===
+data-over-1="2-3 || hide superclass css(font-size: 12pt;) " data-over-2="1-2 | color:red"
 
-<ul class="" data-anim="pause">
-    <li data-anim="1-3"><span style="bla" data-anim="">hu</span></li>
-    <li data-anim="+-"></li>
-    <li data-anim="flyin,500ms,left"></li>
-    <li data-anim=""></li>
-</ul>
-<img src="" id="imid"/>
-<script>
-    ws.id('imid').animate(function() { ... }, 500, easeAround);
-</script>
+The part before the colon is the inverse frame selector:
 
-syntax:
- data-anim="flyin(fast)"
+    <int>+<int>     not from <int> to <int>
+    <int>-<int>     from <int> to <int>
+    <int>           frame <int>
+    <exp>,<exp>     list of selectors, operator is `or`
+    -<int>          to <int>
+    <int>-          from <int>
 
-== Style API ==
-* full user API
+Special selectors:
+    +-              the style is applied to all children
+                    first child    data-over="1 || hide"
+                    second child   data-over="2 || hide"
+                    and so on
+    pause           the style is applied to all previous elements
+
+
+The part after the first pipe defines the style used, when the frame is active/selected.
+The part after the second pipe defindes the style, when the frame is inactive.
+If both pipes are missing, the default value is ` ## .hide `.
+Classes and inline css can be mixed. In this case, the inline
+css must be contained in ` css(<inline css>) `.
+If only inline css is used, this is automatically detected.
+Multiple class names are space separated.
+
+It is possible to define multiple overlays for one element.
+The attribute name is like
+    data-over-<int> 
+
+=== Javascript overlays ===
+Function:
+    ws.setOverlay(domElement, selector, callback)
+
+=== Internal representation ===
+The frame numbers are written into an array.
+For each frame, actions are defined. The action parameters are the DOM elements,
+the css classes and the inline styles.
+Processing:
+    1) Turn the content of the data-over tag into an object.
+    2) Create a temporary table of frames and actions.
+    3) Merge this table into the slide table
+
+=== Animations ===
+Animations are seldom useful in presentations and currently, there is no explicit support
+for them.
+However, the setOverlay function makes it possible to let objects fly around.

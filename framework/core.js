@@ -147,24 +147,12 @@ var ws = function() {
 
     /** Go to the next slide. */
     _ws.gotoNext = function() {
-        if (slides[slideNumber].animationsComplete() === false) {
-            slides[slideNumber].nextAnimation();
-        }
-        else {
-            slides[slideNumber].reset();
-            _ws.gotoSlide(slideNumber + 1);
-        }
+        _ws.gotoSlide(slideNumber + 1);
     };
 
     /** Go to the previous slide. */
     _ws.gotoPrevious = function() {
-        if (slides[slideNumber].animIndex > 0) {
-            slides[slideNumber].undoAnimation();
-        }
-        else {
-            slides[slideNumber].reset();
-            _ws.gotoSlide(slideNumber - 1);
-        }
+        _ws.gotoSlide(slideNumber - 1);
     };
 
     _ws.module = {
@@ -632,60 +620,6 @@ var ws = function() {
         self.div = null;
 
         self.settings = null;
-
-        /**
-         * Add animators to this slide. The Animator instances have to be passed
-         * as the function parameters.
-         */
-        self.addAnimators = function()
-        {
-            for (var i = 0; i < arguments.length; i++) {
-                self.animators = self.animators.concat(arguments[i]);
-            }
-        };
-
-        self.nextAnimation = function()
-        {
-            self.animators[self.animIndex].doAnimate();
-            self.animIndex++;
-            if (self.animIndex < self.animators.length) {
-                if (self.animators[self.animIndex].trigger === 'withprevious') {
-                    self.nextAnimation();
-                }
-                else if (self.animators[self.animIndex].trigger === 'afterprevious') {
-                    self.animators[self.animIndex - 1].onFinished = self.nextAnimation;
-                }
-            }
-        };
-
-        self.undoAnimation = function()
-        {
-            self.animators[self.animIndex].undoAnimate();
-            self.animIndex--;
-        };
-
-        self.backwardAnimation = function()
-        {
-            self.animators[self.animIndex].backwardAnimate();
-            self.animIndex--;
-        };
-
-        self.reset = function()
-        {
-            for(var i = 0; i < self.animIndex; i++) {
-                self.animators[i].undoAnimate();
-                self.animIndex = 0;
-            }
-        };
-
-        self.animationsComplete = function()
-        {
-            return self.animIndex === self.animators.length;
-        };
-
-        self.animIndex = 0;
-
-        self.animators = [];
     }
 
     /* ------------------------- User interaction --------------------------------- */
