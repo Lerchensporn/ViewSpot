@@ -58,7 +58,7 @@ Multiple class names are space separated.
 
 It is possible to define multiple overlays for one element.
 The attribute name is like
-    data-over-<int> 
+    data-over-<int>2
 
 === Javascript overlays ===
 Function:
@@ -77,3 +77,15 @@ Processing:
 Animations are seldom useful in presentations and currently, there is no explicit support
 for them.
 However, the setOverlay function makes it possible to let objects fly around.
+
+Array item:
+    frame selectors
+    element
+    slideIndex
+    style
+    notstyle
+    enterCallback
+    stepCallback
+    leaveCallback
+
+Either the some of the callbacks or style and notstyle have to be defined.

@@ -1,0 +1,125 @@
+#!/usr/bin/python
+
+import os, sys, argparse, zipfile, urllib2, shutil
+
+options = []
+
+def main():
+    global options
+    if len(sys.argv) == 1:
+        return
+
+    options = [
+        ('dirsize', dirsize, 'Get the size of the presentation'),
+        ('zip', makezip, 'Create a portable zip file'),
+        ('backup', backup, 'Create a zip file with the files that do\n\t\t\tnot belong to the framework.'),
+        ('help', help, 'Show this help text.'),
+        ('install-module', installModule, 'Install a module.')
+    ]
+
+    for option in options:
+        if sys.argv[1] == option[0]:
+            option[1]()
+
+def downloadFile(url):
+    print('Initializing download ...')
+    try:
+        ulib = urllib2.urlopen(url)
+    except:
+        print('Unable to download the file.')
+        exit()
+    fp = open('downfile', 'wb')
+    meta = ulib.info()
+    totalsize = int(meta.getheaders('Content-Length')[0])
+    fsize = 0
+    blocksize = 1024
+    while True:
+        buf = ulib.read(blocksize)
+        if not buf:
+            break
+        fsize += len(buf)
+        fp.write(buf)
+        status = 'Progress: [%3.0f %%]\r' % (fsize * 100 / totalsize)
+        sys.stdout.write(status)
+        sys.stdout.flush()
+    fp.close()
+    return 'downfile'
+
+def moveModuleFiles(modname, srcdir):
+    if len(modname) == 0:
+        print('Do not delete the whole presentation')
+        exit()
+    modpath = os.path.join('framework', modname)
+    shutil.rmtree(modpath)
+    shutil.move(srcdir, modpath)
+
+def installModule():
+    if len(sys.argv) < 3:
+        print('Available modules: mathjax, shjs, flot, shjs, jqplot')
+        return
+    module = sys.argv[2]
+    if module == 'mathjax':
+        path = downloadUnzip('http://github.com/mathjax/Mathjax/zipball/master')
+        srcdir = os.path.join(path, os.listdir()[0])
+    elif module == 'shjs':
+        path = downloadUnzip('http://sourceforge.net/projects/shjs/files/latest/download')
+        srcdir = path
+    elif module == 'flot':
+        path = downloadUnzip('http://flot.googlecode.com/files/flot-0.7.zip')
+    elif module == 'jqplot':
+        path = downloadUnzip('http://www.jqplot.com/deploy/download/jquery.jqplot.1.0.0r1095.zip')
+    elif module == 'jsxgraph':
+        path = downloadFile('http://jsxgraph.uni-bayreuth.de/distrib/jsxgraph.css')
+        path = downloadFile('http://jsxgraph.uni-bayreuth.de/distrib/jsxgraphcore.js')
+    else:
+        print('Module not available.')
+        exit()
+    shutil.rmtree(path)
+    moveModuleFiles(module, srcdir)
+
+def downloadUnzip(url):
+    expath = downloadFile(url)
+    return unzip(expath)
+
+def unzip(fname):
+    zf = zipfile.ZipFile(fname)
+    zf.printdir()
+    # TODO check for tarbomb?
+    zf.extractall('/tmp/wsunzip')
+    zf.close()
+    return '/tmp/wsunzip'
+
+def makezip(framework=True):
+    if framework:
+        zipname = 'presentation.zip'
+    else:
+        zipname = 'backup.zip'
+    print('Compressing to zip file ...')
+    zf = zipfile.ZipFile(zipname, 'w', zipfile.ZIP_DEFLATED)
+
+    for root, dirs, files in os.walk('.'):
+        for fn in files:
+            abspath = os.path.join(root, fn)
+            if abspath.startswith('./.') or fn == 'presentation.zip' or fn == 'backup.zip' or \
+                (abspath.startswith('./framework') and not framework):
+                continue
+            zf.write(abspath)
+    zf.close()
+    print(zipname + ' has size of %d kB' % (os.path.getsize(zipname)/1000.))
+
+
+def dirsize():
+    print('Uncompressed size: ')
+    print('Compressed size: ')
+
+def backup():
+    print('Backup ...')
+    makezip(False)
+
+def help():
+    print('Help text:')
+    for option in options:
+        print('\t' + option[0] + '\t\t' + option[2])
+
+if __name__ == '__main__':
+    main()

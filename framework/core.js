@@ -3,7 +3,7 @@ var ws = function() {
     'use strict';
 
     var _ws = { config : {} };
-    var modules = ['jsxgraph', 'mathjax', 'controls', 'fullthemes', 'shjs', 'jqplot', 'flot'];
+    var modules = ['controls', 'fullthemes']; // ['jsxgraph', 'mathjax', 'controls', 'fullthemes', 'shjs', 'jqplot', 'flot'];
     var defaultSettings = {
         pageDimensions : [1024, 768],
         outerColor : 'black',
@@ -98,16 +98,11 @@ var ws = function() {
     _ws.config.setCurrent = function(settings) {
         var scripts = document.getElementsByTagName('script');
         var cur = scripts[scripts.length - 1];
-        var rootDiv = cur.parentNode;
-        while (rootDiv.parentNode !== document.body) {
-            rootDiv = rootDiv.parentNode;
-        }
 
         readyFuncs.script.push(function() {
-            for (var i = 0; i < slides.length; ++i) {
-                if (slides[i].div === rootDiv) {
-                    setConfig(i, settings);
-                }
+            var si = getSlideIndexOfElement(cur);
+            if (si !== null) {
+                setConfig(i, settings);
             }
         });
     };
@@ -206,7 +201,7 @@ var ws = function() {
     function setup() {
         _ws.module.loadCSS('framework/main.css');
 
-        readyFuncs.parse = [parseDom, defaultConfig, parseSections];
+        readyFuncs.parse = [parseDom, defaultConfig, parseSections, parseOverlays];
         readyFuncs.finish = [init];
         onready();
 
@@ -403,53 +398,153 @@ var ws = function() {
         }
     }
 
-    /* rules:
-    */
+    function parseOverlayData(data) {
+        var split = data.split('|');
+        if (split.length === 0) {
+            return;
+        }
+        var selectedFrames = parseSelector(split[0]);
+        var style = (split.length > 0 ? parseOverlayStyle(split[1]) : { });
+        var notstyle = (split.length > 1 ? parseOverlayStyle(split[2]) : { });
 
-    function parseData(data) {
-        var from, to;
-        data = trim(data);
-        // TODO remove *all* spaces
-        data = data.split(',');
-        for (var i = 0; i < data.length; ++i) {
-            if (data.substr(0, 1) === '-') {
-                from[i] = 1;
-                data = data.substr(1);
-            }
-            else {
-                var nr = parseInt(data);
-                var len = nr.toString().length;
-                if (len === data.length) {
-                    from[i] = to[i] = nr;
-                    continue;
-                }
-                else if (data.charAt(len - 1) !== '-') {
-                    return false;
-                }
-                else {
-                    from[i] = nr;
-                    data = data.substr(len);
-                }
-            }
-            var nr2 = parseInt(data);
-            if (nr2 === data) {
-                to[i] = nr2;
+        return { frames : selectedFrames, style : style, notstyle : notstyle };
+    }
+
+    function logger(text) {
+        if (console.log) {
+            console.log(text);
+        }
+    }
+
+    function getSlideIndexOfElement(element) {
+        var rootDiv = element.parentNode;
+        while (rootDiv.parentNode !== document.body) {
+            rootDiv = rootDiv.parentNode;
+        }
+        for (var i = 0; i < slides.length; ++i) {
+            if (slides[i].div === rootDiv) {
+                return i;
             }
         }
-        return [from, to];
+        return null;
     }
+
+    function parseSelector(str) {
+        str.split(' ').join();
+
+        var frames = [];
+        var explist = str.split(',');
+        for (var i = 0; i < explist.length; ++i) {
+            var selector = parseSelectorExp(explist[i]);
+            if (selector === null) {
+                logger('Invalid selector.');
+                continue;
+            }
+            for (var k = 0; i < selector.length; ++k) {
+                frames.push(selector);
+            }
+        }
+
+        // TODO optimize frames list, e. g. if items are redundant
+        // or include another one
+
+        return frames;
+    }
+
+    function parseOverlayStyle(str) {
+        var inline = [];
+        var cssIndex = 0;
+        // FIXME inline css may contain brackets in strings or url
+        while ((cssIndex = str.indexOf('css('), cssIndex) !== -1) {
+            var end = str.indexOf(')', cssIndex);
+            inline = str.substring(cssIndex + 4, end - 1);
+            str = str.substring(cssIndex, end);
+        }
+        var classList = str.split(' ');
+        return { classList : classList, inline : inline };
+    }
+
+    function parseSelectorExp(str) {
+        var from, to, minusIndex, plusIndex;
+
+        if (str[0] === '-') {
+            from = 0;
+            to = str.substr(1);
+        }
+        else if (str[str.length - 1] === '-') {
+            from = str.substr(0, str.length - 2);
+            to = -1;
+        }
+        else if ((minusIndex = str.indexOf('-')) !== -1) {
+            from = str.substr(0, minusIndex);
+            end = str.substr(minusIndex + 1);
+        }
+        else if ((plusIndex = str.indexOf('+')) !== -1) {
+            from = str.substr(0, plusIndex);
+            end = str.substr(plusIndex + 1);
+        }
+        else {
+            from = to = str;
+        }
+
+        var fromInt = parseInt(from);
+        var toInt = parseInt(to);
+        if (fromInt.toString() !== from.toString() || toInt !== to.toString()) {
+            return null;
+        }
+        if (typeof plusIndex !== 'undefined' && plusIndex !== -1) {
+            return [[0, fromInt], [toInt, -1]];
+        }
+        return [[fromInt, toInt]];
+    }
+
+    /** Set the element's style when changing the overlay.
+        @param enter (Boolean) If the style or the notstyle is applied. */
+    function setElementStyle(style, notstyle, enter) {
+    }
+
+    /** Set the overlay action to javascript callbacks.
+        @param selector The frames selector.
+        @param enterfunc A callback that is executed when any of the selected frames becomes active.
+        @param leavefunc A callback that is executed when no frame is selected anymore.
+        @param stepfunc A callback that is executed when the frame changes, but stays selected by selector.
+    */
+    _ws.setOverlay = function(selector, enterfunc, leavefunc, stepfunc) {
+        var si = getSlideIndexOfElement(element);
+        if (si === null) {
+            logger('Cannot get the parent slide.');
+            return;
+        }
+        var frames = parseSelector(selector);
+        if (frames === null) {
+            logger('Invalid frame selector.');
+            return;
+        }
+        var entry = {
+            frames : frames,
+            enterCallback : enterfunc
+        };
+        if (typeof leavefunc !== 'undefined') {
+            entry.leaveCallback = leavefunc;
+        }
+        if (typeof stepfunc !== 'undefined') {
+            entry.stepCallback = stepfunc;
+        }
+        slides[si].overlays.push(entry);
+    };
 
     function parseOverlays() {
         for (var i = 0; i < slides.length; ++i) {
             var elems = slides.children;
             for (var k = 0; k < elems; ++k) {
-                var val = elems[i].dataAnim;
-                if (typeof val !== 'undefined') {
-                    if (val === '<+->') {
-                        
-                    }
-                //    else if (val === ''
+                var over = elems[k].getAttribute('data-over');
+                if (typeof over === 'undefined') {
+                    continue;
                 }
+                var parsed = parseOverlayData(over);
+                parsed.element = elems[k];
+                parsed.slideIndex = i;
+                slides[i].overlays.push(parsed);
             }
         }
     }
@@ -615,11 +710,15 @@ var ws = function() {
     }
 
     function Slide() {
-        var self = this;
+        var _slide = { };
 
-        self.div = null;
+        _slide.div = null;
 
-        self.settings = null;
+        _slide.settings = null;
+
+        _slide.overlays = { };
+
+        return _slide;
     }
 
     /* ------------------------- User interaction --------------------------------- */
