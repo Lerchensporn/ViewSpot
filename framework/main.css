@@ -24,6 +24,10 @@
     font-variant: normal;
 }
 
+.hide {
+    opacity: 0.2;
+}
+
 /****************/
 
 .mozfix {

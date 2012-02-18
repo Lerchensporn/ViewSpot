@@ -123,7 +123,7 @@ var ws = function() {
     /** Sets the global settings when the document is ready. */
     _ws.config.setGlobal = function(settings) {
         readyFuncs.script.push(function() {
-            globalSettings = mergeArrays(globalSettings, settings);
+            globalSettings = mergeObjects(globalSettings, settings);
             for (var i = 0; i < slides.length; ++i) {
                 setConfig(i, slideSettings[i]);
             }
@@ -142,12 +142,22 @@ var ws = function() {
 
     /** Go to the next slide. */
     _ws.gotoNext = function() {
-        _ws.gotoSlide(slideNumber + 1);
+        if (slides[slideNumber].overlayIndex < slides[slideNumber].overlayCount) {
+            gotoOverlay(slides[slideNumber].overlayIndex + 1);
+        }
+        else  {
+            _ws.gotoSlide(slideNumber + 1);
+        }
     };
 
     /** Go to the previous slide. */
     _ws.gotoPrevious = function() {
-        _ws.gotoSlide(slideNumber - 1);
+        if (slides[slideNumber].overlayIndex > 1) {
+            gotoOverlay(slides[slideNumber].overlayIndex - 1);
+        }
+        else {
+            _ws.gotoSlide(slideNumber - 1);
+        }
     };
 
     _ws.module = {
@@ -285,12 +295,18 @@ var ws = function() {
             _ws.setSync(true);
         }
         if (window.location.search === '?console') {
-            _ws.gotoSlide = console.gotoSlide;
+            _ws.gotoSlide = function(num) {
+                console.gotoSlide(num);
+                gotoOverlay(1);
+            };
             console.guiLayout();
             window.onresize = console.resize;
         }
         else {
-            _ws.gotoSlide = view.gotoSlide;
+            _ws.gotoSlide = function(num) {
+                view.gotoSlide(num);
+                gotoOverlay(1);
+            }
             window.onresize = view.resize;
         }
 
@@ -382,8 +398,6 @@ var ws = function() {
         for (var i = 0; i < readyFuncs.modulesLoaded.length; ++i) {
             readyFuncs.modulesLoaded[i]();
         }
-
-        mozShadowFix(document.body);
     }
 
     function fileExists(filename) {
@@ -398,21 +412,65 @@ var ws = function() {
         }
     }
 
+    function logger(text) {
+        if (console.log) {
+            console.log(text);
+        }
+    }
+
+    /******************************* Overlays ********************************/
+
     function parseOverlayData(data) {
         var split = data.split('|');
         if (split.length === 0) {
             return;
         }
         var selectedFrames = parseSelector(split[0]);
-        var style = (split.length > 0 ? parseOverlayStyle(split[1]) : { });
-        var notstyle = (split.length > 1 ? parseOverlayStyle(split[2]) : { });
+        var style = (split.length > 1 ? parseOverlayStyle(split[1]) : { classList : [], inline : [] });
+        var notstyle = (split.length > 2 ? parseOverlayStyle(split[2]) : { classList : [], inline : [] });
+        if (split.length < 2) {
+            notstyle = { classList : ['hide'], inline : [] };
+        }
 
         return { frames : selectedFrames, style : style, notstyle : notstyle };
     }
 
-    function logger(text) {
-        if (console.log) {
-            console.log(text);
+    function applyOverlayStyle(elem, style, remove) {
+        if (remove === true) {
+            var classes = elem.className.split(' ');
+
+            for (var i = 0; i < classes.length; ++i) {
+                classes[i] = classes[i].trim();
+            }
+
+            for (var i = 0; i < style.classList.length; ++i) {
+                var index = classes.indexOf(style.classList[i]);
+                while (index !== -1) {
+                    classes[index] = '';
+                    index = classes.indexOf(style.classList[i], index + 1);
+                }
+            }
+
+            elem.className = classes.join(' ').trim();
+            var oldstyle = elem.getAttribute('data-oldstyle');
+            if (oldstyle !== null) {
+                elem.setAttribute('style', oldstyle);
+            }
+        }
+        else {
+            elem.className += ' ' + style.classList.join(' ');
+            if (style.inline.length === 0) {
+                return;
+            }
+            var theStyle = elem.getAttribute('style');
+            if (theStyle === null) {
+                theStyle = '';
+            }
+            elem.setAttribute('data-oldstyle', theStyle);
+            theStyle = [theStyle];
+            theStyle.push(style.inline);
+            theStyle = theStyle.join(';').replace(';;', ';');
+            elem.setAttribute('style', theStyle);
         }
     }
 
@@ -430,7 +488,7 @@ var ws = function() {
     }
 
     function parseSelector(str) {
-        str.split(' ').join();
+        str = str.split(' ').join();
 
         var frames = [];
         var explist = str.split(',');
@@ -440,8 +498,8 @@ var ws = function() {
                 logger('Invalid selector.');
                 continue;
             }
-            for (var k = 0; i < selector.length; ++k) {
-                frames.push(selector);
+            for (var k = 0; k < selector.length; ++k) {
+                frames.push(selector[k]);
             }
         }
 
@@ -453,12 +511,13 @@ var ws = function() {
 
     function parseOverlayStyle(str) {
         var inline = [];
-        var cssIndex = 0;
+        var cssIndex = str.indexOf('css(');
         // FIXME inline css may contain brackets in strings or url
-        while ((cssIndex = str.indexOf('css('), cssIndex) !== -1) {
+        while (cssIndex !== -1) {
             var end = str.indexOf(')', cssIndex);
-            inline = str.substring(cssIndex + 4, end - 1);
-            str = str.substring(cssIndex, end);
+            inline = str.substring(cssIndex + 4, end);
+            str = str.substr(0, cssIndex) + str.substr(end + 1);
+            cssIndex = str.indexOf('css(', cssIndex + 1);
         }
         var classList = str.split(' ');
         return { classList : classList, inline : inline };
@@ -477,11 +536,11 @@ var ws = function() {
         }
         else if ((minusIndex = str.indexOf('-')) !== -1) {
             from = str.substr(0, minusIndex);
-            end = str.substr(minusIndex + 1);
+            to = str.substr(minusIndex + 1);
         }
         else if ((plusIndex = str.indexOf('+')) !== -1) {
             from = str.substr(0, plusIndex);
-            end = str.substr(plusIndex + 1);
+            to = str.substr(plusIndex + 1);
         }
         else {
             from = to = str;
@@ -489,18 +548,43 @@ var ws = function() {
 
         var fromInt = parseInt(from);
         var toInt = parseInt(to);
-        if (fromInt.toString() !== from.toString() || toInt !== to.toString()) {
+        if (fromInt.toString() !== from.toString() || toInt.toString() !== to.toString()) {
             return null;
         }
         if (typeof plusIndex !== 'undefined' && plusIndex !== -1) {
             return [[0, fromInt], [toInt, -1]];
         }
+
         return [[fromInt, toInt]];
     }
 
-    /** Set the element's style when changing the overlay.
-        @param enter (Boolean) If the style or the notstyle is applied. */
-    function setElementStyle(style, notstyle, enter) {
+    function gotoOverlay(overlayIndex) {
+        var slide = slides[slideNumber];
+        if (overlayIndex < 1 || overlayIndex > slide.overlayCount) {
+            return;
+        }
+
+        for (var i = 0; i < slide.overlays.length; ++i) {
+            var ol = slide.overlays[i];
+            var firstmatch = false;
+            for (var k = 0; k < ol.frames.length; ++k) {
+                if (overlayIndex === ol.frames[k][0]) {
+                    firstmatch = true;
+                    applyOverlayStyle(ol.element, ol.notstyle, true);
+                    applyOverlayStyle(ol.element, ol.style, false);
+                }
+                else if (overlayIndex === ol.frames[k][1] + 1) {
+                    applyOverlayStyle(ol.element, ol.style, true);
+                    applyOverlayStyle(ol.element, ol.notstyle, false);
+                }
+            }
+            if (! firstmatch && overlayIndex === 1) {
+                applyOverlayStyle(ol.element, ol.notstyle, true);
+                applyOverlayStyle(ol.element, ol.style, true);
+                applyOverlayStyle(ol.element, ol.notstyle, false);
+            }
+        }
+        slide.overlayIndex = overlayIndex;
     }
 
     /** Set the overlay action to javascript callbacks.
@@ -531,23 +615,43 @@ var ws = function() {
             entry.stepCallback = stepfunc;
         }
         slides[si].overlays.push(entry);
+        updateOverlayCount(si);
     };
+
+    function updateOverlayCount(index) {
+        var overlays = slides[index].overlays;
+        var maxIndex = 0;
+        for (var i = 0; i < overlays.length; ++i) {
+            for (var k = 0; k < overlays[i].frames.length; ++k) {
+                var tmpframe = overlays[i].frames[k];
+                if (tmpframe[0] > maxIndex) {
+                    maxIndex = tmpframe[0];
+                }
+                if (tmpframe[1] > maxIndex) {
+                    maxIndex = tmpframe[1];
+                }
+            }
+        }
+        slides[index].overlayCount = maxIndex;
+    }
 
     function parseOverlays() {
         for (var i = 0; i < slides.length; ++i) {
-            var elems = slides.children;
-            for (var k = 0; k < elems; ++k) {
+            var elems = slides[i].div.querySelectorAll('*');
+            for (var k = 0; k < elems.length; ++k) {
                 var over = elems[k].getAttribute('data-over');
-                if (typeof over === 'undefined') {
+                if (over === null) {
                     continue;
                 }
                 var parsed = parseOverlayData(over);
                 parsed.element = elems[k];
-                parsed.slideIndex = i;
                 slides[i].overlays.push(parsed);
             }
+            updateOverlayCount(i);
         }
     }
+
+    /****************************** End Overlays *******************************/
 
     /* Executes the callbacks in the readycbs array when the DOM is ready. */
     function onready() {
@@ -671,7 +775,7 @@ var ws = function() {
 
     function showSlide(number) {
         slides[number].div.style.visibility = '';
-        mozShadowFix(document.body);
+        mozShadowFix(slides[number].div);
     }
 
     function hideSlide(number) {
@@ -680,7 +784,7 @@ var ws = function() {
 
     /** Merges multiple settings array. A setting can be overwritten by an
         element that appears later in the parameter list.*/
-    function mergeArrays() {
+    function mergeObjects() {
         // slice to copy value instead of reference
         var result = [arguments[0]].slice();
         for (var i = 0; i < arguments.length; ++i) {
@@ -693,7 +797,7 @@ var ws = function() {
                             subargs.push(arguments[subi][key]);
                         }
                     }
-                    result[key] = mergeArrays.apply(null, subargs);
+                    result[key] = mergeObjects.apply(null, subargs);
                 }
                 else {
                     result[key] = arguments[i][key];
@@ -705,7 +809,7 @@ var ws = function() {
 
     function setConfig(index, settings) {
         slideSettings[index] = settings;
-        var merged = mergeArrays(globalSettings, settings);
+        var merged = mergeObjects(globalSettings, settings);
         slides[index].settings = merged;
     }
 
@@ -716,7 +820,11 @@ var ws = function() {
 
         _slide.settings = null;
 
-        _slide.overlays = { };
+        _slide.overlays = [];
+
+        _slide.overlayIndex = 1;
+
+        _slide.overlayCount = 0;
 
         return _slide;
     }
