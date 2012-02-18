@@ -5,7 +5,10 @@
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <script type="text/javascript" src="framework/core.js"></script>
     <style>
-        .klass {text-decoration: underline }
+        .klass { 
+            -moz-transition: background-color 1s;
+            background-color: black;
+        }
     </style>
 </head>
 <body>
@@ -124,10 +127,14 @@ var A  = brd.create('point', [0,0]),
        setupSlide : function(slide) {
         ws.fullthemes.latex(slide);
        }} );
+       ws.ready(function() { ws.setOverlay(2, '2-3', function() { alert('huhu'); }); });
         </script>
         <div class="theorem">
             <h2>One little theorem</h2>
-            The content provides information!
+            <div data-over="1">The content provides information!</div>
+            <div data-over="2">Have a nice day.</div>
+            <div data-over="3">Lorem ipsum dolor sit amet.</div>
+            <div data-over="4">Okay, that it enough.</div>
         </div>
     </div>
 </body>

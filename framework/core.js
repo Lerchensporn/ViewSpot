@@ -34,10 +34,6 @@ var ws = function() {
         sync = boolval;
     };
 
-    _ws.getCurrentSlide = function() {
-        return slides[slideNumber];
-    };
-
     /** Set the modules to load with the presentation.
         @param mods An array of strings that specity the modules. */
     // FIXME integrate in config.setGlobal
@@ -564,8 +560,8 @@ var ws = function() {
             return;
         }
 
-        for (var i = 0; i < slide.overlays.length; ++i) {
-            var ol = slide.overlays[i];
+        for (var i = 0; i < slide.cssOverlays.length; ++i) {
+            var ol = slide.cssOverlays[i];
             var firstmatch = false;
             for (var k = 0; k < ol.frames.length; ++k) {
                 if (overlayIndex === ol.frames[k][0]) {
@@ -573,15 +569,30 @@ var ws = function() {
                     applyOverlayStyle(ol.element, ol.notstyle, true);
                     applyOverlayStyle(ol.element, ol.style, false);
                 }
-                else if (overlayIndex === ol.frames[k][1] + 1) {
+                else if (overlayIndex === ol.frames[k][1] + 1 || overlayIndex === ol.frames[k][1] - 1) {
                     applyOverlayStyle(ol.element, ol.style, true);
                     applyOverlayStyle(ol.element, ol.notstyle, false);
                 }
             }
+
             if (! firstmatch && overlayIndex === 1) {
-                applyOverlayStyle(ol.element, ol.notstyle, true);
                 applyOverlayStyle(ol.element, ol.style, true);
                 applyOverlayStyle(ol.element, ol.notstyle, false);
+            }
+        }
+
+        for (var i = 0; i < slide.jsOverlays.length; ++i) {
+            var ol = slide.jsOverlays[i];
+            for (var k = 0; k < ol.frames.length; ++k) {
+                if (overlayIndex === ol.frames[k][0]) {
+                    ol.enterCallback();
+                }
+                else if (overlayIndex === ol.frames[k][1] + 1) {
+                    ol.leaveCallback();
+                }
+                else {
+                    ol.stepCallback();
+                }
             }
         }
         slide.overlayIndex = overlayIndex;
@@ -593,8 +604,7 @@ var ws = function() {
         @param leavefunc A callback that is executed when no frame is selected anymore.
         @param stepfunc A callback that is executed when the frame changes, but stays selected by selector.
     */
-    _ws.setOverlay = function(selector, enterfunc, leavefunc, stepfunc) {
-        var si = getSlideIndexOfElement(element);
+    _ws.setOverlay = function(si, selector, enterfunc, leavefunc, stepfunc) {
         if (si === null) {
             logger('Cannot get the parent slide.');
             return;
@@ -604,22 +614,28 @@ var ws = function() {
             logger('Invalid frame selector.');
             return;
         }
+        if (enterfunc === null) {
+            enterfunc = function() { };
+        }
+        if (typeof leavefunc === 'undefined' || leavefunc === null) {
+            leavefunc = function() { };
+        }
+        if (typeof stepfunc === 'undefined' || stepfunc === null) {
+            stepfunc = function() { };
+        }
         var entry = {
             frames : frames,
-            enterCallback : enterfunc
+            enterCallback : enterfunc,
+            leaveCallback : leavefunc,
+            stepCallback : stepfunc
         };
-        if (typeof leavefunc !== 'undefined') {
-            entry.leaveCallback = leavefunc;
-        }
-        if (typeof stepfunc !== 'undefined') {
-            entry.stepCallback = stepfunc;
-        }
-        slides[si].overlays.push(entry);
+        slides[si].jsOverlays.push(entry);
         updateOverlayCount(si);
     };
 
     function updateOverlayCount(index) {
-        var overlays = slides[index].overlays;
+        var overlays = slides[index].cssOverlays;
+        overlays = overlays.concat(slides[index].jsOverlays);
         var maxIndex = 0;
         for (var i = 0; i < overlays.length; ++i) {
             for (var k = 0; k < overlays[i].frames.length; ++k) {
@@ -645,7 +661,7 @@ var ws = function() {
                 }
                 var parsed = parseOverlayData(over);
                 parsed.element = elems[k];
-                slides[i].overlays.push(parsed);
+                slides[i].cssOverlays.push(parsed);
             }
             updateOverlayCount(i);
         }
@@ -820,7 +836,9 @@ var ws = function() {
 
         _slide.settings = null;
 
-        _slide.overlays = [];
+        _slide.cssOverlays = [];
+
+        _slide.jsOverlays = [];
 
         _slide.overlayIndex = 1;
 
