@@ -160,7 +160,24 @@ var ws = function() {
         loadScript : function(filename, onload) {
             moduleScriptLoader.appendScript(filename, onload);
         },
-        loadCSS : function(filename) {
+        getConfig : function(modname) {
+            if (typeof globalSettings[modname] === 'undefined') {
+                return { };
+            }
+            return globalSettings[modname];
+        },
+        loadCSS : function(filename, force) {
+            if (typeof force === 'undefined') {
+                force = false;
+            }
+            if (force === false) {
+                var links = document.getElementsByTagName('link');
+                for (var i = 0; i < links.length; ++i) {
+                    if (links[i].getAttribute('href') === filename) {
+                        return;
+                    }
+                }
+            }
             var link = document.createElement('link');
             link.rel = 'stylesheet';
             link.type = 'text/css';

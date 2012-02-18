@@ -19,7 +19,6 @@ ws.config.setForClass(className, settings)
 
 ws.getSlides()
 
-
 === Overlays ===
 * frame based
 * use the data-ani tag to describe the overlay
@@ -77,15 +76,3 @@ Processing:
 Animations are seldom useful in presentations and currently, there is no explicit support
 for them.
 However, the setOverlay function makes it possible to let objects fly around.
-
-Array item:
-    frame selectors
-    element
-    slideIndex
-    style
-    notstyle
-    enterCallback
-    stepCallback
-    leaveCallback
-
-Either the some of the callbacks or style and notstyle have to be defined.

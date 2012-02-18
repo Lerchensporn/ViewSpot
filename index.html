@@ -1,16 +1,143 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta http-equiv="Content-Type" type="text/html; charset=utf-8"/>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
         <title>WebSlider</title>
     </head>
     <style type="text/css">
+        body {
+            margin-right: 200px;
+            margin-left: 200px;
+        }
         h1 {
-            font-size: 20px;
+            font-size: 22px;
+        }
+        h2 {
+            font-size: 18px;
+            border-bottom: 1px solid grey;
+        }
+        h3 {
+            font-size: 16px;
+        }
+        dt {
+            font-style: italic;
+        }
+        a {
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
         }
     </style>
     <body>
         <h1>WebSlider</h1>
-        <a href="demo.html">Demo presentation</a>
+        WebSlider is a framework for creating slideshow presentations like LibreOffice Impress, PowerPoint or KeyNote.
+        It it based on the web technologies HTML, CSS and Javascript. This is no WYSIWYG tool, but you have
+        to write the presentation markup and the configuration into a HTML file.
+
+        <h2>Getting started</h2>
+        To get an impression, view the <a href="demo.html"><b>demo presentation</b></a>.
+        You can download the project from the <a href="http://github.com/woho/WebSlider">project page on github</a>.
+
+        <h2>Features</h2>
+        <dl>
+        <dt>Excellent support for math typesetting</dt><dd>
+         The MathJax plugin converts TeX markup between the tags \[ \] or
+        \( \) into MathML.</dd>
+        <dt>Great looking themes</dt><dd>
+        Some well-tried LaTeX Beamer themes are provided. CSS 3 supports
+        eye-candy features like shadows, gradients and rounded corners.</dd>
+        <dt>Overlays</dt><dd>
+        Show or hide content or even animate your slides using CSS and Javascript callbacks.
+        </dd>
+        <dt>Scripting support (JavaScript)</dt><dd>
+        Do whatever you want using scripts – especially powerful in combination with overlays.
+        </dd>
+        <dt>Customizable</dt><dd>
+        It is very easy to define own themes using CSS or even Javascript.
+        </dd>
+        <dt>Support for controls</dt><dd>
+        This extends the LaTeX approach of different elements like the footer, a title,
+        sidebars etc.</dd>
+        <dt>No WYSIWYG</dt><dd>
+        This leads to a separation of content and style, which is very practical:
+        One can write the content and style it afterwards. The productivity increases,
+        because one only has to concentrate on one thing at the same time.</dd>
+        <dt>Small Download and no installation required</dt>
+        <dd>An advantage in comparision to LaTeX (hundred of megabytes) and Impress, because
+        no installation is required. However, when using many plugins, the file size is likely bigger that
+        the size of .odf files.
+        <dt>Extensibility and many useful plugins</dt><dd>
+        A plugin interface is provided and there are e. g. plugins for math, plotting.
+        </dd>
+        </dl>
+
+        Disadvantages:
+        <dl>
+        <dt>More user experience required</dt><dd>
+        You have to know HTML, CSS and Javascript. Fortunately, the basics of those
+        languages are easy to learn and Javascript knowledge is only necessary
+        when using advances features.
+        Despite the advantages of a non-WYSIWYG approach, some lusers might
+        feel irritated when they cannnot point and click around.</dd>
+        <dt>The portability is worse than with PDF files</dt>
+        <dd>A modern web browser is required to view the presentations (Internet Explorer does
+        not count as a web browser).</dd>
+        </dt>
+        </dl>
+
+    <h2>To Do List</h2>
+    <ul>
+        <li>implement overlays</li>
+        <li>apply mozilla box shadow fix at the right time</li>
+        <li>better presenter screen</li>
+        <li>more themes</li>
+        <li>improve mozilla shadow fix</li>
+        <li>speedup module loading</li>
+        <li>implement Python tools</li>
+        <li>invent a better project name</li>
+        <li>store the fonts in the presentation and use css font-face (good idea?)</li>
+    </ul>
+
+    <h2>Documentation</h2>
+    <h3>A short intruduction</h3>
+    <h3>Javascript API</h3>
+    <h3>Python Tool</h3>
+    One can download WebSlider and unpack it.
+    Without python tools, the WebSlider directory has to be copied for each
+    presentation.
+
+    However, it is more pratical to have one complete WebSlider repository installed.
+    The Python tools can create a working directory and copy only the needed modules
+    to reduce the directory size. It is possible to let the script download the latest
+    git version.
+    For example, the framework could be installed in /usr/share/webslider/... and
+    have the python tool in /usr/share/wstool.
+    To create a new presentation:
+    <pre>
+        1) wstool new &lt;dir&gt;
+              Ask if no directory is specified. Create a new directory with
+              the core files.
+        2) wstool install-module &lt;module&gt;
+              Display available modules if no module is specified.
+        3) create the presentation</pre>
+
+    More functions (not yet available):
+    <pre>
+        wstool update-repo
+        wstool update-repo-modules
+        wstool update-local
+        wstool update-local-modules
+        wstool doc
+        wstool store-fonts</pre>
+
+    <h2>Compatibility</h2>
+    WebSlider is developed for Firefox and Chromium (Gecko and Webkit).
+    <br/>
+    <h2>License</h2>
+    You can do with the code what you want, if you put a reference to me (that means this site).
+    See <a href="http://www.opensource.org/licenses/mit-license.php">MIT license</a>.
+    <br/>
+    <br/>
     </body>
 </html>

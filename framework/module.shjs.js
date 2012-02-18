@@ -1,5 +1,11 @@
 (function() {
-    ws.module.loadCSS('framework/shjs/css/sh_' + 'vim' + '.min.css');
+    var histyle = 'vim';
+    var cfg = ws.module.getConfig('shjs');
+    if (typeof cfg.histyle !== 'undefined') {
+        histyle = cfg.histyle;
+    }
+
+    ws.module.loadCSS('framework/shjs/css/sh_' + histyle + '.min.css');
 
     var onload = function() {
         sh_highlightDocument('framework/shjs/lang/', '.min.js');
