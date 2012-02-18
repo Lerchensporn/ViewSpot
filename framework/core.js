@@ -3,7 +3,7 @@ var ws = function() {
     'use strict';
 
     var _ws = { config : {} };
-    var modules = ['controls', 'fullthemes']; // ['jsxgraph', 'mathjax', 'controls', 'fullthemes', 'shjs', 'jqplot', 'flot'];
+    var modules = ['controls', 'fullthemes', 'shjs']; // ['jsxgraph', 'mathjax', 'controls', 'fullthemes', 'shjs', 'jqplot', 'flot'];
     var defaultSettings = {
         pageDimensions : [1024, 768],
         outerColor : 'black',
