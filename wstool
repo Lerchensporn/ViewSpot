@@ -1,10 +1,12 @@
 #!/usr/bin/python
 
-import os, sys, argparse, zipfile, urllib2, shutil
+import os, signal, sys, argparse, zipfile, urllib2, shutil
 
 options = []
 
 def main():
+    signal.signal(signal.SIGINT, exitSignal)
+
     global options
     if len(sys.argv) == 1:
         return
@@ -20,6 +22,9 @@ def main():
     for option in options:
         if sys.argv[1] == option[0]:
             option[1]()
+
+def exitSignal():
+    exit()
 
 def downloadFile(url):
     print('Initializing download ...')
@@ -49,9 +54,18 @@ def moveModuleFiles(modname, srcdir):
     if len(modname) == 0:
         print('Do not delete the whole presentation')
         exit()
-    modpath = os.path.join('framework', modname)
-    shutil.rmtree(modpath)
+    modpath = os.path.join(os.getcwd(), 'framework', modname)
+    if os.path.exists(modpath):
+        shutil.rmtree(modpath)
     shutil.move(srcdir, modpath)
+
+def rmdirs(base, dirlist):
+    for direc in dirlist:
+        shutil.rmtree(os.path.join(base, direc))
+
+def rmfiles(base, fileslist):
+    for fi in fileslist:
+        os.remove(os.path.join(base, fi))
 
 def installModule():
     if len(sys.argv) < 3:
@@ -60,22 +74,52 @@ def installModule():
     module = sys.argv[2]
     if module == 'mathjax':
         path = downloadUnzip('http://github.com/mathjax/Mathjax/zipball/master')
-        srcdir = os.path.join(path, os.listdir()[0])
+        srcdir = os.path.join(path, os.listdir(path)[0])
+        rmdirs(srcdir, ['fonts', 'docs', 'test', 'unpacked', 'config', 'jax/output/HTML-CSS/fonts/TeX'])
+        rmfiles(srcdir, ['LICENSE', 'README.md', 'jax/output/HTML-CSS/imageFonts.js', 'extensions/MathMenu.js', 'extensions/MathZoom.js'])
     elif module == 'shjs':
         path = downloadUnzip('http://sourceforge.net/projects/shjs/files/latest/download')
-        srcdir = path
+        srcdir = os.path.join(path, os.listdir(path)[0])
+        rmdirs(srcdir, ['doc'])
+        rmfiles(srcdir, ['index.html', 'README.txt', 'VERSION.txt', 'sh_main.js', 'favicon.ico', 'sh_style.css', 'gpl.txt'])
+        for fname in os.listdir(os.path.join(srcdir, 'css')):
+            if not fname.endswith('.min.css'):
+                os.remove(os.path.join(srcdir, 'css', fname))
+        for fname in os.listdir(os.path.join(srcdir, 'lang')):
+            if not fname.endswith('.min.js'):
+                os.remove(os.path.join(srcdir, 'lang', fname))
     elif module == 'flot':
         path = downloadUnzip('http://flot.googlecode.com/files/flot-0.7.zip')
+        srcdir = os.path.join(path, 'flot')
+        rmdirs(srcdir, ['examples'])
+        rmfiles(srcdir, ['FAQ.txt', 'LICENSE.txt', 'NEWS.txt', 'API.txt', 'Makefile', 'PLUGINS.txt', 'README.txt', 'excanvas.min.js'])
+        for fname in os.listdir(srcdir):
+            if not fname.endswith('.min.js') and fname.endswith('.js'):
+                os.remove(os.path.join(srcdir, fname))
     elif module == 'jqplot':
-        path = downloadUnzip('http://www.jqplot.com/deploy/download/jquery.jqplot.1.0.0r1095.zip')
+        path = downloadUnzip('http://bitbucket.org/cleonello/jqplot/downloads/jquery.jqplot.1.0.0b2_r1012.zip')
+        srcdir = os.path.join(path, 'dist')
+        rmdirs(srcdir, ['examples', 'docs'])
+        rmfiles(srcdir, ['jquery.js', 'optionsTutorial.txt', 'jquery.jqplot.css', 'jquery.jqplot.js', \
+            'excanvas.js', 'excanvas.min.js', 'copyright.txt', 'changes.txt', 'gpl-2.0.txt', 'jqPlotCssStyling.txt',\
+            'jqPlotOptions.txt', 'usage.txt', 'README.txt', 'MIT-LICENSE.txt'])
+        for fname in os.listdir(os.path.join(srcdir, 'plugins')):
+            if not fname.endswith('.min.js'):
+                os.remove(os.path.join(srcdir, 'plugins', fname))
     elif module == 'jsxgraph':
         path = downloadFile('http://jsxgraph.uni-bayreuth.de/distrib/jsxgraph.css')
+        if os.path.exists('/tmp/wsunzip'):
+            shutil.rmtree('/tmp/wsunzip')
+        os.mkdir('/tmp/wsunzip')
+        shutil.move(path, '/tmp/wsunzip/jsxgraph.css')
         path = downloadFile('http://jsxgraph.uni-bayreuth.de/distrib/jsxgraphcore.js')
+        shutil.move(path, '/tmp/wsunzip/jsxgraphcore.js')
+        srcdir = '/tmp/wsunzip'
     else:
         print('Module not available.')
         exit()
-    shutil.rmtree(path)
     moveModuleFiles(module, srcdir)
+    print('Module ' + module + ' has been installed.')
 
 def downloadUnzip(url):
     expath = downloadFile(url)
@@ -83,7 +127,6 @@ def downloadUnzip(url):
 
 def unzip(fname):
     zf = zipfile.ZipFile(fname)
-    zf.printdir()
     # TODO check for tarbomb?
     zf.extractall('/tmp/wsunzip')
     zf.close()

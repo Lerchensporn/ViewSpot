@@ -3,7 +3,7 @@ var ws = function() {
     'use strict';
 
     var _ws = { config : {} };
-    var modules = ['controls', 'fullthemes', 'shjs']; // ['jsxgraph', 'mathjax', 'controls', 'fullthemes', 'shjs', 'jqplot', 'flot'];
+    var modules = ['controls', 'fullthemes', 'shjs', 'mathjax']; // ['jsxgraph', 'mathjax', 'controls', 'fullthemes', 'shjs', 'jqplot', 'flot'];
     var defaultSettings = {
         pageDimensions : [1024, 768],
         outerColor : 'black',
@@ -770,15 +770,25 @@ var ws = function() {
 
         absdiv.style.zIndex = computed.getPropertyValue('z-index');
 
+        // the underlying div is inset by 1 px, so increase the shadow offset by 1 px
+        var add1px = function(boxshadow) {
+            var split = boxshadow.split(' ');
+            if (split.length < 3) {
+                return;
+            }
+            split[split.length - 1] = parseInt(split[split.length - 1]) + 1 + 'px';
+            return split.join(' ');
+        };
+
         if (shadowid === null) {
-            absdiv.style.boxShadow = computed.getPropertyValue('box-shadow');
+            absdiv.style.boxShadow = add1px(computed.getPropertyValue('box-shadow'));
             elem.style.boxShadow = 'none';
             absdiv.id = 'mozfix' + Math.floor(Math.random() * 10000000000); // TODO make it really unique
             elem.setAttribute('data-shadowid', absdiv.id);
             elem.parentNode.insertBefore(absdiv, elem);
         }
         else if (computed.getPropertyValue('box-shadow') !== 'none') {
-            absdiv.style.boxShadow = computed.getPropertyValue('box-shadow');
+            absdiv.style.boxShadow = add1px(computed.getPropertyValue('box-shadow'));
         }
     }
 
