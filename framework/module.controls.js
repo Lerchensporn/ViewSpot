@@ -22,8 +22,7 @@ ws.controls = function() {
 
     _controls.footer = function(slide) {
         footerdiv = document.createElement('div');
-        footerdiv.style.padding = '10px';
-        footerdiv.style.fontSize = '18px';
+        footerdiv.className = 'footer';
         if (typeof slide.settings.footer !== 'undefined' && typeof slide.settings.footer.text !== 'undefined') {
             footerdiv.innerHTML = slide.settings.footer.text;
         }

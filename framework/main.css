@@ -71,6 +71,11 @@ pre {
     font-size: 18pt;
 }
 
+/* chromium bug fix */
+.syntaxhighlighter {
+    padding: 1px !important;
+}
+
 .MathJax_MathML {
     /* mathjax bug? */
     padding: 1px;

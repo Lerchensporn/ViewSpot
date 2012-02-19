@@ -1,7 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Developer testing</title>
+
+<script type="text/javascript" src="framework/syntaxhighlighter/scripts/shCore.js"></script>
+ 
+<!--
+    At least one brush, here we choose JS. You need to include a brush for every
+    language you want to highlight
+-->
+<script type="text/javascript" src="framework/syntaxhighlighter/scripts/shBrushJScript.js"></script>
+ 
+<!-- Include *at least* the core style and default theme -->
+<link href="framework/syntaxhighlighter/styles/shCore.css" rel="stylesheet" type="text/css" />
+<link href="framework/syntaxhighlighter/styles/shThemeDefault.css" rel="stylesheet" type="text/css" />
+
+
+
+<title>Developer testing</title>
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <script type="text/javascript" src="framework/core.js"></script>
     <style>
@@ -19,27 +34,22 @@
         </div>
     </div>
     <div>
+        <h1>Table of contents (automagic)</h1>
+        <script> ws.tableOfContents();  </script>
+    </div>
+    <div>
         <section>Modules</section>
         <h1>SHJS plugin (syntax highlighting)</h1>
-        <select id="themes" onchange="setTheme(this)">
-<option>acid</option> <option>berries-dark</option> <option>berries-light</option> <option>bipolar</option> <option>blacknblue</option> <option>bright</option> <option>contrast</option> <option>darkblue</option> <option>darkness</option> <option>desert</option> <option>dull</option> <option>easter</option> <option>emacs</option> <option>golden</option> <option>greenlcd</option> <option>ide-anjuta</option> <option>ide-codewarrior</option> <option>ide-devcpp</option> <option>ide-eclipse</option> <option>ide-kdev</option> <option>ide-msvcpp</option> <option>kwrite</option> <option>matlab</option> <option>navy</option> <option selected="selected">nedit</option> <option>neon</option> <option>night</option> <option>pablo</option> <option>peachpuff</option> <option>print</option> <option>rand01</option> <option>the</option> <option>typical</option> <option>vampire</option> <option>vim</option> <option>vim-dark</option> <option>whatis</option> <option>whitengrey</option> <option>zellner</option>
-        </select><input type="button" onclick="prev()" value="Previous"/><input type="button" onclick="next()" value="Next"/><br/><br/>
-        <script>
-          function prev() {
-              var dropdown = document.getElementById('themes');
-              --dropdown.selectedIndex;
-              setTheme(dropdown);
-          }
-          function next() {
-                var dropdown = document.getElementById('themes');
-                ++dropdown.selectedIndex;
-                setTheme(dropdown);
-            }
-            function setTheme(args) {
-                ws.module.loadCSS('framework/shjs/css/sh_' + args.options[args.selectedIndex].text + '.min.css', true);
-             };
-        </script>
-        <pre style="border: 1px dashed black;padding:10px" class="sh_c">
+        
+<!-- You also need to add some content to highlight, but that is covered elsewhere. -->
+<pre class="brush: js">
+function foo()
+{
+}
+</pre>
+<script>// ws.ready(SyntaxHighlighter.all); </script>
+
+        <pre style="border: 1px dashed black;padding:10px" class="brush: js">
 #include &lt;stdio.h&gt;
 
 int main(int argc, char **argv) {
@@ -129,7 +139,7 @@ var A  = brd.create('point', [0,0]),
         });
         </script>
     </div>-->
-    <div>
+    <div id="rep">
         <h1>MathJax plugin</h1>
         \[\oint_{\partial A}\boldsymbol H\;\cdot\mathrm{d}\boldsymbol s=\iint_A\boldsymbol j_l\;\cdot\mathrm{d}\boldsymbol A+
                 \left(\color{blue}{\iint_A \frac{\partial \boldsymbol D}{\partial t}\;\cdot\mathrm{d}\boldsymbol A} \right)\]
@@ -144,15 +154,17 @@ var A  = brd.create('point', [0,0]),
        setupSlide : function(slide) {
         ws.fullthemes.latex(slide);
        }} );
-//       ws.ready(function() { ws.setOverlay(3, '2-3', function() { alert('huhu'); }); });
+//       ws.ready(function() { ws.setOverlay(3, '2-3', function() { ws.gotoSlide(1); }); });
         </script>
-        <div class="theorem">
+        <div id="rep" class="theorem">
             <h2>One little theorem</h2>
             <div data-over="1">The content provides information!</div>
             <div data-over="2">Have a nice day.</div>
             <div data-over="3">Lorem ipsum dolor sit amet.</div>
             <div data-over="4">Okay, that it enough.</div>
         </div>
+        Repetition is supported, see next slide.
     </div>
+    <div data-repeat="rep"> </div>
 </body>
 </html>

@@ -3,7 +3,7 @@ var ws = function() {
     'use strict';
 
     var _ws = { config : {} };
-    var modules = ['controls', 'fullthemes', 'shjs', 'mathjax']; // ['jsxgraph', 'mathjax', 'controls', 'fullthemes', 'shjs', 'jqplot', 'flot'];
+    var modules = ['controls', 'fullthemes', 'mathjax', 'syntaxhighlighter']; // ['jsxgraph', 'mathjax', 'controls', 'fullthemes', 'shjs', 'jqplot', 'flot'];
     var defaultSettings = {
         pageDimensions : [1024, 768],
         outerColor : 'black',
@@ -166,16 +166,11 @@ var ws = function() {
             }
             return globalSettings[modname];
         },
-        loadCSS : function(filename, force) {
-            if (typeof force === 'undefined') {
-                force = false;
-            }
-            if (force === false) {
-                var links = document.getElementsByTagName('link');
-                for (var i = 0; i < links.length; ++i) {
-                    if (links[i].getAttribute('href') === filename) {
-                        return;
-                    }
+        loadCSS : function(filename) {
+            var links = document.getElementsByTagName('link');
+            for (var i = 0; i < links.length; ++i) {
+                if (links[i].getAttribute('href') === filename) {
+                    return;
                 }
             }
             var link = document.createElement('link');
@@ -231,6 +226,10 @@ var ws = function() {
         document.onkeydown = keyDown;
         document.onmousemove = mouseMove;
         document.onclick = mouseClick;
+
+        window.onload = function() {
+            mozShadowFix(document.body);
+        };
     }
 
     function parseDom() {
@@ -246,6 +245,14 @@ var ws = function() {
             }
             else {
                 children[i].className += ' slide';
+            }
+
+            var repeat = children[i].getAttribute('data-repeat');
+            if (repeat !== null) {
+                var ref = document.getElementById(repeat);
+                if (ref !== null && ref.tagName === 'DIV' && ref.parentNode === document.body) {
+                    children[i].innerHTML = ref.innerHTML + children[i].innerHTML;
+                }
             }
 
             tmpslide.div = children[i];
@@ -750,6 +757,9 @@ var ws = function() {
             return;
         }
         var computed = window.getComputedStyle(elem, null);
+        if (computed.getPropertyValue('position') === 'absolute') {
+            return;
+        }
         var shadowid = elem.getAttribute('data-shadowid');
         if (computed.getPropertyValue('box-shadow') == 'none' && shadowid === null) {
             return;
@@ -810,6 +820,10 @@ var ws = function() {
     }
 
     function mozShadowFix(rootNode) {
+        if (navigator.userAgent.indexOf('Firefox') === -1) {
+            return;
+        }
+
         var all = rootNode.querySelectorAll('*');
         for (var i = 0; i < all.length; ++i) {
             mozShadowElement(all[i]);
@@ -818,7 +832,6 @@ var ws = function() {
 
     function showSlide(number) {
         slides[number].div.style.visibility = '';
-        mozShadowFix(slides[number].div);
     }
 
     function hideSlide(number) {
@@ -899,8 +912,6 @@ var ws = function() {
             return;
         }
 
-        // args.clientX und pageX für IE und andere
-        // newX und mouseX für Chrome, der bei cursor-Änderung auslöst
         if (!args) {
             args = window.event;
         }

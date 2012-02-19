@@ -17,6 +17,10 @@
     cursor: pointer;
 }
 
+.sidebar ul {
+    list-style: none;
+}
+
 .circleActive, .circleInactive {
     cursor: pointer;
 }

@@ -77,17 +77,11 @@ def installModule():
         srcdir = os.path.join(path, os.listdir(path)[0])
         rmdirs(srcdir, ['fonts', 'docs', 'test', 'unpacked', 'config', 'jax/output/HTML-CSS/fonts/TeX'])
         rmfiles(srcdir, ['LICENSE', 'README.md', 'jax/output/HTML-CSS/imageFonts.js', 'extensions/MathMenu.js', 'extensions/MathZoom.js'])
-    elif module == 'shjs':
-        path = downloadUnzip('http://sourceforge.net/projects/shjs/files/latest/download')
+    elif module == 'syntaxhighlighter':
+        path = downloadUnzip('http://alexgorbatchev.com/SyntaxHighlighter/download/download.php?sh_current')
         srcdir = os.path.join(path, os.listdir(path)[0])
-        rmdirs(srcdir, ['doc'])
-        rmfiles(srcdir, ['index.html', 'README.txt', 'VERSION.txt', 'sh_main.js', 'favicon.ico', 'sh_style.css', 'gpl.txt'])
-        for fname in os.listdir(os.path.join(srcdir, 'css')):
-            if not fname.endswith('.min.css'):
-                os.remove(os.path.join(srcdir, 'css', fname))
-        for fname in os.listdir(os.path.join(srcdir, 'lang')):
-            if not fname.endswith('.min.js'):
-                os.remove(os.path.join(srcdir, 'lang', fname))
+        rmdirs(srcdir, ['compass', 'tests', 'src'])
+        rmfiles(srcdir, ['LGPL-LICENSE', 'MIT-LICENSE', 'index.html'])
     elif module == 'flot':
         path = downloadUnzip('http://flot.googlecode.com/files/flot-0.7.zip')
         srcdir = os.path.join(path, 'flot')
