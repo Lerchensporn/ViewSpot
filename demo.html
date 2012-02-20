@@ -1,21 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-<script type="text/javascript" src="framework/syntaxhighlighter/scripts/shCore.js"></script>
- 
-<!--
-    At least one brush, here we choose JS. You need to include a brush for every
-    language you want to highlight
--->
-<script type="text/javascript" src="framework/syntaxhighlighter/scripts/shBrushJScript.js"></script>
- 
-<!-- Include *at least* the core style and default theme -->
-<link href="framework/syntaxhighlighter/styles/shCore.css" rel="stylesheet" type="text/css" />
-<link href="framework/syntaxhighlighter/styles/shThemeDefault.css" rel="stylesheet" type="text/css" />
-
-
-
 <title>Developer testing</title>
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <script type="text/javascript" src="framework/core.js"></script>
@@ -39,17 +24,8 @@
     </div>
     <div>
         <section>Modules</section>
-        <h1>SHJS plugin (syntax highlighting)</h1>
-        
-<!-- You also need to add some content to highlight, but that is covered elsewhere. -->
-<pre class="brush: js">
-function foo()
-{
-}
-</pre>
-<script>// ws.ready(SyntaxHighlighter.all); </script>
-
-        <pre style="border: 1px dashed black;padding:10px" class="brush: js">
+        <h1>SyntaxHighlighter plugin</h1>
+        <pre style="border: 1px dashed black;padding:10px" class="brush: c">
 #include &lt;stdio.h&gt;
 
 int main(int argc, char **argv) {

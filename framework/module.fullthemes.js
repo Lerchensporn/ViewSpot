@@ -3,7 +3,6 @@ ws.fullthemes = function() {
 
     _fullthemes.latex = function(slide) {
         ws.controls.miniframes(slide);
-        ws.controls.footer(slide);
         ws.module.loadCSS('framework/fullthemes.css');
         slide.div.className += ' latex';
     };
