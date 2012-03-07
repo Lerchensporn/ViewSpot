@@ -5,7 +5,7 @@
     script.innerHTML = "MathJax.Hub.Config({" +
         "jax : ['input/TeX', 'output/NativeMML']," +
         "extensions : ['tex2jax.js']," +
-        "NativeMML : { showMathMath : false }" +
+        "NativeMML : { showMathMenu : false }" +
         "});"
     document.head.appendChild(script);
 
