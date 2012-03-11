@@ -43,9 +43,9 @@
 .messagebox {
     background-color: #456;
     color: white;
-    border: 1px solid blue;
     font-size: 12px;
-    box-shadow: 0 0  5px blue;
+    box-shadow: 0 0  5px #456;
+    border-radius: 2px;
     padding: 5px;
     position: absolute;
     bottom: 5px;
@@ -126,6 +126,10 @@ ul {
 li {
     margin: 0.2em;
     margin-left: 0.8em;
+}
+
+.cursorpointer {
+    cursor: url(cursor.svg), crosshair;
 }
 
 html, body {
@@ -278,4 +282,37 @@ body {
 
 .notes {
     display: none;
+}
+
+/* controls */
+
+.minidiv {
+    font-size: 12pt;
+    padding-left: 10px;
+    padding-right: 10px;
+    color: #bbb;
+    background-color: #d2d3ff;
+}
+
+.sidebar {
+    width: 200px;
+    padding-top: 10px;
+    font-size: 12pt;
+    background-color: #d0d0d0;
+}
+
+.sectionActive, .sectionInactive {
+    cursor: pointer;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.circleActive, .circleInactive {
+    cursor: pointer;
+}
+
+.miniframe {
+    font-size: 11pt;
 }

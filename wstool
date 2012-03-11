@@ -69,9 +69,15 @@ def rmfiles(base, fileslist):
 
 def installModule():
     if len(sys.argv) < 3:
-        print('Available modules: mathjax, shjs, flot, shjs, jqplot')
+        print('Available modules: mathjax, shjs, flot, shjs, jqplot, raphael')
         return
     module = sys.argv[2]
+
+    tmpdir = '/tmp/wsunzip'
+    if os.path.exists('/tmp/wsunzip'):
+        shutil.rmtree('/tmp/wsunzip')
+    os.mkdir('/tmp/wsunzip')
+
     if module == 'mathjax':
         path = downloadUnzip('http://github.com/mathjax/Mathjax/zipball/master')
         srcdir = os.path.join(path, os.listdir(path)[0])
@@ -82,6 +88,10 @@ def installModule():
         srcdir = os.path.join(path, os.listdir(path)[0])
         rmdirs(srcdir, ['compass', 'tests', 'src'])
         rmfiles(srcdir, ['LGPL-LICENSE', 'MIT-LICENSE', 'index.html'])
+    elif module == 'raphael':
+        path = downloadFile('https://raw.github.com/DmitryBaranovskiy/raphael/master/raphael.js')
+        srcdir = tmpdir
+        shutil.move(path, os.path.join(tmpdir, 'raphael.js'))
     elif module == 'flot':
         path = downloadUnzip('http://flot.googlecode.com/files/flot-0.7.zip')
         srcdir = os.path.join(path, 'flot')
@@ -102,18 +112,20 @@ def installModule():
                 os.remove(os.path.join(srcdir, 'plugins', fname))
     elif module == 'jsxgraph':
         path = downloadFile('http://jsxgraph.uni-bayreuth.de/distrib/jsxgraph.css')
-        if os.path.exists('/tmp/wsunzip'):
-            shutil.rmtree('/tmp/wsunzip')
-        os.mkdir('/tmp/wsunzip')
-        shutil.move(path, '/tmp/wsunzip/jsxgraph.css')
+        shutil.move(path, os.path.join(tmpdir, 'jsxgraph.css'))
         path = downloadFile('http://jsxgraph.uni-bayreuth.de/distrib/jsxgraphcore.js')
-        shutil.move(path, '/tmp/wsunzip/jsxgraphcore.js')
-        srcdir = '/tmp/wsunzip'
+        shutil.move(path, os.path.join(tmpdir, 'jsxgraphcore.js'))
+        srcdir = tmpdir
     else:
         print('Module not available.')
         exit()
     moveModuleFiles(module, srcdir)
     print('Module ' + module + ' has been installed.')
+
+def moveToDir(pathlist, filenames):
+    for i in range(len(pathlist)):
+        shutil.move(pathlist[i], os.path.join('/tmp/wsunzip', filenames[i]))
+    return '/tmp/wsunzip'
 
 def downloadUnzip(url):
     expath = downloadFile(url)
