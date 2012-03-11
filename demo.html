@@ -17,8 +17,83 @@
             Introduction into PowerView<br/>
             <small>Demonstration of a great slideshow framework</small>
         </div>
+        <div class="notes">
+            A not so short note.
+            When having a presentation, there are three possibilities:
+            one has the complete presentation in mind, one can write the key notes down and use sheets of papers
+            or one uses this notes display.
+            <ul>
+                <li>Note 1</li>
+                <li>Note 2</li>
+                <li>Note 3</li>
+            </ul>
+
+            And now some lorem and ipsum to fill the whole page:<br/><br/>
+            <cite>
+                Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy
+                eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam
+                voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet
+                clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
+                amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
+                nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed
+                diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.
+                Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor
+                sit amet.
+            </cite>
+            <cite>
+                Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy
+                eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam
+                voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet
+                clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
+                amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
+                nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed
+                diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.
+                Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor
+                sit amet.
+            </cite>
+             <cite>
+                Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy
+                eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam
+                voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet
+                clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
+                amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
+                nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed
+                diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.
+                Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor
+                sit amet.
+            </cite>
+            <b>Though there is a lot of place, scolling may be necessary.</b>
+            <cite>
+                Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy
+                eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam
+                voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet
+                clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
+                amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
+                nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed
+                diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.
+                Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor
+                sit amet.
+            </cite>
+            <cite>
+                Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy
+                eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam
+                voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet
+                clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
+                amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
+                nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed
+                diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.
+                Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor
+                sit amet.
+            </cite>
+        </div>
     </div>
     <div>
+        <div class="notes">
+            The table of contents can be generated automatically using the
+            javascript function ws.tableOfContents().
+            <br/>
+            Furthermore, the list items behave like links to the respective slide.
+        </div>
         <h1>Table of contents (automagic)</h1>
         <script> ws.tableOfContents();  </script>
     </div>
@@ -126,18 +201,16 @@ var A  = brd.create('point', [0,0]),
         <h1>Fullthemes</h1>
         <script>
         ws.config.setGlobal({
-        shjs : { histyle : 'neon' },
        setupSlide : function(slide) {
         ws.fullthemes.latex(slide);
        }} );
-//       ws.ready(function() { ws.setOverlay(3, '2-3', function() { ws.gotoSlide(1); }); });
         </script>
         <div id="rep" class="theorem">
             <h2>One little theorem</h2>
             <div data-over="1">The content provides information!</div>
             <div data-over="2">Have a nice day.</div>
             <div data-over="3">Lorem ipsum dolor sit amet.</div>
-            <div data-over="4">Okay, that it enough.</div>
+            <div data-over="4">Okay, that is enough.</div>
         </div>
         Repetition is supported, see next slide.
     </div>

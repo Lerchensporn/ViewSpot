@@ -1,14 +1,15 @@
-var ws = function() {
+var ws = (function() {
 
     'use strict';
 
     var _ws = { config : {} };
     var modules = ['jsxgraph', 'mathjax', 'controls', 'fullthemes', 'syntaxhighlighter', 'jqplot', 'flot'];
     var defaultSettings = {
-        pageDimensions : [1024, 768],
+        format : [1024, 768],
         outerColor : 'black',
         cursorHideTimeout : 1000,
     };
+    var views;
     var slides = [];
     var slideNumber;
     var loaded = false;
@@ -17,11 +18,11 @@ var ws = function() {
     var enableResizing = true;
     var curTout;
     var otherWindow;
-    var windowChild;
     var isLaserMouse = false;
     var menuul = null;
     var moduleScriptLoader;
     var sections = [];
+    var currentView;
     var sync = false;
     var globalSettings = defaultSettings;
     var slideSettings = [];
@@ -77,13 +78,28 @@ var ws = function() {
         });
     };
 
+    var switchView = function(view) {
+        if (typeof currentView !== 'undefined') {
+            currentView.unload();
+        }
+        view.load();
+        currentView = view;
+        view.gotoSlide(slideNumber);
+        window.onresize = currentView.resize;
+    }
+
     /** Executes the given function when the document and all the modules are loaded. */
     _ws.ready = function(func) {
         if (loaded === false) {
             readyFuncs.modulesLoaded.push(func);
         }
         else {
-            func();
+            try {
+                func();
+            }
+            catch (e) {
+                logger(e);
+            }
         }
     };
 
@@ -134,7 +150,17 @@ var ws = function() {
     /** Switch to another slide.
      * @param num The index of the slide to go to.
      * @param effect Function callback Sliding effect */
-    _ws.gotoSlide; // defined dynamically
+    _ws.gotoSlide = function(num) {
+        syncWindow('gotoSlide', arguments);
+
+        num = parseInt(num);
+        if (num < 0 || num > slides.length - 1) {
+            return;
+        }
+        currentView.gotoSlide(num);
+        slideNumber = num;
+        setCookie('slide', num);
+    }
 
     /** Go to the next slide. */
     _ws.gotoNext = function() {
@@ -210,22 +236,59 @@ var ws = function() {
     };
 
     _ws.setLaserMouse = function(on) {
-        isLaserMouse = (on === true);
+        isLaserMouse = on;
         document.body.style.cursor = (isLaserMouse ? 'crosshair' : 'default');
     };
+
+    function logger(text) {
+        _ws.showMessage(text);
+        if (console.log) {
+            console.log(text);
+        }
+    }
+
+    _ws.showMessage = function(message) {
+        var timeout = null;
+
+        var setHideTimeout = function() {
+            timeout = setTimeout(function() {
+                msgdiv.className = 'messagebox mboxhide';
+            }, 1000);
+        };
+
+        var msgdiv = document.createElement('div');
+        msgdiv.className = 'messagebox';
+        msgdiv.innerHTML = message;
+        msgdiv.addEventListener('mouseover', function() {
+            msgdiv.className = 'messagebox';
+            clearInterval(timeout);
+        }, false);
+        msgdiv.addEventListener('mouseleave', function() {
+            setHideTimeout();
+        }, false);
+        msgdiv = document.body.appendChild(msgdiv);
+        setHideTimeout();
+    }
 
     /* ----------------------------- Slide Setup ---------------------------------- */
 
     function setup() {
         _ws.module.loadCSS('framework/main.css');
 
+        views = [normalView, consoleNotes, consolePreview, sorter];
         readyFuncs.parse = [parseDom, defaultConfig, parseSections, parseOverlays];
         readyFuncs.finish = [init];
         onready();
 
-        document.onkeydown = keyDown;
-        document.onmousemove = mouseMove;
-        document.onclick = mouseClick;
+        document.addEventListener('keydown', keyDown, false);
+        document.addEventListener('mousemove', mouseMove, false);
+        document.addEventListener('click', mouseClick, false);
+
+        window.onunload = function() {
+            if (typeof otherWindow !== 'undefined') {
+                otherWindow.ws['showMessage'].apply(otherWindow, ['The other window was closed.']);
+            }
+        };
 
         window.onload = function() {
             mozShadowFix(document.body);
@@ -235,7 +298,7 @@ var ws = function() {
     function parseDom() {
         var children = document.body.getElementsByTagName('div');
         var index = 0;
-        for (var i = 0; i < children.length; i++) {
+        for (var i = 0; i < children.length; ++i) {
             if (children[i].parentNode !== document.body) {
                 continue;
             }
@@ -295,13 +358,12 @@ var ws = function() {
 
     function createSlides() {
         for (var i = 0; i < slides.length; ++i) {
-            var dim = slides[i].settings.pageDimensions;
+            var dim = slides[i].settings.format;
             slides[i].div.style.width = dim[0] + 'px';
 
             // consider the slide padding
             slides[i].div.style.width = dim[0] - (slides[i].div.clientWidth - dim[0]) + 'px';
             slides[i].div.style.height = dim[1] + 'px';
-            slides[i].div.style.visibility = 'hidden';
 
             var themeCallback = slides[i].settings.setupSlide;
             if (typeof themeCallback === 'function') {
@@ -314,27 +376,17 @@ var ws = function() {
             otherWindow = window.opener;
             _ws.setSync(true);
         }
-        if (window.location.search === '?console') {
-            _ws.gotoSlide = function(num) {
-                console.gotoSlide(num);
-                gotoOverlay(1);
-            };
-            console.guiLayout();
-            window.onresize = console.resize;
-        }
-        else {
-            _ws.gotoSlide = function(num) {
-                view.gotoSlide(num);
-                gotoOverlay(1);
-            }
-            window.onresize = view.resize;
+
+        var viewIndex = parseInt(readCookie('view'));
+        if (viewIndex < 0 || viewIndex > views.length || isNaN(viewIndex)) {
+            viewIndex = 0;
         }
 
-        var slidenum = readCookie('slide');
-        if (slidenum === null) {
-            slidenum = 0;
+        slideNumber = parseInt(readCookie('slide'));
+        if (isNaN(slideNumber)) {
+            slideNumber = 0;
         }
-        _ws.gotoSlide(slidenum);
+        switchView(views[viewIndex]);
     };
 
     var ScriptLoader = function() {
@@ -356,6 +408,7 @@ var ws = function() {
                 js.addEventListener('load', onload, false);
             }
             js.addEventListener('load', onScriptLoad, false);
+            js.addEventListener('error', onScriptError, false); // FIXME does not work
             scriptlist.push(js);
         };
 
@@ -374,6 +427,12 @@ var ws = function() {
             if (++loadedCount === scriptlist.length) {
                 _sl.onload();
             }
+        }
+
+        function onScriptError() {
+            logger('Error in module script');
+            alert('bla');
+            onScriptLoad();
         }
 
         return _sl;
@@ -416,7 +475,12 @@ var ws = function() {
 
     function modulesLoaded() {
         for (var i = 0; i < readyFuncs.modulesLoaded.length; ++i) {
-            readyFuncs.modulesLoaded[i]();
+            try {
+                readyFuncs.modulesLoaded[i]();
+            }
+            catch (e) {
+                logger(e);
+            }
         }
     }
 
@@ -429,12 +493,6 @@ var ws = function() {
         }
         catch (e) {
             return false;
-        }
-    }
-
-    function logger(text) {
-        if (console.log) {
-            console.log(text);
         }
     }
 
@@ -761,7 +819,7 @@ var ws = function() {
             return;
         }
         var shadowid = elem.getAttribute('data-shadowid');
-        if (computed.getPropertyValue('box-shadow') == 'none' && shadowid === null) {
+        if (computed.getPropertyValue('box-shadow') === 'none' && shadowid === null) {
             return;
         }
 
@@ -831,7 +889,7 @@ var ws = function() {
     }
 
     function showSlide(number) {
-        slides[number].div.style.visibility = '';
+        slides[number].div.style.visibility = 'visible';
     }
 
     function hideSlide(number) {
@@ -912,9 +970,6 @@ var ws = function() {
             return;
         }
 
-        if (!args) {
-            args = window.event;
-        }
         var newX, newY;
         if (args.pageX) {
             newX = args.pageX;
@@ -938,22 +993,33 @@ var ws = function() {
     }
 
     function keyDown(ev) {
-        if (ev.target === "INPUT") {
+        if (ev.target === 'INPUT') {
             return;
         }
-        if (ev.keyCode === 32) { // space
-            contextMenu(false);
-        }
-        else if (ev.keyCode === 39) { // right
-            _ws.gotoNext();
-        }
-        else if (ev.keyCode === 37) { // left
-            _ws.gotoPrevious();
+
+        switch (ev.keyCode) {
+            case 32: // space
+                contextMenu(false);
+                break;
+            case 39: // right
+                _ws.gotoNext();
+                break;
+            case 37: // left
+                _ws.gotoPrevious();
+                break;
+            case 76: // letter L
+                _ws.setLaserMouse(!isLaserMouse);
+                break;
+            case 87: // letter W
+                var index = views.indexOf(currentView);
+                index = (index === views.length - 1 ? 0 : index + 1);
+                setCookie('view', index);
+                switchView(views[index]);
+                break;
         }
 
-        if (ev.keyCode === 32 || ev.keyCode === 38 || ev.keyCode === 40) {
-            // eat the key to avoid scrolling
-            return false;
+        if ([32, 37, 38, 39, 40].indexOf(ev.keyCode) !== -1) {
+            ev.preventDefault();
         }
     }
 
@@ -1022,7 +1088,7 @@ var ws = function() {
     }
 
     function setMenuEvents(menuEntries) {
-        for (var i = 0; i < menuEntries.length; i++) {
+        for (var i = 0; i < menuEntries.length; ++i) {
             var elem = document.getElementById('cm_' + i.toString());
             if (elem !== null) {
                 elem.onclick = menuEntries[i][2];
@@ -1031,7 +1097,7 @@ var ws = function() {
     }
 
     function openNewWindow() {
-        otherWindow = window.open('main.html?console', 'Presentation Screen &ndash ' + document.title,
+        otherWindow = window.open('demo.html?console', 'Presentation Screen &ndash ' + document.title,
             'status=yes,menubar=yes,screenX=' + screen.availWidth +
             '*,screenY=0,height=' + screen.availHeight + ',width=' + screen.availWidth);
         _ws.setSync(true);
@@ -1042,7 +1108,7 @@ var ws = function() {
             start = 0;
         }
 
-        for (var cnt = start; cnt < menuEntries.length; cnt++) {
+        for (var cnt = start; cnt < menuEntries.length; ++cnt) {
             if (menuEntries[cnt] === 'closesubmenu') {
                 break;
             }
@@ -1078,26 +1144,19 @@ var ws = function() {
 
     /* ------------------------------- Normal view -------------------------------- */
 
-    var view = function() {
-        var _view = {};
-        _view.gotoSlide = function(num) {
-            syncWindow('gotoSlide', arguments);
+    var normalView = (function() {
+        var _normalView = {};
 
-            num = parseInt(num);
+        _normalView.load = function() { };
 
-            if (num < 0) {
-                num = 0;
-            }
-            else if (num >= slides.length) {
-                num = slides.length - 1;
-            }
+        _normalView.unload = function() { };
 
+        _normalView.gotoSlide = function(num) {
             var oldsn = slideNumber;
-            slideNumber = num;
 
-            // resize before showing the slide, else
-            // it can look blurry at first
-            _view.resize();
+            slideNumber = num;
+            _normalView.resize();
+
             if (oldsn === num) {
                 showSlide(num);
             }
@@ -1105,135 +1164,38 @@ var ws = function() {
                 hideSlide(oldsn);
                 showSlide(num);
             }
-
-            setCookie('slide', num);
         };
 
-        /* Called when the window is resized, adjusts the slide size. */
-        _view.resize = function() {
+        _normalView.resize = function() {
             if (enableResizing === false) {
                 return;
             }
             var height = document.body.clientHeight;
             var width = document.body.clientWidth;
 
-            var pagewidth = slides[slideNumber].settings.pageDimensions[0];
-            var pageheight = slides[slideNumber].settings.pageDimensions[1];
+            var pagewidth = slides[slideNumber].settings.format[0];
+            var pageheight = slides[slideNumber].settings.format[1];
 
-            var scale = Math.min(width/pagewidth, height/pageheight);
-            var marginTop = (scale - 1) * pageheight / 2;
-
-            slides[slideNumber].div.style.WebkitTransform = 'scale(' + scale + ')';
-            slides[slideNumber].div.style.MozTransform = 'scale(' + scale + ')';
-            slides[slideNumber].div.style.marginTop = marginTop + 'px';
-            slides[slideNumber].div.style.marginLeft =  (width - pagewidth) / 2 + 'px';
+            var newWidth = Math.min(width / pagewidth, height / pageheight) * pagewidth;
+            scaleSlide(slides[slideNumber], (width - newWidth) / 2, 0, newWidth);
         }
 
-        return _view;
-    }();
+        return _normalView;
+    })();
 
-    /* ----------------------------- End Normal view ------------------------------ */
+    function scaleSlide(slide, x, y, newWidth) {
+        var scale = newWidth / slide.settings.format[0];
+        slide.div.style.WebkitTransform = 'scale(' + scale + ')';
+        slide.div.style.MozTransform = 'scale(' + scale + ')';
+        slide.div.style.marginTop = (scale - 1) * slide.settings.format[1] / 2 + y + 'px';
+        slide.div.style.marginLeft = (scale - 1) * slide.settings.format[0] / 2 + x + 'px';
+    }
 
-    /* ------------------------------- Console ------------------------------------ */
-    var console = function() {
-        var _console = {};
-        var startTime = null;
-        var paused = 0;
-        var timerRunning = true;
-        var showNotes = false;
-        var notesdiv = null;
-
-        _console.guiLayout = function() {
-            var cbar = document.createElement('div');
-            cbar.style.textAlign = 'center';
-            cbar.style.bottom = '0px';
-            cbar.style.position = 'absolute';
-            cbar.style.width = '100%';
-
-            // blur, because space key would press button again
-            cbar.innerHTML =
-                '<div id="controls" style="margin:auto;display:table">' +
-                '   <div style="display:table-row;height:100%">' +
-                '       <div><span>' + getClockHtml('&ndash;', '0:00') +
-                '           </span><a id="reset">Reset</a>' +
-                '           <a id="pause">Pause</a>' +
-                '       </div>' +
-                '       <div>' +
-                '           <button id="notesbutton">Notes</button>' +
-                '       </div>' +
-                '       <div><button id="slidesbutton" onclick="javascript:this.blur();">Slides</button></div>' +
-                '   </div>' +
-                '</div>';
-            document.body.appendChild(cbar);
-            document.getElementById('notesbutton').onclick = function() {
-               showNotes = !showNotes;
-               _console.gotoSlide(slideNumber);
-               this.blur();
-            };
-
-            document.getElementById('reset').onclick = resetTimer;
-            document.getElementById('pause').onclick = startStop;
-            document.getElementById('reset').href = '#';
-            document.getElementById('pause').href = '#';
-
-            setInterval(updateTime, 1000);
-        };
-
-        function getClockHtml(string1, string2) {
-            return '<span id="clocktime">' + string1 + '</span>' +
-                   '     <span id="time">' + string2 + '</span>';
-        }
-
-        _console.resize = function() {
-        };
-
-        _console.gotoSlide = function(num) {
-            syncWindow('gotoSlide', arguments);
-            if (num >= slides.length || num < 0) {
-                return;
-            }
-            hideSlide(slideNumber);
-            if (slideNumber < slides.length - 1) {
-                hideSlide(slideNumber + 1);
-            }
-            showSlide(num);
-            if (showNotes === false) {
-                if (notesdiv !== null) {
-                    document.body.removeChild(notesdiv);
-                    notesdiv = null;
-                }
-                slides[num].div.style.left = '-10%';
-                slides[num].div.style.MozTransform = 'scale(0.6)';
-                slides[num].div.style.WebkitTransform = 'scale(0.6)';
-                slides[num].div.style.top = '-10%'; // -20 + 15
-            }
-            else {
-                slides[num].div.style.left = '-15%';
-                slides[num].div.style.MozTransform = slides[num].div.style.WebkitTransform = 'scale(0.5)';
-                slides[num].div.style.top = '-15%';
-                if (notesdiv === null) {
-                    notesdiv = document.createElement('div');
-                }
-                notesdiv.className = 'notesdiv';
-                var notes = slides[num].div.getElementsByClassName('notes');
-                if (notes.length > 0) {
-                    notesdiv.innerHTML = notes[0].innerHTML;
-                }
-                document.body.appendChild(notesdiv);
-            }
-            if (num < slides.length - 1) {
-                if (showNotes === false) {
-                    showSlide(num + 1);
-                    slides[num + 1].div.style.left = '35%';
-                    slides[num + 1].div.style.top = '-20%'; // -30 + 15
-                    slides[num + 1].div.style.MozTransform = slides[num + 1].div.style.WebkitTransform = 'scale(0.4)';
-                }
-                else {
-                }
-            }
-            slideNumber = num;
-            setCookie('slide', num);
-        };
+    var statusbar = function() {
+        var timerRunning;
+        var startTime;
+    
+        var _statusbar = { };
 
         function resetTimer() {
             startTime = null;
@@ -1242,7 +1204,6 @@ var ws = function() {
         }
 
         function updateTime() {
-            // Uhr
             var now = new Date();
 
             var clockstring = pad2two(now.getHours()) + ':' + pad2two(now.getMinutes()) + ':' + pad2two(now.getSeconds());
@@ -1280,10 +1241,307 @@ var ws = function() {
         function pad2two(digit) {
             return (digit.toString().length === 1 ? '0' + digit.toString() : digit.toString());
         }
+    };
 
-        return _console;
-    }();
+    var sorter = (function() {
+        var _sorter = { };
+        var activeSlideIndex = 0;
+        var colsPerRow = 3;
+        var mouseActive;
+
+        var boxes = [];
+
+        function getIndexByTarget(args) {
+            for (var i = 0; i < slides.length; ++i) {
+                if (args.currentTarget === slides[i].div) {
+                    return i;
+                }
+            }
+        }
+
+        function focusSlide(index) {
+            blurSlide(activeSlideIndex);
+            boxes[index].style.backgroundColor = 'orange';
+            activeSlideIndex = index;
+
+            var boxtop = parseInt(boxes[index].style.top);
+            var yoff = boxtop + boxes[index].clientHeight - window.innerHeight;
+            var scrolling = false;
+            if (window.pageYOffset < yoff) {
+                scrolling = true;
+                window.scrollTo(0, yoff);
+            }
+            else if (window.pageYOffset > boxtop) {
+                scrolling = true;
+                window.scrollTo(0, boxtop);
+            }
+
+            if (mouseActive && scrolling) {
+                mouseActive = false;
+                setTimeout(function() { mouseActive = true; }, 0);
+            }
+        }
+
+        function blurSlide(index) {
+            boxes[index].style.backgroundColor = '';
+        }
+
+        function sorterKeyDown(args) {
+            if (args.keyCode === 13) {
+                slideNumber = activeSlideIndex;
+                switchView(normalView);
+                return;
+            }
+            else if (args.keyCode === 87) { // letter 87
+                keyDown(args);
+            }
+
+            var newIndex = activeSlideIndex;
+            switch (args.keyCode) {
+                case 37: // left
+                    --newIndex;
+                    args.preventDefault();
+                    break;
+                case 38: // up
+                    newIndex -= colsPerRow;
+                    args.preventDefault();
+                    break;
+                case 39: // right
+                    ++newIndex;
+                    args.preventDefault();
+                    break;
+                case 40: // down
+                    newIndex += colsPerRow;
+                    args.preventDefault();
+                    break;
+                default: return;
+            }
+
+            if (newIndex < 0) {
+                newIndex = 0;
+            }
+            else if (newIndex > slides.length - 1) {
+                newIndex = slides.length - 1;
+            }
+            blurSlide(activeSlideIndex);
+            focusSlide(newIndex);
+            activeSlideIndex = newIndex;
+        }
+
+        function activateMouse() {
+            mouseActive = true;
+        }
+
+        _sorter.load = function() {
+            mouseActive = false;
+            document.body.style.overflowY = 'scroll';
+            for (var i = 0; i < slides.length; ++i) {
+                boxes[i] = document.createElement('div');
+                boxes[i].className = 'consolebox';
+                document.body.appendChild(boxes[i]);
+
+                slides[i].div.addEventListener('mouseover', function(args) {
+                    if (mouseActive) {
+                        focusSlide(getIndexByTarget(args));
+                    }
+                }, false);
+                slides[i].div.addEventListener('mouseleave', function(args) {
+                    if (mouseActive) {
+                        blurSlide(getIndexByTarget(args));
+                    }
+                }, false);
+                showSlide(i);
+            }
+
+            document.removeEventListener('keydown', keyDown);
+            document.addEventListener('keydown', sorterKeyDown, false);
+            document.addEventListener('mousemove', activateMouse, false);
+            focusSlide(slideNumber);
+
+            _sorter.resize();
+        };
+
+        _sorter.unload = function() {
+            for (var i = 0; i < slides.length; ++i) {
+                hideSlide(i);
+                document.body.removeChild(boxes[i]);
+            }
+            document.body.style.overflow = '';
+            document.removeEventListener('keydown', sorterKeyDown);
+            document.removeEventListener('mousemove', activateMouse);
+            document.addEventListener('keydown', keyDown, false);
+            window.scrollTo(0, 0);
+        };
+
+        _sorter.resize = function() {
+            var padding = 15;
+            var boxMargin = 7;
+            var cellwidth = document.body.clientWidth / colsPerRow;
+            for (var i = 0; i < slides.length; ++i) {
+                var row = Math.floor(i / colsPerRow);
+                var col = i % colsPerRow;
+                var ratio = slides[i].settings.format[1] / slides[i].settings.format[0];
+                var x = col * cellwidth + padding;
+                var y = row * ratio * cellwidth + (row + 2) * padding / 2;
+                var width = cellwidth - 2 * padding;
+                scaleSlide(slides[i], x, y, width);
+
+                boxes[i].style.left = x - boxMargin + 'px';
+                boxes[i].style.top = y - boxMargin + 'px';
+                boxes[i].style.width = width + 2 * boxMargin + 'px';
+                boxes[i].style.height = ratio * width + 2 * boxMargin + 'px';
+            }
+        };
+
+        _sorter.gotoSlide = function() { };
+
+        return _sorter;
+    })();
+
+    var consoleNotes = (function() {
+        var _notes = { };
+        var notesdiv;
+        var box;
+
+        function notesKeyDown(args) {
+            var delta = 200;
+            if (args.keyCode === 40) { // down
+                notesdiv.scrollTop = (notesdiv.scrollTop < notesdiv.scrollHeight + delta ? notesdiv.scrollTop + delta : notesdiv.scrollTop);
+            }
+            else if (args.keyCode === 38) { // up
+                if (notesdiv.scrollTop > delta) {
+                    notesdiv.scrollTop = notesdiv.scrollTop - delta;
+                }
+                else {
+                    // 1 and 0 because of firefox bug
+                    notesdiv.scrollTop = 1;
+                    notesdiv.scrollTop = 0;
+                }
+            }
+        }
+
+        _notes.load = function() {
+            notesdiv = document.createElement('div');
+            notesdiv.id = 'notesdiv';
+            notesdiv = document.body.appendChild(notesdiv);
+
+            box = document.createElement('div');
+            box.className = 'consolebox';
+            document.body.appendChild(box);
+
+            window.addEventListener('keydown', notesKeyDown, false);
+        };
+
+        _notes.unload = function() {
+            document.body.removeChild(notesdiv);
+            document.body.removeChild(box);
+            window.removeEventListener('keydown', notesKeyDown);
+        };
+
+        _notes.resize = function() {
+            var boxMargin = 5;
+            var sidesRatio = 0.45;
+            var padding = 20;
+            var leftWidth = document.body.clientWidth * sidesRatio;
+            var rightWidth = document.body.clientWidth * (1 - sidesRatio);
+            scaleSlide(slides[slideNumber], padding, padding, leftWidth);
+
+            box.style.left = padding - boxMargin + 'px';
+            box.style.top = padding - boxMargin + 'px';
+            box.style.width = leftWidth + 2 * boxMargin + 'px';
+            var ratio = slides[slideNumber].settings.format[1] / slides[slideNumber].settings.format[0];
+            box.style.height = ratio * leftWidth + 2 * boxMargin + 'px';
+
+            notesdiv.innerHTML = getNotes(slides[slideNumber]);
+            notesdiv.style.left = leftWidth + 2 * padding + 'px';
+            notesdiv.style.width = rightWidth - 4 * padding + 'px';
+            notesdiv.style.top = padding - boxMargin + 'px';
+            notesdiv.style.height = document.body.clientHeight - 3 * padding + 2 * boxMargin + 'px';
+        };
+
+        _notes.gotoSlide = function(num) {
+            hideSlide(slideNumber);
+            slideNumber = num;
+            _notes.resize();
+            showSlide(num);
+        };
+
+        function getNotes(slide) {
+            var notes = slide.div.querySelectorAll('.notes');
+            if (notes.length > 0) {
+                return notes[0].innerHTML;
+            }
+            return '<span class="noNotes">This slide has no notes.</span>';
+        }
+
+        return _notes;
+    })();
+
+    var consolePreview = (function() {
+        var _prev = { };
+        var boxLarge;
+        var boxSmall;
+
+        _prev.resize = function() {
+            var boxMargin = 5;
+            var sidesRadio = 3 / 5;
+            var padding = 20;
+            var leftWidth = document.body.clientWidth * sidesRadio - 2 * padding;
+            var rightWidth = document.body.clientWidth * (1 - sidesRadio) - padding;
+            scaleSlide(slides[slideNumber], padding, padding, leftWidth);
+            boxLarge.style.left = padding - boxMargin + 'px';
+            boxLarge.style.top = padding - boxMargin + 'px';
+            boxLarge.style.width = leftWidth + 2 * boxMargin + 'px';
+            var ratio = slides[slideNumber].settings.format[1] / slides[slideNumber].settings.format[0];
+            boxLarge.style.height = ratio * leftWidth + 2 * boxMargin + 'px';
+
+            if (slideNumber < slides.length - 1) {
+                scaleSlide(slides[slideNumber + 1], leftWidth + 2 * padding, padding, rightWidth);
+                boxSmall.style.visibility = 'visible';
+                boxSmall.style.left = leftWidth + 2 * padding - boxMargin + 'px';
+                boxSmall.style.top = padding - boxMargin + 'px';
+                boxSmall.style.width = rightWidth + 2 * boxMargin + 'px';
+                ratio = slides[slideNumber + 1].settings.format[1] / slides[slideNumber + 1].settings.format[0];
+                boxSmall.style.height = ratio * rightWidth + 2 * boxMargin + 'px';
+            }
+            else {
+                boxSmall.style.visibility = 'hidden';
+            }
+        };
+
+        _prev.unload = function() {
+            document.body.removeChild(boxLarge);
+            document.body.removeChild(boxSmall);
+        }
+
+        _prev.load = function() {
+            boxLarge = document.createElement('div');
+            boxLarge.className = 'consolebox';
+            document.body.appendChild(boxLarge);
+
+            boxSmall = document.createElement('div');
+            boxSmall.className = 'consolebox';
+            document.body.appendChild(boxSmall);
+        }
+
+        _prev.gotoSlide = function(num) {
+            hideSlide(slideNumber);
+            if (slideNumber < slides.length - 1) {
+                hideSlide(slideNumber + 1);
+            }
+
+            slideNumber = num;
+            _prev.resize(num);
+
+            showSlide(num);
+            if (num < slides.length - 1) {
+                showSlide(num + 1);
+            }
+        };
+
+        return _prev;
+    })();
 
     setup();
     return _ws;
-}();
+})();
