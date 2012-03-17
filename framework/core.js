@@ -354,7 +354,7 @@ var ws = (function() {
         }
     }
 
-    function createSlides() {
+    function setDefaultClass() {
         document.body.style.backgroundColor = globalSettings.outerColor;
 
         for (var i = 0; i < slides.length; ++i) {
@@ -362,8 +362,10 @@ var ws = (function() {
                 slides[i].div.className += ' ' + slides[i].settings.defaultClass;
             }
         }
+    }
 
-        for (i = 0; i < slides.length; ++i) {
+    function createSlides() {
+        for (var i = 0; i < slides.length; ++i) {
             var dim = slides[i].settings.format;
             slides[i].div.style.width = dim[0] + 'px';
 
@@ -741,6 +743,7 @@ var ws = (function() {
                 readyFuncs.script[i]();
             }
 
+            setDefaultClass();
             createSlides();
         };
         window.addEventListener('DOMContentLoaded', cb, false);
