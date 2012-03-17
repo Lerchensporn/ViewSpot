@@ -183,17 +183,7 @@ var ws = (function() {
             return globalSettings[modname];
         },
         loadCSS : function(filename) {
-            var links = document.getElementsByTagName('link');
-            for (var i = 0; i < links.length; ++i) {
-                if (links[i].getAttribute('href') === filename) {
-                    return;
-                }
-            }
-            var link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.type = 'text/css';
-            link.href = filename;
-            document.head.appendChild(link);
+            moduleScriptLoader.appendCSS(filename);
         }
     };
 
@@ -272,8 +262,7 @@ var ws = (function() {
     /* ----------------------------- Slide Setup ---------------------------------- */
 
     function setup() {
-        _ws.module.loadCSS('framework/main.css');
-        _ws.module.loadCSS('framework/corethemes.css');
+  
 
         views = [normalView, consoleNotes, consolePreview, sorter];
         onready();
@@ -354,7 +343,7 @@ var ws = (function() {
         }
     }
 
-    function setDefaultClass() {
+    function createSlides() {
         document.body.style.backgroundColor = globalSettings.outerColor;
 
         for (var i = 0; i < slides.length; ++i) {
@@ -362,16 +351,15 @@ var ws = (function() {
                 slides[i].div.className += ' ' + slides[i].settings.defaultClass;
             }
         }
-        setTimeout(createSlides);
-    }
 
-    function createSlides() {
         for (var i = 0; i < slides.length; ++i) {
             var dim = slides[i].settings.format;
-            slides[i].div.style.width = dim[0] + 'px';
+            var computed = document.defaultView.getComputedStyle(slides[i].div, null);
+            var paddingLeft = parseInt(computed.getPropertyValue('padding-left'));
+            var paddingRight = parseInt(computed.getPropertyValue('padding-right'));
 
             // consider the slide padding
-            slides[i].div.style.width = dim[0] - (slides[i].div.clientWidth - dim[0]) + 'px';
+            slides[i].div.style.width = dim[0] - paddingLeft - paddingRight + 'px';
             slides[i].div.style.height = dim[1] + 'px';
 
             var themeCallback = slides[i].settings.setupSlide;
@@ -401,6 +389,7 @@ var ws = (function() {
     var ScriptLoader = function() {
         var _sl = { };
         var scriptlist = [];
+        var csslist = [];
         var loadedCount = 0;
         var loading = false;
 
@@ -417,23 +406,35 @@ var ws = (function() {
             if (typeof onload !== 'undefined') {
                 js.addEventListener('load', onload, false);
             }
-            js.addEventListener('load', onScriptLoad, false);
+            js.addEventListener('load', onElementLoad, false);
             scriptlist.push(js);
+        };
+
+        _sl.appendCSS = function(filename) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = filename;
+            link.addEventListener('load', onElementLoad, false);
+            csslist.push(link);
         };
 
         _sl.load = function() {
             loading = true;
-            if (scriptlist.length === 0) {
+            if (scriptlist.length === 0 && csslist.length === 0) {
                 _sl.onload();
                 return;
             }
             for (var i = 0; i < scriptlist.length; ++i) {
                 document.head.appendChild(scriptlist[i]);
             }
+            for (var i = 0; i < csslist.length; ++i) {
+                document.head.appendChild(csslist[i]);
+            }
         };
 
-        function onScriptLoad() {
-            if (++loadedCount === scriptlist.length) {
+        function onElementLoad() {
+            if (++loadedCount === scriptlist.length + csslist.length) {
                 _sl.onload();
             }
         }
@@ -734,6 +735,23 @@ var ws = (function() {
 
     /* Executes the callbacks in the readycbs array when the DOM is ready. */
     function onready() {
+        /* Firefox loads stylesheets asynchronously, but the stylesheets must be loaded
+           when createSlides is executed. So we run createSlides after both the load
+           event of the ScriptLoader and DOMContentLoaded were fired. */
+
+        var cssLoader = ScriptLoader();
+        var domcssCount = 0;
+        var domcssLoader = function() {
+            if (++domcssCount === 2) {
+                createSlides();
+            }
+        };
+
+        cssLoader.onload = domcssLoader;
+        cssLoader.appendCSS('framework/main.css');
+        cssLoader.appendCSS('framework/corethemes.css');
+        cssLoader.load();
+
         var cb = function() {
             parseDom();
             defaultConfig();
@@ -744,7 +762,7 @@ var ws = (function() {
                 readyFuncs.script[i]();
             }
 
-            setDefaultClass();
+            domcssLoader();
         };
         window.addEventListener('DOMContentLoaded', cb, false);
         window.addEventListener('load', loadModules, false);
@@ -1569,8 +1587,6 @@ ws.controls = function() {
     'use strict';
 
     var _controls = { };
-
-    ws.module.loadCSS('framework/controls.css');
 
     _controls.sidebar = function(slide) {
         var sidebardiv = document.createElement('div');
