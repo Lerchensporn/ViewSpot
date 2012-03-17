@@ -391,14 +391,10 @@ var ws = (function() {
         var scriptlist = [];
         var csslist = [];
         var loadedCount = 0;
-        var loading = false;
 
         _sl.onload = function() { };
 
         _sl.appendScript = function(filename, onload) {
-            if (loading) {
-                throw 'The load function was already called.';
-            }
             var js = document.createElement('script');
             js.type = 'text/javascript';
             js.async = false;
@@ -415,12 +411,19 @@ var ws = (function() {
             link.rel = 'stylesheet';
             link.type = 'text/css';
             link.href = filename;
-            link.addEventListener('load', onElementLoad, false);
+
+            if (navigator.userAgent.indexOf('AppleWebKit') !== -1) {
+                // Webkit does/did not support the onload event on link elements. A patch has
+                // been committed 2012-02-24. https://bugs.webkit.org/show_bug.cgi?id=38995
+                ++loadedCount;
+            }
+            else {
+                link.addEventListener('load', onElementLoad, false);
+            }
             csslist.push(link);
         };
 
         _sl.load = function() {
-            loading = true;
             if (scriptlist.length === 0 && csslist.length === 0) {
                 _sl.onload();
                 return;
@@ -430,6 +433,11 @@ var ws = (function() {
             }
             for (var i = 0; i < csslist.length; ++i) {
                 document.head.appendChild(csslist[i]);
+            }
+
+            // for webkit, see above
+            if (loadedCount === scriptlist.length + csslist.length) {
+                _sl.onload();
             }
         };
 
