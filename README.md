@@ -1,1 +1,1 @@
-Visit the [project web page](http://woho.github.com/WebSlider).
+Visit the [project web page](http://woho.github.com/ViewSpot).
