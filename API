@@ -61,7 +61,7 @@ The attribute name is like
 
 === Javascript overlays ===
 Function:
-    ws.setOverlay(domElement, selector, callback)
+    ws.setOverlay(selector, callback)
 
 === Internal representation ===
 The frame numbers are written into an array.

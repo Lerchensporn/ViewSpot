@@ -29,6 +29,23 @@
 
 /****************/
 
+.timer {
+    background-color: #456;
+    border-radius: 10px;
+    position: absolute;
+    height: 100px;
+    width: 100px;
+    margin: 10px;
+    left: 0px;
+    bottom: 0px;
+    text-align: center;
+}
+
+.clockspan {
+    font-size: 20px;
+    color: white;
+}
+
 .consolebox {
     position: absolute;
     z-index: -1;

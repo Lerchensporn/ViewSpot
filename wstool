@@ -69,7 +69,7 @@ def rmfiles(base, fileslist):
 
 def installModule():
     if len(sys.argv) < 3:
-        print('Available modules: mathjax, shjs, flot, shjs, jqplot, raphael')
+        print('Available modules: mathjax, flot, syntaxhighlighter, jqplot, raphael')
         return
     module = sys.argv[2]
 

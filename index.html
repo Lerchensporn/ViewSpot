@@ -8,6 +8,7 @@
         body {
             margin-right: 200px;
             margin-left: 200px;
+            font-size: 11pt;
         }
         h1 {
             font-size: 22px;
@@ -27,6 +28,20 @@
         }
         a:hover {
             text-decoration: underline;
+        }
+        table {
+            margin-top: 10px;
+            border-collapse: collapse;
+        }
+        table th {
+            text-align: left;
+            padding-left: 10px;
+            background-color: #abc;
+            border: 1px solid #abc;
+        }
+        table td {
+            padding: 5px;
+            border: 1px solid #abc;
         }
     </style>
     <body>
@@ -53,6 +68,10 @@
         <dt>Scripting support (JavaScript)</dt><dd>
         Do whatever you want using scripts – especially powerful in combination with overlays.
         </dd>
+        <dt>Presenter Console</dt><dd>
+        Different views for the presenter and the audience. Notes for every slide
+        are supported.
+        </dd>
         <dt>Customizable</dt><dd>
         It is very easy to define own themes using CSS or even Javascript.
         </dd>
@@ -63,7 +82,7 @@
         This leads to a separation of content and style, which is very practical:
         One can write the content and style it afterwards. The productivity increases,
         because one only has to concentrate on one thing at the same time.</dd>
-        <dt>Small Download and no installation required</dt>
+        <dt>Small download and no installation required</dt>
         <dd>An advantage in comparision to LaTeX (hundred of megabytes) and Impress, because
         no installation is required. However, when using many plugins, the file size is likely bigger that
         the size of .odf files.
@@ -79,7 +98,7 @@
         languages are easy to learn and Javascript knowledge is only necessary
         when using advances features.
         Despite the advantages of a non-WYSIWYG approach, some lusers might
-        feel irritated when they cannnot point and click around.</dd>
+        feel irritated when they cannot point and click around.</dd>
         <dt>The portability is worse than with PDF files</dt>
         <dd>A modern web browser is required to view the presentations (Internet Explorer does
         not count as a web browser).</dd>
@@ -88,20 +107,161 @@
 
     <h2>To Do List</h2>
     <ul>
-        <li>implement overlays</li>
-        <li>apply mozilla box shadow fix at the right time</li>
-        <li>better presenter screen</li>
+        <li>presentation clock</li>
         <li>more themes</li>
-        <li>improve mozilla shadow fix</li>
-        <li>speedup module loading</li>
         <li>implement Python tools</li>
         <li>invent a better project name</li>
-        <li>store the fonts in the presentation and use css font-face (good idea?)</li>
     </ul>
 
     <h2>Documentation</h2>
     <h3>A short intruduction</h3>
+    To be able to use this software, you should at least be able to write HTML and CSS code.
+    When you have downloaded and unpacked WebSlider, you will see a directory called »framework«
+    and the file »wstool«. The wstool is a Python script with a lot of helpful functions, »framework«
+    contains the actual presentation software.
+
+    For basic presentation, create an HTML file in the directory containing »framework«.
+    In the head, load the javascript file »core.js« and set you desired charset. The title
+    is optional.
+    Every div element inside the body tag will be turned into a slide.
+    <pre>
+        &lt;!DOCTYPE html&gt;
+        &lt;html&gt;
+        &lt;head&gt;
+            &lt;title&gt;My first presentation&lt;/title&gt;
+            &lt;meta http-equiv=&quot;content-type&quot; content=&quot;text/html; charset=utf-8&quot;/&gt;
+            &lt;script type=&quot;text/javascript&quot; src=&quot;framework/core.js&quot;&gt;&lt;/script&gt;
+        &lt;/head&gt;
+        &lt;body&gt;
+            &lt;div&gt;
+                My first slide.
+            &lt;/div&gt;
+            &lt;div&gt;
+                My second slide.
+            &lt;/div&gt;
+        &lt;/body&gt;
+        &lt;/html&gt;
+    </pre>
+    Edit your presentation and view the result in a browser. The current slide number
+    is saved in a cookie, so just press F5 to update the presentation.
+
+    <h3>Navigation</h3>
+    Use the left and right key to move to the previous or next slide.
+    Pressing the space key will show a menu with some functions. 
+    Normally, the cursor is hidden after some time. To activate the »laser mouse«,
+    a tool similar to a laser pointer, press »L«.
+
+    It is possible to have different views for the audience and the presenter.
+    In the menu (space key), click on »Console« to load a second window. The two
+    windows will be able to communicate with each other.
+    Press »W« to change the view. Currently, there are the following views:
+    <dl>
+        <dt>Normal View</dt><dd>The fullscreen slide visible to the audience</dd>
+        <dt>Preview Console</dt><dd>Shows the current slide and the next slide.</dd>
+        <dt>Notes Console</dt><dd>Shows the current slides and notes. Press the up/down
+            key to scroll the notes box up and down.</dd>
+        <dt>Slide Sorter</dt><dd>Shows all slides in a matrix. You can select a slide using the
+            array keys or the mouse. Press enter to switch to the normal view and go to the selected
+            slide.</dd>
+    </dl>
+
+    <h3>Important elements</h3>
+    To assign notes to a slide, create a div with the class »notes« that contains
+    the HTML markup of the notes.
+    Each slide is supposed to contain a <code>&lt;h1&gt;&lt;/h1&gt;</code> element, which
+    represents the slide title.
+    To create theorem boxed like in LaTeX beamer, use this structure:
+    <pre>
+        &lt;div class="theorem"&gt;
+            &lt;h2&gt;Theorem title&lt;/h2&gt;
+            Theorem contents.
+        &lt;/div&gt;
+    </pre>
+    There are some predefined CSS styles that can be applied to each slide by
+    setting the class name to the respective class.
+
+    <h3>Configuration</h3>
+    Javascript is used to configure the presentation. The most important options
+    are the module list and the slide theme.
+    Example:
+    <pre>
+        &lt;script&gt;
+            ws.config.setGlobal({
+                modules : ['mathjax', 'jqplot'],
+                defaultClass : 'latex warsaw',
+                setupSlide : function(slide) { ws.controls.miniframes(slide); }
+            });
+        &lt;/script&gt;
+    </pre>
+
+    Complete list of configuration options:
+    <table>
+        <tr><th>Option</th><th>Explanation</th><th>Value</th></tr>
+        <tr>
+            <td>modules</td>
+            <td>List of modules to be loaded.</td>
+            <td>Array of strings that specify the module names. Full module list:
+                ['mathjax', 'raphael', 'jqplot', 'flot', 'syntaxhighlighter']. See chapter »Modules«.</td>
+        </tr>
+        <tr>
+            <td>format</td>
+            <td>The slide size in pixels. The slide is resized to the browser viewport size, so actually 
+                only the side ratio is relevant.</td>
+            <td>Array with two integer items. The first one is the width, the second one is the height. Default value:
+                [1024, 768].</td>
+        </tr>
+        <tr>
+            <td>outerColor</td>
+            <td>The background color of the place next to the slides.</td>
+            <td>CSS color string. Default value: 'black'.</td>
+        </tr>
+        <tr>
+            <td>cursorHideTimeout</td>
+            <td>Time after the the not moving cursor is hidden.</td>
+            <td>Integer that specifies the time in milliseconds. Default value: 1000.</td>
+        </tr>
+        <tr>
+            <td>setupSlide</td>
+            <td>Javascript callback that sets up the slides. The respective slide is given
+            as a function argument. The callback is called on every slide on the presentation at startup time.
+            The callback can be used to add controls like miniframes or a footer to each slide.</td>
+            <td>&ndash;</td>
+        </tr>
+        <tr>
+            <td>defaultClass</td>
+            <td>List of class names that are assigned to each slide at startup time. Already existing
+                class names are preserved.</td>
+            <td>String containing space-separated class names. Example: 'latex warsaw'.</td>
+        </tr>
+    </table>
+
+    <h3>Modules</h3>
+    It is possible to load third party javascript modules. In the framework directory, each
+    module has an own directory and a loader file called »module.[name].js«.
+    There are the following modules:
+    <dl>
+        <dt>jqPlot</dt><dd>For plotting, charts and graphs. It is based on the jQuery framework.
+            See <a href="http://www.jqplot.com/">http://www.jqplot.com/</a>.</dd>
+        <dt>Flot</dt><dd>Another plotting library based on jQuery. See <a href="http://code.google.com/p/flot/">http://code.google.com/p/flot/</a>.
+            Generally, Flot contains more features and jqPlot has a better support for plugins.</dd>
+        <dt>MathJax</dt><dd>Typeset math in the presentation. When you put LaTeX code inside those \[\] brackets,
+            it is converted to a MathML formula. See <a href="http://www.mathjax.org">http://www.mathjax.org</a>.</dd>
+        <dt>RaphaelJs</dt><dd>A library for creating and animating SVG graphics. See <a href="http://raphaeljs.com/">http://raphaeljs.com/</a>.</dd>
+        <dt>SyntaxHighlighter</dt><dd>Highlights code and supports many languages. Put code inside <code>&lt;pre class="brush: ??"&gt;&lt;/pre&gt;</code>
+            and replace ?? by the language abbreviation, for example »js« or »c«.
+            See <a href="http://alexgorbatchev.com/SyntaxHighlighter/">http://alexgorbatchev.com/SyntaxHighlighter/</a>.</dd>
+        <dt>JSXGraph</dt><dd>Library for interactive geometry, plotting, charting and data visualization.
+            It is even possible to display GeoNext files. See <a href="http://jsxgraph.uni-bayreuth.de/wp/">http://jsxgraph.uni-bayreuth.de/wp/</a>.</dd>
+    </dl>
+
+
+    <h3>Overlays</h3>
+    Overlays are like animation in Impress/Powerpoint or like overlays in LaTeX Beamer. The overlays
+    are frame based, that means when navigating, whe frame number changes and the respective overlay
+    is loaded. There are both CSS and Javascript overlays.
+
     <h3>Javascript API</h3>
+
     <h3>Python Tool</h3>
     One can download WebSlider and unpack it.
     Without python tools, the WebSlider directory has to be copied for each
@@ -133,7 +293,16 @@
 
     <h2>Compatibility</h2>
     WebSlider is developed for Firefox and Chromium (Gecko and Webkit).
-    <br/>
+    Browser bugs:
+    <ul>
+        <li>Firefox renders scaled fonts twice, which makes letters to dance.
+            Before presenting, one should scroll through the slides, because
+            the bug only appears once for each scale.</li>
+        <li>Firefox does not render scaled borders and box shadows correctly. A complex workaround is used
+            to make it look properly.</li>
+        <li>Chromium does not support MathML, that is why the HTML-CSS output is used in MathJax.</li>
+        <li>Chromium fires the mousemove event when the cursor shape changes. There is an easy workaround.</li>
+    </ul>
     <h2>License</h2>
     You can do with the code what you want, if you put a reference to me (that means this site).
     See <a href="http://www.opensource.org/licenses/mit-license.php">MIT license</a>.

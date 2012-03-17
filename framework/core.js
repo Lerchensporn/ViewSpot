@@ -3,11 +3,11 @@ var ws = (function() {
     'use strict';
 
     var _ws = { config : {} };
-    var modules = ['raphael', 'jsxgraph', 'mathjax', 'fullthemes', 'syntaxhighlighter', 'jqplot', 'flot'];
     var defaultSettings = {
         format : [1024, 768],
         outerColor : 'black',
         cursorHideTimeout : 1000,
+        modules : []
     };
     var views;
     var slides = [];
@@ -26,20 +26,13 @@ var ws = (function() {
     var sync = false;
     var globalSettings = defaultSettings;
     var slideSettings = [];
-    var readyFuncs = { parse : [], script : [], finish : [], modulesLoaded : [] };  // callbacks to run when DOM is ready
+    var readyFuncs = { script : [], modulesLoaded : [] };
 
     /* ---------------------------- API methods ----------------------------------- */
 
     /** Sets whether the presentation is synchronized between windows. */
     _ws.setSync = function(boolval) {
         sync = boolval;
-    };
-
-    /** Set the modules to load with the presentation.
-        @param mods An array of strings that specity the modules. */
-    // FIXME integrate in config.setGlobal
-    _ws.loadModules = function(mods) {
-        modules = mods;
     };
 
     /** Get the current slide. */
@@ -78,13 +71,13 @@ var ws = (function() {
         });
     };
 
-    var switchView = function(view) {
+    function switchView(view) {
         if (typeof currentView !== 'undefined') {
             currentView.unload();
         }
         view.load();
         currentView = view;
-        view.gotoSlide(slideNumber);
+        _ws.gotoSlide(slideNumber);
         window.onresize = currentView.resize;
         setCookie('view', views.indexOf(view));
     }
@@ -95,12 +88,7 @@ var ws = (function() {
             readyFuncs.modulesLoaded.push(func);
         }
         else {
-            try {
-                func();
-            }
-            catch (e) {
-                logger(e);
-            }
+            func();
         }
     };
 
@@ -115,7 +103,7 @@ var ws = (function() {
         readyFuncs.script.push(function() {
             var si = getSlideIndexOfElement(cur);
             if (si !== null) {
-                setConfig(i, settings);
+                setConfig(si, settings);
             }
         });
     };
@@ -159,14 +147,15 @@ var ws = (function() {
             return;
         }
         currentView.gotoSlide(num);
+        _ws.gotoOverlay(1);
         slideNumber = num;
         setCookie('slide', num);
-    }
+    };
 
     /** Go to the next slide. */
     _ws.gotoNext = function() {
         if (slides[slideNumber].overlayIndex < slides[slideNumber].overlayCount) {
-            gotoOverlay(slides[slideNumber].overlayIndex + 1);
+            _ws.gotoOverlay(slides[slideNumber].overlayIndex + 1);
         }
         else  {
             _ws.gotoSlide(slideNumber + 1);
@@ -176,7 +165,7 @@ var ws = (function() {
     /** Go to the previous slide. */
     _ws.gotoPrevious = function() {
         if (slides[slideNumber].overlayIndex > 1) {
-            gotoOverlay(slides[slideNumber].overlayIndex - 1);
+            _ws.gotoOverlay(slides[slideNumber].overlayIndex - 1);
         }
         else {
             _ws.gotoSlide(slideNumber - 1);
@@ -229,7 +218,7 @@ var ws = (function() {
             }
         }
 
-        for (var i = 0; i < subbing; ++i) {
+        for (i = 0; i < subbing; ++i) {
             html += '</ul>';
         }
 
@@ -278,16 +267,15 @@ var ws = (function() {
         }, false);
         msgdiv = document.body.appendChild(msgdiv);
         setHideTimeout();
-    }
+    };
 
     /* ----------------------------- Slide Setup ---------------------------------- */
 
     function setup() {
         _ws.module.loadCSS('framework/main.css');
+        _ws.module.loadCSS('framework/corethemes.css');
 
         views = [normalView, consoleNotes, consolePreview, sorter];
-        readyFuncs.parse = [parseDom, defaultConfig, parseSections, parseOverlays];
-        readyFuncs.finish = [init];
         onready();
 
         document.addEventListener('keydown', keyDown, false);
@@ -296,7 +284,7 @@ var ws = (function() {
 
         window.onunload = function() {
             if (typeof otherWindow !== 'undefined') {
-                otherWindow.ws['showMessage'].apply(otherWindow, ['The other window was closed.']);
+                otherWindow.ws.showMessage.apply(otherWindow, ['The other window was closed.']);
             }
         };
 
@@ -367,7 +355,15 @@ var ws = (function() {
     }
 
     function createSlides() {
+        document.body.style.backgroundColor = globalSettings.outerColor;
+
         for (var i = 0; i < slides.length; ++i) {
+            if (typeof slides[i].settings.defaultClass !== 'undefined') {
+                slides[i].div.className += ' ' + slides[i].settings.defaultClass;
+            }
+        }
+
+        for (i = 0; i < slides.length; ++i) {
             var dim = slides[i].settings.format;
             slides[i].div.style.width = dim[0] + 'px';
 
@@ -397,7 +393,7 @@ var ws = (function() {
             slideNumber = 0;
         }
         switchView(views[viewIndex]);
-    };
+    }
 
     var ScriptLoader = function() {
         var _sl = { };
@@ -418,7 +414,6 @@ var ws = (function() {
                 js.addEventListener('load', onload, false);
             }
             js.addEventListener('load', onScriptLoad, false);
-            js.addEventListener('error', onScriptError, false); // FIXME does not work
             scriptlist.push(js);
         };
 
@@ -439,58 +434,28 @@ var ws = (function() {
             }
         }
 
-        function onScriptError() {
-            logger('Error in module script');
-            alert('bla');
-            onScriptLoad();
-        }
-
         return _sl;
     };
 
-    function init() {
-        document.body.style.backgroundColor = globalSettings.outerColor;
-        var themeDict = [];
-
-        for (var i = 0; i < slides.length; ++i) {
-            if (typeof slides[i].settings.css !== 'undefined') {
-                var css = slides[i].settings.css;
-                for (var k = 0; k < css.length; ++k) {
-                    if (themeDict.indexOf(css[k]) === -1) {
-                        themeDict.push(css[k]);
-                    }
-                }
-            }
-        }
-
-        for (var i = 0; i < themeDict.length; ++i) {
-            _ws.module.loadCSS('framework/' + themeDict[i] + '.css');
-        }
-
+    function loadModules() {
         moduleScriptLoader = ScriptLoader();
         moduleScriptLoader.onload = function () {
             modulesLoaded();
-            createSlides();
             loaded = true;
         };
         var loader = ScriptLoader();
         loader.onload = function() {
             moduleScriptLoader.load();
         };
-        for (var i = 0; i < modules.length; ++i) {
-            loader.appendScript('framework/module.' + modules[i] + '.js');
+        for (var i = 0; i < globalSettings.modules.length; ++i) {
+            loader.appendScript('framework/module.' + globalSettings.modules[i] + '.js');
         }
         loader.load();
     }
 
     function modulesLoaded() {
         for (var i = 0; i < readyFuncs.modulesLoaded.length; ++i) {
-            try {
-                readyFuncs.modulesLoaded[i]();
-            }
-            catch (e) {
-                logger(e);
-            }
+            readyFuncs.modulesLoaded[i]();
         }
     }
 
@@ -531,7 +496,7 @@ var ws = (function() {
                 classes[i] = classes[i].trim();
             }
 
-            for (var i = 0; i < style.classList.length; ++i) {
+            for (i = 0; i < style.classList.length; ++i) {
                 var index = classes.indexOf(style.classList[i]);
                 while (index !== -1) {
                     classes[index] = '';
@@ -646,7 +611,9 @@ var ws = (function() {
         return [[fromInt, toInt]];
     }
 
-    function gotoOverlay(overlayIndex) {
+    _ws.gotoOverlay = function(overlayIndex) {
+        syncWindow('gotoOverlay', arguments);
+
         var slide = slides[slideNumber];
         if (overlayIndex < 1 || overlayIndex > slide.overlayCount) {
             return;
@@ -688,7 +655,7 @@ var ws = (function() {
             }
         }
         slide.overlayIndex = overlayIndex;
-    }
+    };
 
     /** Set the overlay action to javascript callbacks.
         @param selector The frames selector.
@@ -764,17 +731,19 @@ var ws = (function() {
     /* Executes the callbacks in the readycbs array when the DOM is ready. */
     function onready() {
         var cb = function() {
-            for (var i = 0; i < readyFuncs.parse.length; ++i) {
-                readyFuncs.parse[i]();
-            }
-            for (i = 0; i < readyFuncs.script.length; ++i) {
+            parseDom();
+            defaultConfig();
+            parseSections();
+            parseOverlays();
+
+            for (var i = 0; i < readyFuncs.script.length; ++i) {
                 readyFuncs.script[i]();
             }
-            for (i = 0; i < readyFuncs.finish.length; ++i) {
-                readyFuncs.finish[i]();
-            }
+
+            createSlides();
         };
         window.addEventListener('DOMContentLoaded', cb, false);
+        window.addEventListener('load', loadModules, false);
     }
 
     /* ---------------------------------------------------------------------------- */
@@ -829,17 +798,56 @@ var ws = (function() {
             return;
         }
         var shadowid = elem.getAttribute('data-shadowid');
-        if (computed.getPropertyValue('box-shadow') === 'none' && shadowid === null) {
+        var boxshadow = computed.getPropertyValue('box-shadow');
+        if (boxshadow === 'none' && shadowid === null) {
             return;
         }
+
+        // the underlying div is inset by 1 px, so increase the shadow offset by 1 px
+        var add1px = function(boxshadow) {
+            var split = boxshadow.split(' ');
+            if (split.length < 3) {
+                return;
+            }
+            split[split.length - 1] = parseInt(split[split.length - 1]) + 1 + 'px';
+            return split.join(' ');
+        };
 
         var absdiv;
         if (shadowid !== null) {
             absdiv = document.getElementById(shadowid);
         }
-        if (shadowid === null) {
+
+        if (shadowid === null || absdiv === null) {
+            var innershadow = [];
+            var outershadow = [];
+            var split = boxshadow.split(', rgb(');
+            for (var i = 0; i < split.length; ++i) {
+                if (i !== 0) {
+                    split[i] = 'rgb(' + split[i];
+                }
+                if (split[i].lastIndexOf('inset') !== -1) {
+                    innershadow.push(split[i]);
+                }
+                else {
+                    outershadow.push(add1px(split[i]));
+                }
+            }
+            innershadow = innershadow.join(',');
+            outershadow = outershadow.join(',');
+
+            if (outershadow.length === 0) {
+                return;
+            }
+
             absdiv = document.createElement('div');
             absdiv.className = 'mozfix';
+            absdiv.id = 'mozfix' + Math.floor(Math.random() * 10000000000); // TODO make it really unique
+            elem.setAttribute('data-shadowid', absdiv.id);
+            elem.parentNode.insertBefore(absdiv, elem);
+
+            absdiv.style.boxShadow = outershadow;
+            elem.style.boxShadow = innershadow;
         }
 
         var cssLength = function(prop) {
@@ -864,27 +872,6 @@ var ws = (function() {
         absdiv.style.width = cssLength('width') + cssLength('padding-left') + cssLength('padding-right') - 2 + 'px';
 
         absdiv.style.zIndex = computed.getPropertyValue('z-index');
-
-        // the underlying div is inset by 1 px, so increase the shadow offset by 1 px
-        var add1px = function(boxshadow) {
-            var split = boxshadow.split(' ');
-            if (split.length < 3) {
-                return;
-            }
-            split[split.length - 1] = parseInt(split[split.length - 1]) + 1 + 'px';
-            return split.join(' ');
-        };
-
-        if (shadowid === null) {
-            absdiv.style.boxShadow = add1px(computed.getPropertyValue('box-shadow'));
-            elem.style.boxShadow = 'none';
-            absdiv.id = 'mozfix' + Math.floor(Math.random() * 10000000000); // TODO make it really unique
-            elem.setAttribute('data-shadowid', absdiv.id);
-            elem.parentNode.insertBefore(absdiv, elem);
-        }
-        else if (computed.getPropertyValue('box-shadow') !== 'none') {
-            absdiv.style.boxShadow = add1px(computed.getPropertyValue('box-shadow'));
-        }
     }
 
     function mozShadowFix(rootNode) {
@@ -1004,6 +991,14 @@ var ws = (function() {
 
     function keyDown(ev) {
         if (ev.target === 'INPUT') {
+            return;
+        }
+
+        if (ev.keyCode === 32) {
+            var timerdiv = timer.createGui();
+            document.body.appendChild(timerdiv);
+            timer.start();
+            ev.preventDefault();
             return;
         }
 
@@ -1190,7 +1185,7 @@ var ws = (function() {
 
             var newWidth = Math.min(width / pagewidth, height / pageheight) * pagewidth;
             scaleSlide(slides[slideNumber], (width - newWidth) / 2, 0, newWidth);
-        }
+        };
 
         return _normalView;
     })();
@@ -1203,57 +1198,65 @@ var ws = (function() {
         slide.div.style.marginLeft = (scale - 1) * slide.settings.format[0] / 2 + x + 'px';
     }
 
-    var statusbar = function() {
-        var timerRunning;
-        var startTime;
-    
-        var _statusbar = { };
 
-        function resetTimer() {
-            startTime = null;
-            paused = 0;
-            document.getElementById('time').innerHTML = '0:00';
-        }
+    var timer = (function() {
+        var _timer = { };
+        var startTime = null;
+        var runner = null;
 
-        function updateTime() {
+        /* DOM cache */
+        var clockspan;
+        var timerspan;
+        var pie;
+
+        _timer.createGui = function(isHorizontal) {
+            var timerdiv = document.createElement('div');
+            timerdiv.className = 'timer';
+         /*   var svg = document.createElement('svg');
+            svg.xmlns = 'http://www.w3.org/2000/svg';
+            svg.version = '1.1';
+            svg.height = '100px';
+            svg.width = '100px';
+            var pie = document.createElement('circle');
+            circle.cx = '50px';
+            circle.cy = '50px';*/
+
+            clockspan = document.createElement('div');
+            clockspan.className = 'clockspan';
+            timerdiv.appendChild(clockspan);
+            return timerdiv;
+        };
+
+        _timer.start = function() {
+            if (runner !== null) {
+                return;
+            }
+            startTime = new Date();
+            clearInterval(runner);
+            runner = setInterval(updateGui, 1000);
+        };
+
+        _timer.pause = function() {
+            clearInterval(runner);
+            runner = null;
+        };
+
+        _timer.reset = function() {
+            startTime = new Date();
+            _timer.pause();
+        };
+
+        function updateGui() {
             var now = new Date();
-
-            var clockstring = pad2two(now.getHours()) + ':' + pad2two(now.getMinutes()) + ':' + pad2two(now.getSeconds());
-
-            if (timerRunning === false) {
-                document.getElementById('clocktime').innerHTML = clockstring;
-            }
-            else {
-                if (startTime === null) {
-                    startTime = now;
-                }
-                var diff = new Date(now.getTime() + paused - startTime.getTime());
-                var timestring = (diff.getHours()*60 - 60 + diff.getMinutes()).toString() + ':' + pad2two(diff.getSeconds());
-
-                // change parent html to be synchronous
-                document.getElementById('clocktime').parentNode.innerHTML = getClockHtml(clockstring, timestring);
-            }
-        }
-
-        function startStop() {
-            if (timerRunning === false) {
-                document.getElementById('pause').innerHTML = 'Pause';
-                timerRunning = true;
-            }
-            else {
-                if (startTime !== null) {
-                    paused += (new Date()).getTime() - startTime;
-                    startTime = null;
-                }
-                timerRunning = false;
-                document.getElementById('pause').innerHTML = 'Resume';
-            }
+            clockspan.textContent = pad2two(now.getHours()) + ':' + pad2two(now.getMinutes()) + ':' + pad2two(now.getSeconds());
         }
 
         function pad2two(digit) {
             return (digit.toString().length === 1 ? '0' + digit.toString() : digit.toString());
         }
-    };
+
+        return _timer;
+    })();
 
     var sorter = (function() {
         var _sorter = { };
@@ -1262,14 +1265,6 @@ var ws = (function() {
         var mouseActive;
 
         var boxes = [];
-
-        function getIndexByTarget(args) {
-            for (var i = 0; i < slides.length; ++i) {
-                if (args.currentTarget === slides[i].div) {
-                    return i;
-                }
-            }
-        }
 
         function focusSlide(index) {
             blurSlide(activeSlideIndex);
@@ -1289,7 +1284,7 @@ var ws = (function() {
             }
 
             if (mouseActive && scrolling) {
-                mouseActive = false;
+                deactivateMouse();
                 setTimeout(function() { mouseActive = true; }, 0);
             }
         }
@@ -1340,8 +1335,14 @@ var ws = (function() {
             activeSlideIndex = newIndex;
         }
 
+        function deactivateMouse() {
+            mouseActive = false;
+            document.addEventListener('mousemove', activateMouse);
+        }
+
         function activateMouse() {
             mouseActive = true;
+            document.removeEventListener('mousemove', activateMouse);
         }
 
         _sorter.load = function() {
@@ -1351,23 +1352,30 @@ var ws = (function() {
                 boxes[i] = document.createElement('div');
                 boxes[i].className = 'consolebox';
                 document.body.appendChild(boxes[i]);
+                slides[i].div.addEventListener('mouseover', (function(index) {
+                    return function(args) {
+                        args.preventDefault();
+                        if (mouseActive) {
+                            focusSlide(index);
+                        }
+                    };
+                })(i), false);
 
-                slides[i].div.addEventListener('mouseover', function(args) {
-                    if (mouseActive) {
-                        focusSlide(getIndexByTarget(args));
-                    }
-                }, false);
-                slides[i].div.addEventListener('mouseleave', function(args) {
-                    if (mouseActive) {
-                        blurSlide(getIndexByTarget(args));
-                    }
-                }, false);
+                slides[i].div.addEventListener('mouseleave', (function(index) {
+                    return function(args) {
+                        args.preventDefault();
+                        if (mouseActive) {
+                            blurSlide(index);
+                        }
+                    };
+                })(i), false);
+
                 showSlide(i);
             }
 
             document.removeEventListener('keydown', keyDown);
             document.addEventListener('keydown', sorterKeyDown, false);
-            document.addEventListener('mousemove', activateMouse, false);
+            deactivateMouse();
             focusSlide(slideNumber);
 
             _sorter.resize();
@@ -1380,7 +1388,6 @@ var ws = (function() {
             }
             document.body.style.overflow = '';
             document.removeEventListener('keydown', sorterKeyDown);
-            document.removeEventListener('mousemove', activateMouse);
             document.addEventListener('keydown', keyDown, false);
             window.scrollTo(0, 0);
         };
@@ -1560,7 +1567,7 @@ var ws = (function() {
 
 ws.controls = function() {
 
-    'use strict;'
+    'use strict';
 
     var _controls = { };
 
@@ -1581,7 +1588,7 @@ ws.controls = function() {
     };
 
     _controls.footer = function(slide) {
-        footerdiv = document.createElement('div');
+        var footerdiv = document.createElement('div');
         footerdiv.className = 'footer';
         if (typeof slide.settings.footer !== 'undefined' && typeof slide.settings.footer.text !== 'undefined') {
             footerdiv.innerHTML = slide.settings.footer.text;
