@@ -362,6 +362,7 @@ var ws = (function() {
                 slides[i].div.className += ' ' + slides[i].settings.defaultClass;
             }
         }
+        setTimeout(createSlides);
     }
 
     function createSlides() {
@@ -744,7 +745,6 @@ var ws = (function() {
             }
 
             setDefaultClass();
-            createSlides();
         };
         window.addEventListener('DOMContentLoaded', cb, false);
         window.addEventListener('load', loadModules, false);
