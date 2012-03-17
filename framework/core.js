@@ -362,7 +362,7 @@ var ws = (function() {
                 slides[i].div.className += ' ' + slides[i].settings.defaultClass;
             }
         }
-alert('pause');
+
         for (i = 0; i < slides.length; ++i) {
             var dim = slides[i].settings.format;
             slides[i].div.style.width = dim[0] + 'px';
