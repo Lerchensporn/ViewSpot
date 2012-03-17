@@ -409,6 +409,7 @@ var ws = (function() {
             }
             var js = document.createElement('script');
             js.type = 'text/javascript';
+            js.async = false;
             js.src = filename;
             if (typeof onload !== 'undefined') {
                 js.addEventListener('load', onload, false);

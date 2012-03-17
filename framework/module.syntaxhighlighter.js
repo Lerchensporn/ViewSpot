@@ -7,16 +7,7 @@
     ws.module.loadCSS('framework/syntaxhighlighter/styles/shCore.css');
     ws.module.loadCSS('framework/syntaxhighlighter/styles/sh' + cfg.style + '.css');
 
-    // used because the script loading order is unknown
-    var synload = false;
-
     var onload = function() {
-        if (synload === false) {
-            // only skip the first call
-            synload = true;
-            return;
-        }
-
         function path() {
             var result = [];
             for (var i = 0; i < arguments.length; ++i) {
@@ -56,6 +47,6 @@
         SyntaxHighlighter.all();
     };
 
-    ws.module.loadScript('framework/syntaxhighlighter/scripts/shCore.js', onload);
+    ws.module.loadScript('framework/syntaxhighlighter/scripts/shCore.js');
     ws.module.loadScript('framework/syntaxhighlighter/scripts/shAutoloader.js', onload);
 })();
