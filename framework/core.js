@@ -362,7 +362,7 @@ var ws = (function() {
                 slides[i].div.className += ' ' + slides[i].settings.defaultClass;
             }
         }
-
+alert('pause');
         for (i = 0; i < slides.length; ++i) {
             var dim = slides[i].settings.format;
             slides[i].div.style.width = dim[0] + 'px';
@@ -1162,16 +1162,11 @@ var ws = (function() {
 
             slideNumber = num;
             _normalView.resize();
-            showSlide(num);
-            hideSlide(num);
 
-            if (oldsn === num) {
-                showSlide(num);
-            }
-            else {
+            if (oldsn !== num) {
                 hideSlide(oldsn);
-                showSlide(num);
             }
+            showSlide(num);
         };
 
         _normalView.resize = function() {
