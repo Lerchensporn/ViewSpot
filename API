@@ -1,23 +1,23 @@
 == User API ==
-Prefix: ws
+Prefix: vs
 
-ws.setSync()
-ws.tableOfContents()
-ws.gotoSlide(index)
-ws.gotoNext()
-ws.gotoPrevious()
-ws.getSections()
-ws.getCurrentSlide()
-ws.getSections()
-ws.module.loadScript()
-ws.module.loadCSS()
+vs.setSync()
+vs.tableOfContents()
+vs.gotoSlide(index)
+vs.gotoNext()
+vs.gotoPrevious()
+vs.getSections()
+vs.getCurrentSlide()
+vs.getSections()
+vs.module.loadScript()
+vs.module.loadCSS()
 
-ws.config.setCurrent(settings)
-ws.config.setGlobal(settings)
-ws.config.setForSlide(index, settings)
-ws.config.setForClass(className, settings)
+vs.config.setCurrent(settings)
+vs.config.setGlobal(settings)
+vs.config.setForSlide(index, settings)
+vs.config.setForClass(className, settings)
 
-ws.getSlides()
+vs.getSlides()
 
 === Overlays ===
 * frame based
@@ -61,7 +61,7 @@ The attribute name is like
 
 === Javascript overlays ===
 Function:
-    ws.setOverlay(selector, callback)
+    vs.setOverlay(selector, callback)
 
 === Internal representation ===
 The frame numbers are written into an array.

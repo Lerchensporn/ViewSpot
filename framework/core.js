@@ -1,8 +1,8 @@
-var ws = (function() {
+var vs = (function() {
 
     'use strict';
 
-    var _ws = { config : {} };
+    var _vs = { config : {} };
     var defaultSettings = {
         format : [1024, 768],
         outerColor : 'black',
@@ -31,21 +31,21 @@ var ws = (function() {
     /* ---------------------------- API methods ----------------------------------- */
 
     /** Sets whether the presentation is synchronized between windows. */
-    _ws.setSync = function(boolval) {
+    _vs.setSync = function(boolval) {
         sync = boolval;
     };
 
     /** Get the current slide. */
-    _ws.getCurrentSlide = function() {
+    _vs.getCurrentSlide = function() {
         return slides[slideNumber];
     };
 
     /** Get all slides of the presentation.. */
-    _ws.getSlides = function() {
+    _vs.getSlides = function() {
         return slides;
     };
 
-    _ws.getSections = function(noSubsections) {
+    _vs.getSections = function(noSubsections) {
         if (typeof noSubsections !== 'undefined' && noSubsections === true) {
             var nosubs = [];
             for (var i = 0; i < sections.length; ++i) {
@@ -60,13 +60,13 @@ var ws = (function() {
 
     /** Generates a table of contents formatted as a nested <ul> list and
         inserts it before the calling script element. */
-    _ws.tableOfContents = function() {
+    _vs.tableOfContents = function() {
         var scripts = document.getElementsByTagName('script');
         var current = scripts[scripts.length - 1];
 
         readyFuncs.script.push(function() {
             var toc = document.createElement('ul');
-            toc.innerHTML = _ws.getTocMarkup();
+            toc.innerHTML = _vs.getTocMarkup();
             current.parentNode.insertBefore(toc, current);
         });
     };
@@ -77,13 +77,13 @@ var ws = (function() {
         }
         view.load();
         currentView = view;
-        _ws.gotoSlide(slideNumber);
+        _vs.gotoSlide(slideNumber);
         window.onresize = currentView.resize;
         setCookie('view', views.indexOf(view));
     }
 
     /** Executes the given function when the document and all the modules are loaded. */
-    _ws.ready = function(func) {
+    _vs.ready = function(func) {
         if (loaded === false) {
             readyFuncs.modulesLoaded.push(func);
         }
@@ -96,7 +96,7 @@ var ws = (function() {
 
     /** When called in a slide div, set the settings for the current slide when the
         document is ready.*/
-    _ws.config.setCurrent = function(settings) {
+    _vs.config.setCurrent = function(settings) {
         var scripts = document.getElementsByTagName('script');
         var cur = scripts[scripts.length - 1];
 
@@ -110,7 +110,7 @@ var ws = (function() {
 
     /** Sets the settings for each slide that has the specified class name
         when the document is ready. */
-    _ws.config.setForClass = function(className, settings) {
+    _vs.config.setForClass = function(className, settings) {
         readyFuncs.script.push(function() {
             for (var i = 0; i < slides.length; ++i) {
                 var split = slides[i].div.className.split(' ');
@@ -122,7 +122,7 @@ var ws = (function() {
     };
 
     /** Sets the global settings when the document is ready. */
-    _ws.config.setGlobal = function(settings) {
+    _vs.config.setGlobal = function(settings) {
         readyFuncs.script.push(function() {
             globalSettings = mergeObjects(globalSettings, settings);
             for (var i = 0; i < slides.length; ++i) {
@@ -132,14 +132,14 @@ var ws = (function() {
     };
 
     /** Sets the slide settings for the slide with number `index`. */
-    _ws.config.setForSlide = function(index, settings) {
+    _vs.config.setForSlide = function(index, settings) {
         readyFuncs.script.push(function() { setConfig(index - 1, settings); });
     };
 
     /** Switch to another slide.
      * @param num The index of the slide to go to.
      * @param effect Function callback Sliding effect */
-    _ws.gotoSlide = function(num) {
+    _vs.gotoSlide = function(num) {
         syncWindow('gotoSlide', arguments);
 
         num = parseInt(num);
@@ -147,32 +147,32 @@ var ws = (function() {
             return;
         }
         currentView.gotoSlide(num);
-        _ws.gotoOverlay(1);
+        _vs.gotoOverlay(1);
         slideNumber = num;
         setCookie('slide', num);
     };
 
     /** Go to the next slide. */
-    _ws.gotoNext = function() {
+    _vs.gotoNext = function() {
         if (slides[slideNumber].overlayIndex < slides[slideNumber].overlayCount) {
-            _ws.gotoOverlay(slides[slideNumber].overlayIndex + 1);
+            _vs.gotoOverlay(slides[slideNumber].overlayIndex + 1);
         }
         else  {
-            _ws.gotoSlide(slideNumber + 1);
+            _vs.gotoSlide(slideNumber + 1);
         }
     };
 
     /** Go to the previous slide. */
-    _ws.gotoPrevious = function() {
+    _vs.gotoPrevious = function() {
         if (slides[slideNumber].overlayIndex > 1) {
-            _ws.gotoOverlay(slides[slideNumber].overlayIndex - 1);
+            _vs.gotoOverlay(slides[slideNumber].overlayIndex - 1);
         }
         else {
-            _ws.gotoSlide(slideNumber - 1);
+            _vs.gotoSlide(slideNumber - 1);
         }
     };
 
-    _ws.module = {
+    _vs.module = {
         loadScript : function(filename, onload) {
             moduleScriptLoader.appendScript(filename, onload);
         },
@@ -187,12 +187,12 @@ var ws = (function() {
         }
     };
 
-    _ws.getTocMarkup = function() {
+    _vs.getTocMarkup = function() {
         // if a subsection has no parent section, it is treated as a section
         var html = '';
         var subbing = 0;
 
-        var ahref = function() { return '<li><span class="link" onclick="javascript:ws.gotoSlide(' +  index + ');">'; };
+        var ahref = function() { return '<li><span class="link" onclick="javascript:vs.gotoSlide(' +  index + ');">'; };
         for (var i = 0; i < sections.length; ++i) {
             var index = sections[i].slideIndex;
             if (i > 0 && sections[i].type === 'subsection' && sections[i-1].type === 'section') {
@@ -215,7 +215,7 @@ var ws = (function() {
         return html;
     };
 
-    _ws.setLaserMouse = function(on) {
+    _vs.setLaserMouse = function(on) {
         isLaserMouse = on;
 
         // firefox bug: cursor url cannot be set using javascript => use css class
@@ -229,14 +229,7 @@ var ws = (function() {
         }
     };
 
-    function logger(text) {
-        _ws.showMessage(text);
-        if (console.log) {
-            console.log(text);
-        }
-    }
-
-    _ws.showMessage = function(message) {
+    _vs.showMessage = function(message) {
         var timeout = null;
 
         var setHideTimeout = function() {
@@ -245,25 +238,27 @@ var ws = (function() {
             }, 1000);
         };
 
-        var msgdiv = document.createElement('div');
+        var msgdiv = document.getElementById('messagebox');
+        if (msgdiv === null) {
+            msgdiv = document.createElement('div');
+            msgdiv.id = 'messagebox';
+            document.body.appendChild(msgdiv);
+            msgdiv.addEventListener('mouseover', function() {
+                msgdiv.className = 'messagebox';
+                clearInterval(timeout);
+            }, false);
+            msgdiv.addEventListener('mouseleave', function() {
+                setHideTimeout();
+            }, false);
+        }
         msgdiv.className = 'messagebox';
         msgdiv.innerHTML = message;
-        msgdiv.addEventListener('mouseover', function() {
-            msgdiv.className = 'messagebox';
-            clearInterval(timeout);
-        }, false);
-        msgdiv.addEventListener('mouseleave', function() {
-            setHideTimeout();
-        }, false);
-        msgdiv = document.body.appendChild(msgdiv);
         setHideTimeout();
     };
 
     /* ----------------------------- Slide Setup ---------------------------------- */
 
     function setup() {
-  
-
         views = [normalView, consoleNotes, consolePreview, sorter];
         onready();
 
@@ -273,7 +268,7 @@ var ws = (function() {
 
         window.onunload = function() {
             if (typeof otherWindow !== 'undefined') {
-                otherWindow.ws.showMessage.apply(otherWindow, ['The other window was closed.']);
+                otherWindow.vs.showMessage.apply(otherWindow, ['The other window was closed.']);
             }
         };
 
@@ -371,7 +366,7 @@ var ws = (function() {
         slideNumber = 0;
         if (window.opener !== null) {
             otherWindow = window.opener;
-            _ws.setSync(true);
+            _vs.setSync(true);
         }
 
         var viewIndex = parseInt(readCookie('view'));
@@ -395,6 +390,10 @@ var ws = (function() {
         _sl.onload = function() { };
 
         _sl.appendScript = function(filename, onload) {
+            if (fileExists(filename) === false) {
+                _vs.showMessage('The script file »' + filename + '« does not exist.');
+                return;
+            }
             var js = document.createElement('script');
             js.type = 'text/javascript';
             js.async = false;
@@ -407,6 +406,10 @@ var ws = (function() {
         };
 
         _sl.appendCSS = function(filename) {
+            if (fileExists(filename) === false) {
+                _vs.showMessage('The css file »' + filename + '« does not exist.');
+                return;
+            }
             var link = document.createElement('link');
             link.rel = 'stylesheet';
             link.type = 'text/css';
@@ -473,7 +476,13 @@ var ws = (function() {
     }
 
     function fileExists(filename) {
+        if (navigator.userAgent.indexOf('AppleWebKit') !== -1) {
+            // Chromium does not support local ajax.
+            return true;
+        }
+
         var xmlhttp = new XMLHttpRequest();
+        xmlhttp.overrideMimeType('text/plain');
         xmlhttp.open('GET', filename, false);
         try {
             xmlhttp.send(null);
@@ -624,7 +633,7 @@ var ws = (function() {
         return [[fromInt, toInt]];
     }
 
-    _ws.gotoOverlay = function(overlayIndex) {
+    _vs.gotoOverlay = function(overlayIndex) {
         syncWindow('gotoOverlay', arguments);
 
         var slide = slides[slideNumber];
@@ -676,7 +685,7 @@ var ws = (function() {
         @param leavefunc A callback that is executed when no frame is selected anymore.
         @param stepfunc A callback that is executed when the frame changes, but stays selected by selector.
     */
-    _ws.setOverlay = function(si, selector, enterfunc, leavefunc, stepfunc) {
+    _vs.setOverlay = function(si, selector, enterfunc, leavefunc, stepfunc) {
         if (si === null) {
             logger('Cannot get the parent slide.');
             return;
@@ -806,14 +815,14 @@ var ws = (function() {
         }
 
         // 2nd check: window has been closed
-        if (otherWindow === undefined || otherWindow.ws === undefined) {
+        if (otherWindow === undefined || otherWindow.vs === undefined) {
             sync = false;
             return;
         }
 
-        otherWindow.ws.setSync(false);
-        otherWindow.ws[func].apply(otherWindow.ws, args);
-        otherWindow.ws.setSync(true);
+        otherWindow.vs.setSync(false);
+        otherWindow.vs[func].apply(otherWindow.vs, args);
+        otherWindow.vs.setSync(true);
     }
 
     /* Workaround for a firefox bug that creates lines around blocks when scale and box-shadow are applied.
@@ -1037,13 +1046,13 @@ var ws = (function() {
                 contextMenu(false);
                 break;
             case 39: // right
-                _ws.gotoNext();
+                _vs.gotoNext();
                 break;
             case 37: // left
-                _ws.gotoPrevious();
+                _vs.gotoPrevious();
                 break;
             case 76: // letter L
-                _ws.setLaserMouse(!isLaserMouse);
+                _vs.setLaserMouse(!isLaserMouse);
                 break;
             case 87: // letter W
                 var index = views.indexOf(currentView);
@@ -1087,20 +1096,20 @@ var ws = (function() {
         }
 
         var menuEntries = [
-            ['Next', slideNumber < slides.length - 1, function() { _ws.gotoNext(); contextMenu(true); }],
-            ['Previous', slideNumber > 0, function() { _ws.gotoPrevious(); contextMenu(true); }],
-            ['First', slideNumber > 0, function() { _ws.gotoSlide(0); contextMenu(true); }],
-            ['Last', slideNumber < slides.length - 1, function() { _ws.gotoSlide(slides.length - 1); contextMenu(true); }],
+            ['Next', slideNumber < slides.length - 1, function() { _vs.gotoNext(); contextMenu(true); }],
+            ['Previous', slideNumber > 0, function() { _vs.gotoPrevious(); contextMenu(true); }],
+            ['First', slideNumber > 0, function() { _vs.gotoSlide(0); contextMenu(true); }],
+            ['Last', slideNumber < slides.length - 1, function() { _vs.gotoSlide(slides.length - 1); contextMenu(true); }],
             ['Console',  true, function() { openNewWindow(); contextMenu(false); }],
             ['Laser mouse (' + (isLaserMouse ? 'on)' : 'off)'), true, function() {
-                _ws.setLaserMouse(!isLaserMouse);
+                _vs.setLaserMouse(!isLaserMouse);
                 this.innerHTML = (isLaserMouse ? 'Laser mouse (on)' : 'Laser mouse (off)');
             }],
             ['Go to',  true, function() { }],
             'opensubmenu'
         ];
 
-        var gotofunc = function() { _ws.gotoSlide(this.firstChild.value - 1); };
+        var gotofunc = function() { _vs.gotoSlide(this.firstChild.value - 1); };
         for (var i = 0; i < slides.length; ++i) {
             var title = (i + 1).toString();
             var h1arr = slides[i].div.getElementsByTagName('h1');
@@ -1135,7 +1144,7 @@ var ws = (function() {
         otherWindow = window.open('demo.html?console', 'Presentation Screen &ndash ' + document.title,
             'status=yes,menubar=yes,screenX=' + screen.availWidth +
             '*,screenY=0,height=' + screen.availHeight + ',width=' + screen.availWidth);
-        _ws.setSync(true);
+        _vs.setSync(true);
     }
 
     function fillMenuUl(ul, menuEntries, start) {
@@ -1587,10 +1596,10 @@ var ws = (function() {
     })();
 
     setup();
-    return _ws;
+    return _vs;
 })();
 
-ws.controls = function() {
+vs.controls = function() {
 
     'use strict';
 
@@ -1605,7 +1614,7 @@ ws.controls = function() {
         if (typeof slide.settings.sidebar !== 'undefined' && typeof slide.settings.sidebar.title !== 'undefined') {
             sidebardiv.innerHTML += '<span>' + layout.title + '</span>';
         }
-        sidebardiv.innerHTML += '<ul>' + ws.getTocMarkup() + '</ul>';
+        sidebardiv.innerHTML += '<ul>' + vs.getTocMarkup() + '</ul>';
 
         dockdiv(sidebardiv, slide, 'left');
     };
@@ -1627,8 +1636,8 @@ ws.controls = function() {
         minidiv.className = 'miniframe';
 
         var html = '';
-        var sections = ws.getSections(true);
-        var slideslist = ws.getSlides();
+        var sections = vs.getSections(true);
+        var slideslist = vs.getSlides();
         for (var i = 0; i < sections.length; ++i) {
             var sectionClass;
             var sectionEnd = (i < sections.length - 1  ? sections[i + 1].slideIndex : slideslist.length);
@@ -1646,12 +1655,12 @@ ws.controls = function() {
                 html += '<td>';
             }
 
-            html += '<span class="' + sectionClass + '" onclick="ws.gotoSlide(' + sections[i].slideIndex + ')">' + sections[i].title + '</span>';
+            html += '<span class="' + sectionClass + '" onclick="vs.gotoSlide(' + sections[i].slideIndex + ')">' + sections[i].title + '</span>';
             html += '<br/><svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="12">';
             for (var circi = sections[i].slideIndex; circi < sectionEnd; ++circi) {
                 var circleClass = (slide.index === slideslist[circi].index ? 'circleActive' : 'circleInactive');
                 html += '<circle class="' + sectionClass + ' ' + circleClass +
-                        '" onclick="ws.gotoSlide(' + slideslist[circi].index + ')" cx="' + (12*(circi - sections[i].slideIndex) + 6.5) + '" cy="5" r="4.5"/>';
+                        '" onclick="vs.gotoSlide(' + slideslist[circi].index + ')" cx="' + (12*(circi - sections[i].slideIndex) + 6.5) + '" cy="5" r="4.5"/>';
             }
             html += '</svg>';
             html += '</td>';

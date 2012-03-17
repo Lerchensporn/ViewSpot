@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-        <title>WebSlider</title>
+        <title>ViewSpot</title>
     </head>
     <style type="text/css">
         body {
@@ -45,14 +45,14 @@
         }
     </style>
     <body>
-        <h1>WebSlider</h1>
-        WebSlider is a framework for creating slideshow presentations like LibreOffice Impress, PowerPoint or KeyNote.
+        <h1>ViewSpot</h1>
+        ViewSpot is a framework for creating slideshow presentations like LibreOffice Impress, PowerPoint or KeyNote.
         It it based on the web technologies HTML, CSS and Javascript. This is no WYSIWYG tool, but you have
         to write the presentation markup and the configuration into a HTML file.
 
         <h2>Getting started</h2>
         To get an impression, view the <a href="demo.html"><b>demo presentation</b></a>.
-        You can download the project from the <a href="http://github.com/woho/WebSlider">project page on github</a>.
+        You can download the project from the <a href="http://github.com/woho/ViewSpot">project page on github</a>.
 
         <h2>Features</h2>
         <dl>
@@ -61,7 +61,7 @@
         \( \) into MathML.</dd>
         <dt>Great looking themes</dt><dd>
         Some well-tried LaTeX Beamer themes are provided. CSS 3 supports
-        eye-candy features like shadows, gradients and rounded corners.</dd>
+        eye-candy features like shadovs, gradients and rounded corners.</dd>
         <dt>Overlays</dt><dd>
         Show or hide content or even animate your slides using CSS and Javascript callbacks.
         </dd>
@@ -69,7 +69,7 @@
         Do whatever you want using scripts – especially powerful in combination with overlays.
         </dd>
         <dt>Presenter Console</dt><dd>
-        Different views for the presenter and the audience. Notes for every slide
+        Different vievs for the presenter and the audience. Notes for every slide
         are supported.
         </dd>
         <dt>Customizable</dt><dd>
@@ -100,8 +100,8 @@
         Despite the advantages of a non-WYSIWYG approach, some lusers might
         feel irritated when they cannot point and click around.</dd>
         <dt>The portability is worse than with PDF files</dt>
-        <dd>A modern web browser is required to view the presentations (Internet Explorer does
-        not count as a web browser).</dd>
+        <dd>A modern web brovser is required to view the presentations (Internet Explorer does
+        not count as a web brovser).</dd>
         </dt>
         </dl>
 
@@ -110,14 +110,13 @@
         <li>presentation clock</li>
         <li>more themes</li>
         <li>implement Python tools</li>
-        <li>invent a better project name</li>
     </ul>
 
     <h2>Documentation</h2>
     <h3>A short intruduction</h3>
     To be able to use this software, you should at least be able to write HTML and CSS code.
-    When you have downloaded and unpacked WebSlider, you will see a directory called »framework«
-    and the file »wstool«. The wstool is a Python script with a lot of helpful functions, »framework«
+    When you have downloaded and unpacked ViewSpot, you will see a directory called »framework«
+    and the file »vstool«. The vstool is a Python script with a lot of helpful functions, »framework«
     contains the actual presentation software.
 
     For basic presentation, create an HTML file in the directory containing »framework«.
@@ -142,7 +141,7 @@
         &lt;/body&gt;
         &lt;/html&gt;
     </pre>
-    Edit your presentation and view the result in a browser. The current slide number
+    Edit your presentation and view the result in a brovser. The current slide number
     is saved in a cookie, so just press F5 to update the presentation.
 
     <h3>Navigation</h3>
@@ -151,16 +150,16 @@
     Normally, the cursor is hidden after some time. To activate the »laser mouse«,
     a tool similar to a laser pointer, press »L«.
 
-    It is possible to have different views for the audience and the presenter.
+    It is possible to have different vievs for the audience and the presenter.
     In the menu (space key), click on »Console« to load a second window. The two
-    windows will be able to communicate with each other.
-    Press »W« to change the view. Currently, there are the following views:
+    windovs will be able to communicate with each other.
+    Press »W« to change the view. Currently, there are the following vievs:
     <dl>
         <dt>Normal View</dt><dd>The fullscreen slide visible to the audience</dd>
-        <dt>Preview Console</dt><dd>Shows the current slide and the next slide.</dd>
-        <dt>Notes Console</dt><dd>Shows the current slides and notes. Press the up/down
+        <dt>Preview Console</dt><dd>Shovs the current slide and the next slide.</dd>
+        <dt>Notes Console</dt><dd>Shovs the current slides and notes. Press the up/down
             key to scroll the notes box up and down.</dd>
-        <dt>Slide Sorter</dt><dd>Shows all slides in a matrix. You can select a slide using the
+        <dt>Slide Sorter</dt><dd>Shovs all slides in a matrix. You can select a slide using the
             array keys or the mouse. Press enter to switch to the normal view and go to the selected
             slide.</dd>
     </dl>
@@ -186,10 +185,10 @@
     Example:
     <pre>
         &lt;script&gt;
-            ws.config.setGlobal({
+            vs.config.setGlobal({
                 modules : ['mathjax', 'jqplot'],
                 defaultClass : 'latex warsaw',
-                setupSlide : function(slide) { ws.controls.miniframes(slide); }
+                setupSlide : function(slide) { vs.controls.miniframes(slide); }
             });
         &lt;/script&gt;
     </pre>
@@ -205,7 +204,7 @@
         </tr>
         <tr>
             <td>format</td>
-            <td>The slide size in pixels. The slide is resized to the browser viewport size, so actually 
+            <td>The slide size in pixels. The slide is resized to the brovser viewport size, so actually 
                 only the side ratio is relevant.</td>
             <td>Array with two integer items. The first one is the width, the second one is the height. Default value:
                 [1024, 768].</td>
@@ -263,46 +262,48 @@
     <h3>Javascript API</h3>
 
     <h3>Python Tool</h3>
-    One can download WebSlider and unpack it.
-    Without python tools, the WebSlider directory has to be copied for each
+    One can download ViewSpot and unpack it.
+    Without python tools, the ViewSpot directory has to be copied for each
     presentation.
 
-    However, it is more pratical to have one complete WebSlider repository installed.
+    However, it is more pratical to have one complete ViewSpot repository installed.
     The Python tools can create a working directory and copy only the needed modules
     to reduce the directory size. It is possible to let the script download the latest
     git version.
     For example, the framework could be installed in /usr/share/webslider/... and
-    have the python tool in /usr/share/wstool.
+    have the python tool in /usr/share/vstool.
     To create a new presentation:
     <pre>
-        1) wstool new &lt;dir&gt;
+        1) vstool new &lt;dir&gt;
               Ask if no directory is specified. Create a new directory with
               the core files.
-        2) wstool install-module &lt;module&gt;
+        2) vstool install-module &lt;module&gt;
               Display available modules if no module is specified.
         3) create the presentation</pre>
 
     More functions (not yet available):
     <pre>
-        wstool update-repo
-        wstool update-repo-modules
-        wstool update-local
-        wstool update-local-modules
-        wstool doc
-        wstool store-fonts</pre>
+        vstool update-repo
+        vstool update-repo-modules
+        vstool update-local
+        vstool update-local-modules
+        vstool doc
+        vstool store-fonts</pre>
 
     <h2>Compatibility</h2>
-    WebSlider is developed for Firefox and Chromium (Gecko and Webkit).
-    Browser bugs:
+    ViewSpot is developed for Firefox and Chromium (Gecko and Webkit).
+    Brovser bugs:
     <ul>
         <li>Firefox renders scaled fonts twice, which makes letters to dance.
             Before presenting, one should scroll through the slides, because
             the bug only appears once for each scale.</li>
-        <li>Firefox does not render scaled borders and box shadows correctly. A complex workaround is used
+        <li>Firefox does not render scaled borders and box shadovs correctly. A complex workaround is used
             to make it look properly.</li>
         <li>Chromium does not support MathML, that is why the HTML-CSS output is used in MathJax.</li>
         <li>Chromium fires the mousemove event when the cursor shape changes. There is an easy workaround.</li>
         <li>Chromium does not support local cookies by default.</li>
+        <li>Chromium does not support local ajax requests, because it thinks this would be
+            a cross origin request.</li>
     </ul>
     <h2>License</h2>
     You can do with the code what you want, if you put a reference to me (that means this site).

@@ -14,9 +14,10 @@
 <body>
     <div>
         <div class="title">
-            Introduction into PowerView<br/>
+            Introduction into ViewSpot<br/>
             <small>Demonstration of a great slideshow framework</small>
         </div>
+        <div style="text-align:center;margin-top:50px">Press »W« to see a get impressed.</div>
         <div class="notes">
             A not so short note.
             When having a presentation, there are three possibilities:
@@ -90,12 +91,12 @@
     <div>
         <div class="notes">
             The table of contents can be generated automatically using the
-            javascript function ws.tableOfContents().
+            javascript function vs.tableOfContents().
             <br/>
             Furthermore, the list items behave like links to the respective slide.
         </div>
         <h1>Table of contents (automagic)</h1>
-        <script> ws.tableOfContents();  </script>
+        <script> vs.tableOfContents();  </script>
     </div>
     <div>
         <section>Modules</section>
@@ -112,7 +113,7 @@ int main(int argc, char **argv) {
         <h1>JSXGraph plugin</h1>
         <div id="jxgbox" class="jxgbox" style="width:500px; height:500px;"></div>
         <script>
-    ws.ready(function() {
+    vs.ready(function() {
 var brd = JXG.JSXGraph.initBoard('jxgbox', {boundingbox:[-2,5,5,-2]});
 var A  = brd.create('point', [0,0]),
     B  = brd.create('point', [2,0]),
@@ -140,7 +141,7 @@ var A  = brd.create('point', [0,0]),
         <h1>jqPlot plugin</h1>
         <div id="jqplot" style="width:700px;height:500px;margin-left:110px;margin-top:50px"></div>
         <script>
-            ws.ready(function() {
+            vs.ready(function() {
                 var options = {
                     grid : { shadow : false },
                     seriesDefaults : { shadow: false, markerOptions : { shadow : false }}
@@ -153,7 +154,7 @@ var A  = brd.create('point', [0,0]),
         <h1>Flot plugin</h1>
         <div id="flotplot" style="width:700px;height:500px;margin-left:110px;margin-top:50px"></div>
         <script>
-            ws.ready(function() {
+            vs.ready(function() {
                 var d1 = [];
             for (var i = 0; i < Math.PI * 2; i += 0.25)
                 d1.push([i, Math.sin(i)]);
@@ -194,10 +195,10 @@ var A  = brd.create('point', [0,0]),
         <h1>Raphael plugin</h1>
         <div id="holder"></div>
         <script>
-            ws.ready(function() {
+            vs.ready(function() {
                 var paper = new Raphael(document.getElementById('holder'), 500, 500);
                 var tetronimo = paper.path("M 250 250 l 0 -50 l -50 0 l 0 -50 l -50 0 l 0 50 l -50 0 l 0 50 z");
-                ws.setOverlay(6, '1-2', function() { tetronimo.attr({ stroke : 'blue', 'stroke-width' : '10px' }); }, 
+                vs.setOverlay(6, '1-2', function() { tetronimo.attr({ stroke : 'blue', 'stroke-width' : '10px' }); }, 
                 function() { tetronimo.attr({ stroke: 'black', 'stroke-width' : '1px' }); });
             });
         </script>
@@ -212,11 +213,11 @@ var A  = brd.create('point', [0,0]),
         <section>Themes and Controls</section>
         <h1>Fullthemes</h1>
         <script>
-        ws.config.setGlobal({
-            modules : ['raphael', 'jsxgraph', 'mathjax', 'fullthemes', 'syntaxhighlighter', 'jqplot', 'flot'],
+        vs.config.setGlobal({
+            modules : ['raphael', 'jsxgraph', 'mathjax', 'syntaxhighlighter', 'jqplot', 'flot'],
             defaultClass : 'latex red',
             setupSlide : function(slide) {
-                ws.controls.miniframes(slide);
+                vs.controls.miniframes(slide);
             }
         } );
         </script>

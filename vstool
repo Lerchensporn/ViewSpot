@@ -73,10 +73,10 @@ def installModule():
         return
     module = sys.argv[2]
 
-    tmpdir = '/tmp/wsunzip'
-    if os.path.exists('/tmp/wsunzip'):
-        shutil.rmtree('/tmp/wsunzip')
-    os.mkdir('/tmp/wsunzip')
+    tmpdir = '/tmp/vsunzip'
+    if os.path.exists('/tmp/vsunzip'):
+        shutil.rmtree('/tmp/vsunzip')
+    os.mkdir('/tmp/vsunzip')
 
     if module == 'mathjax':
         path = downloadUnzip('http://github.com/mathjax/Mathjax/zipball/master')
@@ -124,8 +124,8 @@ def installModule():
 
 def moveToDir(pathlist, filenames):
     for i in range(len(pathlist)):
-        shutil.move(pathlist[i], os.path.join('/tmp/wsunzip', filenames[i]))
-    return '/tmp/wsunzip'
+        shutil.move(pathlist[i], os.path.join('/tmp/vsunzip', filenames[i]))
+    return '/tmp/vsunzip'
 
 def downloadUnzip(url):
     expath = downloadFile(url)
@@ -134,9 +134,9 @@ def downloadUnzip(url):
 def unzip(fname):
     zf = zipfile.ZipFile(fname)
     # TODO check for tarbomb?
-    zf.extractall('/tmp/wsunzip')
+    zf.extractall('/tmp/vsunzip')
     zf.close()
-    return '/tmp/wsunzip'
+    return '/tmp/vsunzip'
 
 def makezip(framework=True):
     if framework:

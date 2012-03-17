@@ -1,11 +1,11 @@
 (function() {
-    var cfg = ws.module.getConfig('syntaxhighlighter');
+    var cfg = vs.module.getConfig('syntaxhighlighter');
     if (typeof cfg.style === 'undefined') {
         cfg.style = 'CoreDefault';
     }
 
-    ws.module.loadCSS('framework/syntaxhighlighter/styles/shCore.css');
-    ws.module.loadCSS('framework/syntaxhighlighter/styles/sh' + cfg.style + '.css');
+    vs.module.loadCSS('framework/syntaxhighlighter/styles/shCore.css');
+    vs.module.loadCSS('framework/syntaxhighlighter/styles/sh' + cfg.style + '.css');
 
     var onload = function() {
         function path() {
@@ -47,6 +47,6 @@
         SyntaxHighlighter.all();
     };
 
-    ws.module.loadScript('framework/syntaxhighlighter/scripts/shCore.js');
-    ws.module.loadScript('framework/syntaxhighlighter/scripts/shAutoloader.js', onload);
+    vs.module.loadScript('framework/syntaxhighlighter/scripts/shCore.js');
+    vs.module.loadScript('framework/syntaxhighlighter/scripts/shAutoloader.js', onload);
 })();

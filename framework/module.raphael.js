@@ -1,3 +1,3 @@
 (function() {
-    ws.module.loadScript('framework/raphael/raphael.js');
+    vs.module.loadScript('framework/raphael/raphael.js');
 })();

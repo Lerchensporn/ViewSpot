@@ -13,5 +13,5 @@
     var onload = function() {
         MathJax.Hub.Startup.onload();
     };
-    ws.module.loadScript('framework/mathjax/MathJax.js', onload);
+    vs.module.loadScript('framework/mathjax/MathJax.js', onload);
 })();
