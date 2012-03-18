@@ -78,7 +78,16 @@ var vs = (function() {
         view.load();
         currentView = view;
         _vs.gotoSlide(slideNumber);
-        window.onresize = currentView.resize;
+
+        /* Resize with a 50 ms delay which needs less ressources and looks better. */
+        var resizeTimeout;
+        window.onresize = function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(function() {
+                currentView.resize();
+            }, 50);
+        }
+
         setCookie('view', views.indexOf(view));
     }
 
@@ -91,8 +100,6 @@ var vs = (function() {
             func();
         }
     };
-
-    // XXX it is possible that a config.* function is called in only one window due to user interaction
 
     /** When called in a slide div, set the settings for the current slide when the
         document is ready.*/
@@ -229,12 +236,16 @@ var vs = (function() {
         }
     };
 
-    _vs.showMessage = function(message) {
+    _vs.showMessage = function(message, hide) {
+        if (typeof hide === 'undefined') {
+            hide = true;
+        }
+
         var timeout = null;
 
         var setHideTimeout = function() {
             timeout = setTimeout(function() {
-                msgdiv.className = 'messagebox mboxhide';
+                msgdiv.className = 'mboxhide';
             }, 1000);
         };
 
@@ -243,17 +254,23 @@ var vs = (function() {
             msgdiv = document.createElement('div');
             msgdiv.id = 'messagebox';
             document.body.appendChild(msgdiv);
-            msgdiv.addEventListener('mouseover', function() {
-                msgdiv.className = 'messagebox';
-                clearInterval(timeout);
-            }, false);
-            msgdiv.addEventListener('mouseleave', function() {
-                setHideTimeout();
-            }, false);
+
+            if (hide === true) {
+                msgdiv.addEventListener('mouseover', function() {
+                    msgdiv.className = 'messagebox';
+                    clearInterval(timeout);
+                }, false);
+                msgdiv.addEventListener('mouseleave', function() {
+                    setHideTimeout();
+                }, false);
+            }
         }
-        msgdiv.className = 'messagebox';
+        msgdiv.className = '';
         msgdiv.innerHTML = message;
-        setHideTimeout();
+
+        if (hide === true) {
+            setHideTimeout();
+        }
     };
 
     /* ----------------------------- Slide Setup ---------------------------------- */
@@ -881,7 +898,7 @@ var vs = (function() {
 
             absdiv = document.createElement('div');
             absdiv.className = 'mozfix';
-            absdiv.id = 'mozfix' + Math.floor(Math.random() * 10000000000); // TODO make it really unique
+            absdiv.id = 'mozfix' + mozShadowUnique();
             elem.setAttribute('data-shadowid', absdiv.id);
             elem.parentNode.insertBefore(absdiv, elem);
 
@@ -912,6 +929,13 @@ var vs = (function() {
 
         absdiv.style.zIndex = computed.getPropertyValue('z-index');
     }
+
+    var mozShadowUnique = (function() {
+        var i = 0;
+        return function() {
+            return ++i;
+        };
+    })();
 
     function mozShadowFix(rootNode) {
         if (navigator.userAgent.indexOf('Firefox') === -1) {
@@ -1029,15 +1053,7 @@ var vs = (function() {
     }
 
     function keyDown(ev) {
-        if (ev.target === 'INPUT') {
-            return;
-        }
-
-        if (ev.keyCode === 32) {
-            var timerdiv = timer.createGui();
-            document.body.appendChild(timerdiv);
-            timer.start();
-            ev.preventDefault();
+        if (ev.target === 'INPUT' || ev.target === 'TEXTAREA') {
             return;
         }
 
@@ -1058,6 +1074,9 @@ var vs = (function() {
                 var index = views.indexOf(currentView);
                 index = (index === views.length - 1 ? 0 : index + 1);
                 switchView(views[index]);
+                break;
+            case 84:  // letter T
+                timer.startStop();
                 break;
         }
 
@@ -1191,7 +1210,9 @@ var vs = (function() {
     var normalView = (function() {
         var _normalView = {};
 
-        _normalView.load = function() { };
+        _normalView.load = function() {
+            _normalView.resize();
+        };
 
         _normalView.unload = function() { };
 
@@ -1199,7 +1220,6 @@ var vs = (function() {
             var oldsn = slideNumber;
 
             slideNumber = num;
-            _normalView.resize();
 
             if (oldsn !== num) {
                 hideSlide(oldsn);
@@ -1214,11 +1234,14 @@ var vs = (function() {
             var height = document.body.clientHeight;
             var width = document.body.clientWidth;
 
-            var pagewidth = slides[slideNumber].settings.format[0];
-            var pageheight = slides[slideNumber].settings.format[1];
 
-            var newWidth = Math.min(width / pagewidth, height / pageheight) * pagewidth;
-            scaleSlide(slides[slideNumber], (width - newWidth) / 2, 0, newWidth);
+            for (var i = 0; i < slides.length; ++i) {
+                var pagewidth = slides[slideNumber].settings.format[0];
+                var pageheight = slides[slideNumber].settings.format[1];
+
+                var newWidth = Math.min(width / pagewidth, height / pageheight) * pagewidth;
+                scaleSlide(slides[i], (width - newWidth) / 2, 0, newWidth);
+            }
         };
 
         return _normalView;
@@ -1238,29 +1261,6 @@ var vs = (function() {
         var startTime = null;
         var runner = null;
 
-        /* DOM cache */
-        var clockspan;
-        var timerspan;
-        var pie;
-
-        _timer.createGui = function(isHorizontal) {
-            var timerdiv = document.createElement('div');
-            timerdiv.className = 'timer';
-         /*   var svg = document.createElement('svg');
-            svg.xmlns = 'http://www.w3.org/2000/svg';
-            svg.version = '1.1';
-            svg.height = '100px';
-            svg.width = '100px';
-            var pie = document.createElement('circle');
-            circle.cx = '50px';
-            circle.cy = '50px';*/
-
-            clockspan = document.createElement('div');
-            clockspan.className = 'clockspan';
-            timerdiv.appendChild(clockspan);
-            return timerdiv;
-        };
-
         _timer.start = function() {
             if (runner !== null) {
                 return;
@@ -1268,21 +1268,31 @@ var vs = (function() {
             startTime = new Date();
             clearInterval(runner);
             runner = setInterval(updateGui, 1000);
+            updateGui();
         };
 
-        _timer.pause = function() {
+        _timer.stop = function() {
+            if (runner === null) {
+                return;
+            }
             clearInterval(runner);
             runner = null;
+            _vs.showMessage('Timer has been stopped.');
         };
 
-        _timer.reset = function() {
-            startTime = new Date();
-            _timer.pause();
+        _timer.startStop = function() {
+            if (runner === null) {
+                _timer.start();
+            }
+            else {
+                _timer.stop();
+            }
         };
 
         function updateGui() {
             var now = new Date();
-            clockspan.textContent = pad2two(now.getHours()) + ':' + pad2two(now.getMinutes()) + ':' + pad2two(now.getSeconds());
+            var msg = pad2two(now.getHours()) + ':' + pad2two(now.getMinutes()) + ':' + pad2two(now.getSeconds());
+            _vs.showMessage('<span style="font-size:12pt">' + msg + '</span>', false);
         }
 
         function pad2two(digit) {
@@ -1333,8 +1343,9 @@ var vs = (function() {
                 switchView(normalView);
                 return;
             }
-            else if (args.keyCode === 87) { // letter 87
+            else if (args.keyCode === 87 || args.keyCode === 32) { // letter W || space
                 keyDown(args);
+                return;
             }
 
             var newIndex = activeSlideIndex;
@@ -1497,7 +1508,9 @@ var vs = (function() {
             var padding = 20;
             var leftWidth = document.body.clientWidth * sidesRatio;
             var rightWidth = document.body.clientWidth * (1 - sidesRatio);
-            scaleSlide(slides[slideNumber], padding, padding, leftWidth);
+            for (var i = 0; i < slides.length; ++i) {
+                scaleSlide(slides[i], padding, padding, leftWidth);
+            }
 
             box.style.left = padding - boxMargin + 'px';
             box.style.top = padding - boxMargin + 'px';
@@ -1536,6 +1549,10 @@ var vs = (function() {
         var boxSmall;
 
         _prev.resize = function() {
+            /* It is not possible to resize all slides in one call,
+               because the scale changes when navigating. In Firefox,
+               the letters will dance in this view. */
+
             var boxMargin = 5;
             var sidesRadio = 3 / 5;
             var padding = 20;

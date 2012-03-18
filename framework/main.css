@@ -57,14 +57,14 @@
     background-color: #789;
 }
 
-.messagebox {
+#messagebox {
     background-color: #456;
     color: white;
     font-size: 12px;
     box-shadow: 0 0  5px #456;
     border-radius: 2px;
     padding: 5px;
-    position: absolute;
+    position: fixed;
     bottom: 5px;
     left: 5px;
 }

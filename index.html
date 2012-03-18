@@ -61,7 +61,7 @@
         \( \) into MathML.</dd>
         <dt>Great looking themes</dt><dd>
         Some well-tried LaTeX Beamer themes are provided. CSS 3 supports
-        eye-candy features like shadovs, gradients and rounded corners.</dd>
+        eye-candy features like shadows, gradients and rounded corners.</dd>
         <dt>Overlays</dt><dd>
         Show or hide content or even animate your slides using CSS and Javascript callbacks.
         </dd>
@@ -100,15 +100,15 @@
         Despite the advantages of a non-WYSIWYG approach, some lusers might
         feel irritated when they cannot point and click around.</dd>
         <dt>The portability is worse than with PDF files</dt>
-        <dd>A modern web brovser is required to view the presentations (Internet Explorer does
-        not count as a web brovser).</dd>
+        <dd>A modern web browser is required to view the presentations (Internet Explorer does
+        not count as a web browser).</dd>
         </dt>
         </dl>
 
     <h2>To Do List</h2>
     <ul>
-        <li>presentation clock</li>
         <li>more themes</li>
+        <li>improve menu</li>
         <li>implement Python tools</li>
     </ul>
 
@@ -141,7 +141,7 @@
         &lt;/body&gt;
         &lt;/html&gt;
     </pre>
-    Edit your presentation and view the result in a brovser. The current slide number
+    Edit your presentation and view the result in a browser. The current slide number
     is saved in a cookie, so just press F5 to update the presentation.
 
     <h3>Navigation</h3>
@@ -152,14 +152,14 @@
 
     It is possible to have different vievs for the audience and the presenter.
     In the menu (space key), click on »Console« to load a second window. The two
-    windovs will be able to communicate with each other.
+    windows will be able to communicate with each other.
     Press »W« to change the view. Currently, there are the following vievs:
     <dl>
         <dt>Normal View</dt><dd>The fullscreen slide visible to the audience</dd>
-        <dt>Preview Console</dt><dd>Shovs the current slide and the next slide.</dd>
-        <dt>Notes Console</dt><dd>Shovs the current slides and notes. Press the up/down
+        <dt>Preview Console</dt><dd>Shows the current slide and the next slide.</dd>
+        <dt>Notes Console</dt><dd>Shows the current slides and notes. Press the up/down
             key to scroll the notes box up and down.</dd>
-        <dt>Slide Sorter</dt><dd>Shovs all slides in a matrix. You can select a slide using the
+        <dt>Slide Sorter</dt><dd>Shows all slides in a matrix. You can select a slide using the
             array keys or the mouse. Press enter to switch to the normal view and go to the selected
             slide.</dd>
     </dl>
@@ -204,7 +204,7 @@
         </tr>
         <tr>
             <td>format</td>
-            <td>The slide size in pixels. The slide is resized to the brovser viewport size, so actually 
+            <td>The slide size in pixels. The slide is resized to the browser viewport size, so actually 
                 only the side ratio is relevant.</td>
             <td>Array with two integer items. The first one is the width, the second one is the height. Default value:
                 [1024, 768].</td>
@@ -292,12 +292,12 @@
 
     <h2>Compatibility</h2>
     ViewSpot is developed for Firefox and Chromium (Gecko and Webkit).
-    Brovser bugs:
+    Browser bugs:
     <ul>
         <li>Firefox renders scaled fonts twice, which makes letters to dance.
             Before presenting, one should scroll through the slides, because
             the bug only appears once for each scale.</li>
-        <li>Firefox does not render scaled borders and box shadovs correctly. A complex workaround is used
+        <li>Firefox does not render scaled borders and box shadows correctly. A complex workaround is used
             to make it look properly.</li>
         <li>Chromium does not support MathML, that is why the HTML-CSS output is used in MathJax.</li>
         <li>Chromium fires the mousemove event when the cursor shape changes. There is an easy workaround.</li>
