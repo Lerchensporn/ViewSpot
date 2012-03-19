@@ -15,11 +15,11 @@ var vs = (function() {
     var loaded = false;
     var mouseX = 0;
     var mouseY = 0;
-    var enableResizing = true;
     var curTout;
+    var darken = false;
+    var lighten = false;
     var otherWindow;
     var isLaserMouse = false;
-    var menuul = null;
     var moduleScriptLoader;
     var sections = [];
     var currentView;
@@ -281,7 +281,6 @@ var vs = (function() {
 
         document.addEventListener('keydown', keyDown, false);
         document.addEventListener('mousemove', mouseMove, false);
-        document.addEventListener('click', mouseClick, false);
 
         window.onunload = function() {
             if (typeof otherWindow !== 'undefined') {
@@ -1007,22 +1006,6 @@ var vs = (function() {
 
     /* ------------------------- User interaction --------------------------------- */
 
-    /* Hide context menu if visible. */
-    function mouseClick(args) {
-        if (menuul === null) {
-            return;
-        }
-        var parentNode = args.target;
-        while (parentNode !== document.body) {
-            if (parentNode === menuul) {
-                return;
-            }
-            parentNode = parentNode.parentNode;
-        }
-        document.body.removeChild(menuul);
-        menuul = null;
-    }
-
     /* For cursor hiding. */
     function mouseMove(args) {
         if (typeof slides[slideNumber] === 'undefined') {
@@ -1059,20 +1042,50 @@ var vs = (function() {
 
         switch (ev.keyCode) {
             case 32: // space
-                contextMenu(false);
+                contextMenu();
+                break;
+            case 67: // letter C
+                openNewWindow();
+                break;
+            case 65: // letter A
+                _vs.gotoSlide(0);
+                break;
+            case 90: // letter Z
+                _vs.gotoSlide(slides.length - 1);
                 break;
             case 39: // right
-                _vs.gotoNext();
+                if (ev.shiftKey) {
+                    _vs.gotoSlide(slideNumber + 1);
+                }
+                else {
+                    _vs.gotoNext();
+                }
                 break;
             case 37: // left
-                _vs.gotoPrevious();
+                if (ev.shiftKey) {
+                    _vs.gotoSlide(slideNumber - 1);
+                }
+                else {
+                    _vs.gotoPrevious();
+                }
                 break;
             case 76: // letter L
                 _vs.setLaserMouse(!isLaserMouse);
                 break;
+            case 68: // letter D
+                darkenLighten(false);
+                break;
+            case 72:  // letter H
+                darkenLighten(true);
+                break;
             case 87: // letter W
                 var index = views.indexOf(currentView);
                 index = (index === views.length - 1 ? 0 : index + 1);
+                switchView(views[index]);
+                break;
+            case 81: // letter Q
+                var index = views.indexOf(currentView);
+                index = (index === 0 ? views.length - 1 : index - 1);
                 switchView(views[index]);
                 break;
             case 84:  // letter T
@@ -1080,9 +1093,28 @@ var vs = (function() {
                 break;
         }
 
-        // 33, 34, 35 is PageUp, PageDown, End key
+        // 33, 34, 35 = PageUp, PageDown, End key
         if ([32, 33, 34, 35, 37, 38, 39, 40].indexOf(ev.keyCode) !== -1) {
             ev.preventDefault();
+        }
+    }
+
+    function darkenLighten(whiten) {
+        if (currentView !== normalView) {
+            return;
+        }
+
+        if ((darken || lighten) && whiten === lighten) {
+            document.body.style.backgroundColor = globalSettings.outerColor;
+            showSlide(slideNumber);
+            darken = false;
+            lighten = false;
+        }
+        else {
+            document.body.style.backgroundColor = (whiten ? 'white' : globalSettings.outerColor);
+            darken = (whiten === false);
+            lighten = (whiten === true);
+            hideSlide(slideNumber);
         }
     }
 
@@ -1091,118 +1123,73 @@ var vs = (function() {
      * Shows a context menu.
      * @param keepMenu Whether to keep an already existing menu and only adjust its position.
      */
-    function contextMenu(keepMenu) {
-        var posx, posy;
-        if (mouseX === null) {
+    function contextMenu() {
+        var menuul = document.getElementById('menuul');
+        if (menuul !== null) {
             return;
         }
-        if (menuul !== null) {
-            if (!keepMenu) {
-                document.body.removeChild(menuul);
-                menuul = null;
-                return;
-            }
-            else if (keepMenu) {
-                posx = menuul.style.left;
-                posy = menuul.style.top;
-            }
-            document.body.removeChild(menuul);
-            menuul = null;
-        }
-        else {
-            posx = mouseX + 'px';
-            posy = mouseY + 'px';
-        }
-
-        var menuEntries = [
-            ['Next', slideNumber < slides.length - 1, function() { _vs.gotoNext(); contextMenu(true); }],
-            ['Previous', slideNumber > 0, function() { _vs.gotoPrevious(); contextMenu(true); }],
-            ['First', slideNumber > 0, function() { _vs.gotoSlide(0); contextMenu(true); }],
-            ['Last', slideNumber < slides.length - 1, function() { _vs.gotoSlide(slides.length - 1); contextMenu(true); }],
-            ['Console',  true, function() { openNewWindow(); contextMenu(false); }],
-            ['Laser mouse (' + (isLaserMouse ? 'on)' : 'off)'), true, function() {
-                _vs.setLaserMouse(!isLaserMouse);
-                this.innerHTML = (isLaserMouse ? 'Laser mouse (on)' : 'Laser mouse (off)');
-            }],
-            ['Go to',  true, function() { }],
-            'opensubmenu'
-        ];
-
-        var gotofunc = function() { _vs.gotoSlide(this.firstChild.value - 1); };
-        for (var i = 0; i < slides.length; ++i) {
-            var title = (i + 1).toString();
-            var h1arr = slides[i].div.getElementsByTagName('h1');
-            if (h1arr.length > 0) {
-                title += '&nbsp;' + h1arr[0].innerHTML;
-            }
-            menuEntries.push(['<input type="hidden" value="' + (i + 1) + '"/>' + title, i !== slideNumber, gotofunc]);
-        }
-
-        menuEntries.push('closesubmenu');
 
         menuul = document.createElement('ul');
-        menuul.className = 'menuul';
-        menuul.style.left = posx;
-        menuul.style.top = posy;
-        document.body.appendChild(menuul);
+        menuul.id = 'menuul';
 
-        fillMenuUl(menuul, menuEntries);
-        setMenuEvents(menuEntries);
-    }
+        var menuEntries = [
+            ['First', 'A'],
+            ['Last', 'Z'],
+            ['Presenter window', 'C'],
+            ['Switch view', 'W'],
+            ['Switch back view', 'Q'],
+            ['Darken', 'D'],
+            ['Lighten', 'H'],
+            ['Next slide', 'shift ←'],
+            ['Previous slide', 'shift →'],
+            ['Laser mouse (' + (isLaserMouse ? 'on)' : 'off)'), 'L'],
+            ['Clock', 'T'],
+        ];
 
-    function setMenuEvents(menuEntries) {
+        var focused = -1;
+
         for (var i = 0; i < menuEntries.length; ++i) {
-            var elem = document.getElementById('cm_' + i.toString());
-            if (elem !== null) {
-                elem.onclick = menuEntries[i][2];
+            var li = document.createElement('li');
+            if (i === menuEntries.length - 1) {
+                li.className = 'lastMenuLi';
             }
+            li.innerHTML = '<span style="float:left">' + menuEntries[i][0] +
+                           '</span><span class="menukey">' + menuEntries[i][1] + '</span><br style="clear:both" />';
+            menuul.appendChild(li);
         }
+
+        document.body.appendChild(menuul);
+        window.addEventListener('keyup', function(args) {
+            if (args.keyCode === 32) { // space
+                document.body.removeChild(menuul);
+            }
+        }, false);
     }
 
     function openNewWindow() {
-        otherWindow = window.open('demo.html?console', 'Presentation Screen &ndash ' + document.title,
-            'status=yes,menubar=yes,screenX=' + screen.availWidth +
-            '*,screenY=0,height=' + screen.availHeight + ',width=' + screen.availWidth);
-        _vs.setSync(true);
-    }
+        var cleanup = function() {
+            document.body.removeChild(popdiv);
+            document.body.removeChild(darkdiv);
+            document.body.style.opactity = '';
+        };
 
-    function fillMenuUl(ul, menuEntries, start) {
-        if (typeof start === 'undefined') {
-            start = 0;
-        }
+        var darkdiv = document.createElement('div');
+        darkdiv.id = 'darkdiv';
+        darkdiv.onclick = cleanup;
 
-        for (var cnt = start; cnt < menuEntries.length; ++cnt) {
-            if (menuEntries[cnt] === 'closesubmenu') {
-                break;
-            }
-            else if (menuEntries[cnt] === 'opensubmenu') {
-                continue;
-            }
-            var li = document.createElement('li');
-            if (menuEntries[cnt + 1] === 'opensubmenu') {
-                var subul = document.createElement('ul');
-                li.appendChild(subul);
-                li.className = 'menuarrow';
-                fillMenuUl(subul, menuEntries, cnt + 1);
-            }
-            li.className += menuEntries[cnt][1] === true ? '' : 'inactli';
-            li.innerHTML += menuEntries[cnt][0];
-            li.id = 'cm_' + cnt.toString();
-            ul.appendChild(li);
-            if (menuEntries[cnt + 1] === 'opensubmenu') {
-                cnt += 2;
-                var opencount = 1;
-                while (opencount !== 0) {
-                    if (menuEntries[cnt] === 'opensubmenu') {
-                        opencount++;
-                    }
-                    else if (menuEntries[cnt] === 'closesubmenu') {
-                        opencount--;
-                    }
-                    cnt++;
-                }
-            }
-        }
+        var popdiv = document.createElement('button');
+        popdiv.innerHTML = 'Click to open a new window.<br/><span style="font-weight:normal"><small>Bypass the popup blocker.</small></span>';
+        popdiv.id = 'popupdiv';
+        popdiv.onclick = function() {
+            otherWindow = window.open(window.location, 'Presentation Screen &ndash ' + document.title,
+                'status=yes,menubar=yes,screenX=' + screen.availWidth / 2 +
+                '*,screenY=0,height=' + screen.availHeight / 2 + ',width=' + screen.availWidth / 2);
+            _vs.setSync(true);
+            cleanup();
+        };
+
+        document.body.appendChild(darkdiv);
+        document.body.appendChild(popdiv);
     }
 
     /* ------------------------------- Normal view -------------------------------- */
@@ -1228,9 +1215,6 @@ var vs = (function() {
         };
 
         _normalView.resize = function() {
-            if (enableResizing === false) {
-                return;
-            }
             var height = document.body.clientHeight;
             var width = document.body.clientWidth;
 
@@ -1343,7 +1327,7 @@ var vs = (function() {
                 switchView(normalView);
                 return;
             }
-            else if (args.keyCode === 87 || args.keyCode === 32) { // letter W || space
+            else if (args.keyCode === 87 || args.keyCode === 81 || args.keyCode === 32) { // letter W || letter Q || space
                 keyDown(args);
                 return;
             }
@@ -1494,6 +1478,7 @@ var vs = (function() {
             document.body.appendChild(box);
 
             window.addEventListener('keydown', notesKeyDown, false);
+            _notes.resize();
         };
 
         _notes.unload = function() {
@@ -1518,7 +1503,6 @@ var vs = (function() {
             var ratio = slides[slideNumber].settings.format[1] / slides[slideNumber].settings.format[0];
             box.style.height = ratio * leftWidth + 2 * boxMargin + 'px';
 
-            notesdiv.innerHTML = getNotes(slides[slideNumber]);
             notesdiv.style.left = leftWidth + 2 * padding + 'px';
             notesdiv.style.width = rightWidth - 4 * padding + 'px';
             notesdiv.style.top = padding - boxMargin + 'px';
@@ -1526,10 +1510,10 @@ var vs = (function() {
         };
 
         _notes.gotoSlide = function(num) {
+            notesdiv.innerHTML = getNotes(slides[num]);
             hideSlide(slideNumber);
-            slideNumber = num;
-            _notes.resize();
             showSlide(num);
+            slideNumber = num;
         };
 
         function getNotes(slide) {
@@ -1582,6 +1566,9 @@ var vs = (function() {
         _prev.unload = function() {
             document.body.removeChild(boxLarge);
             document.body.removeChild(boxSmall);
+            if (slideNumber < slides.length - 1) {
+                hideSlide(slideNumber + 1);
+            }
         }
 
         _prev.load = function() {

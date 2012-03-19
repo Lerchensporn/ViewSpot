@@ -57,6 +57,24 @@
     background-color: #789;
 }
 
+#popupdiv {
+    font-weight: bold;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -125px;
+    margin-top: -25px;
+    width: 250px;
+    height: 50px;
+}
+
+#darkdiv {
+    opacity: 0.6;
+    background-color: black;
+    width: 100%;
+    height: 100%;
+}
+
 #messagebox {
     background-color: #456;
     color: white;
@@ -131,6 +149,7 @@ pre {
     padding: 0px;
 }
 
+/* <???> */
 ul {
     margin-left: 1.5em;
 }
@@ -139,6 +158,8 @@ ul {
     margin: 0.3em;
     margin-left: 4px;
 }
+
+/* </???> */
 
 li {
     margin: 0.2em;
@@ -160,54 +181,34 @@ body {
     overflow: hidden;
 }
 
-.menuul {
-    font-size: 11pt;
-}
-
-.menuul, .menuul ul {
-    -moz-user-select: none;
-    z-index: 1;
-    white-space: nowrap;
+#menuul {
+    font-size: 10pt;
     position: absolute;
-    color: black;
-    padding: 0px;
-    margin: 0px;
+    border-radius: 2px;
+    margin: 15px;
+    padding: 3px;
     background-color: #f0f0f0;
     box-shadow: 0px 0px 3px 1px #aaa;
 }
 
-.menuarrow {
-    background: url(styles/pics/li-triangle.svg) no-repeat right;
-}
-
-.menuul li {
+#menuul li {
     list-style: none;
-    cursor: pointer;
     margin: 0px;
+    border-bottom: 1px solid #d0d0d0;
     padding: 3px;
     padding-left: 3px;
 }
 
-.menuul li:hover {
-    background-color: #d0d0df;
+.lastMenuLi {
+    border: none !important;
 }
 
-.menuul li ul {
-    z-index: 0;
-    display: none;
-    padding: 0px;
-    margin: -2px;
-    margin-left: 0px;
-}
-
-.inactli {
-    color: #aaa;
-}
-
-.menuul li:hover ul {
-    position: absolute;
-    left: 100%;
-    display: block;
+.menukey {
+    font-family: monospace;
+    color: blue;
+    font-weight: bold;
+    float: right;
+    margin-left: 10px;
 }
 
 .slide {

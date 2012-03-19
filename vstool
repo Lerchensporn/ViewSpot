@@ -8,22 +8,26 @@ def main():
     signal.signal(signal.SIGINT, exitSignal)
 
     global options
-    if len(sys.argv) == 1:
-        return
 
     options = [
         ('dirsize', dirsize, 'Get the size of the presentation'),
         ('zip', makezip, 'Create a portable zip file'),
-        ('backup', backup, 'Create a zip file with the files that do\n\t\t\tnot belong to the framework.'),
+        ('backup', backup, 'Create a zip file with the files that do not belong to the framework.'),
         ('help', help, 'Show this help text.'),
-        ('install-module', installModule, 'Install a module.')
+        ('install-module', installModule, 'Install a module.'),
+        ('uninstall-module', uninstallModule, 'Uninstall a module.'),
+        ('list-modules', listModules, 'List the installed modules.')
     ]
+
+    if len(sys.argv) == 1:
+        help()
+        return
 
     for option in options:
         if sys.argv[1] == option[0]:
             option[1]()
 
-def exitSignal():
+def exitSignal(arg1, arg2):
     exit()
 
 def downloadFile(url):
@@ -67,9 +71,36 @@ def rmfiles(base, fileslist):
     for fi in fileslist:
         os.remove(os.path.join(base, fi))
 
+modules = ['mathjax', 'flot', 'syntaxhighlighter', 'jqplot', 'raphael', 'jsxgraph']
+
+def listModules():
+    modlist = []
+    for mod in modules:
+        if os.path.exists(os.path.join(os.getcwd(), 'framework', mod)):
+            modlist.append(mod)
+    print('Installed modules: ' + ', '.join(modlist))
+
+def uninstallModule():
+    if len(sys.argv) < 3:
+        print('Specify a module to uninstall.')
+        listModules()
+        return
+
+    mod = sys.argv[2]
+    if mod not in modules:
+        print('The module does not exist.')
+        return
+    modpath = os.path.join(os.getcwd(), 'framework', mod)
+    if not os.path.exists(modpath):
+        print('The module is not installed.')
+        return
+    print('Removing ' + mod + ' ...')
+    shutil.rmtree(modpath)
+    listModules()
+
 def installModule():
     if len(sys.argv) < 3:
-        print('Available modules: mathjax, flot, syntaxhighlighter, jqplot, raphael')
+        print('Available modules: ' + ', '.join(modules))
         return
     module = sys.argv[2]
 
@@ -121,6 +152,9 @@ def installModule():
         exit()
     moveModuleFiles(module, srcdir)
     print('Module ' + module + ' has been installed.')
+    downpath = os.path.join(os.getcwd(), 'downfile')
+    if (os.path.exists(downpath)):
+        os.remove(downpath)
 
 def moveToDir(pathlist, filenames):
     for i in range(len(pathlist)):
@@ -168,7 +202,7 @@ def backup():
 def help():
     print('Help text:')
     for option in options:
-        print('\t' + option[0] + '\t\t' + option[2])
+        print('\t' + option[0].ljust(20, ' ') + option[2])
 
 if __name__ == '__main__':
     main()
