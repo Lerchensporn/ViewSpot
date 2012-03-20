@@ -431,12 +431,6 @@ var vs = (function() {
             link.type = 'text/css';
             link.href = filename;
 
-            if (isLinkSync()) {
-                ++loadedCount;
-            }
-            else {
-                link.addEventListener('load', onElementLoad, false);
-            }
             csslist.push(link);
         };
 
@@ -445,45 +439,24 @@ var vs = (function() {
                 _sl.onload();
                 return;
             }
+
             for (var i = 0; i < scriptlist.length; ++i) {
                 document.head.appendChild(scriptlist[i]);
             }
+
             for (var i = 0; i < csslist.length; ++i) {
                 document.head.appendChild(csslist[i]);
-            }
-
-            // for webkit, see above
-            if (loadedCount === scriptlist.length + csslist.length) {
-                _sl.onload();
             }
         };
 
         function onElementLoad() {
-            if (++loadedCount === scriptlist.length + csslist.length) {
+            if (++loadedCount === scriptlist.length) {
                 _sl.onload();
             }
         }
 
         return _sl;
     };
-
-    function isLinkSync() {
-        // check if link nodes support the onload event
-        // webkit: patch committed 2012-02-24, https://bugs.webkit.org/show_bug.cgi?id=38995
-        // firefox: async loading if version > 8
-
-        if (navigator.userAgent.indexOf('AppleWebKit') !== -1) {
-            return true;
-        }
-
-        var ffstr = 'Firefox/';
-        var ua = navigator.userAgent;
-        var ffindex = ua.indexOf(ffstr);
-        if (ffindex === -1) {
-            return false;
-        }
-        return (ua[ffindex + ffstr.length + 1] === '.' && ua[ffindex + ffstr.length] < 9);
-    }
 
     function loadModules() {
         moduleScriptLoader = ScriptLoader();
@@ -784,23 +757,6 @@ var vs = (function() {
 
     /* Executes the callbacks in the readycbs array when the DOM is ready. */
     function onready() {
-        /* Firefox loads stylesheets asynchronously, but the stylesheets must be loaded
-           when createSlides is executed. So we run createSlides after both the load
-           event of the ScriptLoader and DOMContentLoaded were fired. */
-
-        var cssLoader = ScriptLoader();
-        var domcssCount = 0;
-        var domcssLoader = function() {
-            if (++domcssCount === 2) {
-                createSlides();
-            }
-        };
-
-        cssLoader.onload = domcssLoader;
-        cssLoader.appendCSS('framework/main.css');
-        cssLoader.appendCSS('framework/corethemes.css');
-        cssLoader.load();
-
         var cb = function() {
             parseDom();
             defaultConfig();
@@ -810,8 +766,7 @@ var vs = (function() {
             for (var i = 0; i < readyFuncs.script.length; ++i) {
                 readyFuncs.script[i]();
             }
-
-            domcssLoader();
+            createSlides();
         };
         window.addEventListener('DOMContentLoaded', cb, false);
         window.addEventListener('load', loadModules, false);
