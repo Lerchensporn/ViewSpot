@@ -431,9 +431,7 @@ var vs = (function() {
             link.type = 'text/css';
             link.href = filename;
 
-            if (navigator.userAgent.indexOf('AppleWebKit') !== -1) {
-                // Webkit does/did not support the onload event on link elements. A patch has
-                // been committed 2012-02-24. https://bugs.webkit.org/show_bug.cgi?id=38995
+            if (isLinkSync()) {
                 ++loadedCount;
             }
             else {
@@ -468,6 +466,24 @@ var vs = (function() {
 
         return _sl;
     };
+
+    function isLinkSync() {
+        // check if link nodes support the onload event
+        // webkit: patch committed 2012-02-24, https://bugs.webkit.org/show_bug.cgi?id=38995
+        // firefox: async loading if version > 8
+
+        if (navigator.userAgent.indexOf('AppleWebKit') !== -1) {
+            return true;
+        }
+
+        var ffstr = 'Firefox/';
+        var ua = navigator.userAgent;
+        var ffindex = ua.indexOf(ffstr);
+        if (ffindex === -1) {
+            return false;
+        }
+        return (ua[ffindex + ffstr.length + 1] === '.' && ua[ffindex + ffstr.length] < 9);
+    }
 
     function loadModules() {
         moduleScriptLoader = ScriptLoader();
@@ -800,8 +816,6 @@ var vs = (function() {
         window.addEventListener('DOMContentLoaded', cb, false);
         window.addEventListener('load', loadModules, false);
     }
-
-    /* ---------------------------------------------------------------------------- */
 
     function setCookie(name, value) {
         // expires after one day
