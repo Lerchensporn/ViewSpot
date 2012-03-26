@@ -677,7 +677,7 @@ var vs = (function() {
                     ol.leaveCallback();
                 }
                 else {
-                    ol.stepCallback();
+                    ol.stepCallback(overlayIndex);
                 }
             }
         }

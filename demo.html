@@ -143,13 +143,9 @@ var A  = brd.create('point', [0,0]),
         <h1>jqPlot plugin</h1>
         <div id="jqplot" style="width:700px;height:500px;margin-left:110px;margin-top:50px"></div>
         <script>
-            vs.ready(function() {
-                var options = {
-                    grid : { shadow : false },
-                    seriesDefaults : { shadow: false, markerOptions : { shadow : false }}
-                };
-                $.jqplot('jqplot', [[[1, 2],[3,5.12],[5,13.1],[7,33.6],[9,85.9],[11,219.9]]], options);
-            });
+        vs.ready(function() {
+            var plot1 = $.jqplot ('jqplot', [[3,7,9,1,4,6,8,2,5]]);
+        });
         </script>
     </div>
     <div>
@@ -157,51 +153,65 @@ var A  = brd.create('point', [0,0]),
         <div id="flotplot" style="width:700px;height:500px;margin-left:110px;margin-top:50px"></div>
         <script>
             vs.ready(function() {
-                var d1 = [];
-            for (var i = 0; i < Math.PI * 2; i += 0.25)
-                d1.push([i, Math.sin(i)]);
+    var d1 = [];
+    for (var i = 0; i <= 10; i += 1)
+        d1.push([i, parseInt(Math.random() * 30)]);
 
-            var d2 = [];
-            for (var i = 0; i < Math.PI * 2; i += 0.25)
-                d2.push([i, Math.cos(i)]);
+    var d2 = [];
+    for (var i = 0; i <= 10; i += 1)
+        d2.push([i, parseInt(Math.random() * 30)]);
 
-            var d3 = [];
-            for (var i = 0; i < Math.PI * 2; i += 0.1)
-                d3.push([i, Math.tan(i)]);
+    var d3 = [];
+    for (var i = 0; i <= 10; i += 1)
+        d3.push([i, parseInt(Math.random() * 30)]);
 
-            $.plot($("#flotplot"), [
-                { label: "sin(x)",  data: d1},
-                { label: "cos(x)",  data: d2},
-                { label: "tan(x)",  data: d3}
-            ], {
-                series: {
-                    lines: { show: true },
-                    points: { show: true }
-                },
-                xaxis: {
-                    ticks: [0, [Math.PI/2, "\u03c0/2"], [Math.PI, "\u03c0"], [Math.PI * 3/2, "3\u03c0/2"], [Math.PI * 2, "2\u03c0"]]
-                },
-                yaxis: {
-                    ticks: 10,
-                    min: -2,
-                    max: 2
-                },
-                grid: {
-                    backgroundColor: { colors: ["#fff", "#eee"] }
-                }
-            });
+    var stack = 0, bars = true, lines = false, steps = false;
+    
+    function plotWithOptions() {
+        $.plot($("#flotplot"), [ d1, d2, d3 ], {
+            series: {
+                stack: stack,
+                lines: { show: lines, fill: true, steps: steps },
+                bars: { show: bars, barWidth: 0.6 }
+            }
         });
-        </script>
+    }
+
+    plotWithOptions();
+    
+    $(".stackControls input").click(function (e) {
+        e.preventDefault();
+        stack = $(this).val() == "With stacking" ? true : null;
+        plotWithOptions();
+    });
+    $(".graphControls input").click(function (e) {
+        e.preventDefault();
+        bars = $(this).val().indexOf("Bars") != -1;
+        lines = $(this).val().indexOf("Lines") != -1;
+        steps = $(this).val().indexOf("steps") != -1;
+        plotWithOptions();
+    });
+
+            });
+
+       </script>
     </div>
     <div>
         <h1>Raphael plugin</h1>
-        <div id="holder"></div>
+        <div id="holder" style="margin-left:170px"></div>
         <script>
             vs.ready(function() {
-                var paper = new Raphael(document.getElementById('holder'), 500, 500);
-                var tetronimo = paper.path("M 250 250 l 0 -50 l -50 0 l 0 -50 l -50 0 l 0 50 l -50 0 l 0 50 z");
-                vs.setOverlay(6, '1-2', function() { tetronimo.attr({ stroke : 'blue', 'stroke-width' : '10px' }); }, 
-                function() { tetronimo.attr({ stroke: 'black', 'stroke-width' : '1px' }); });
+                var paper = Raphael('holder', 700, 700);
+                var r = 200;
+                for (var i = 0; i < 10; ++i) {
+                    var phi = 2 * Math.PI / 10 * i;
+                    paper.circle(r + r * Math.cos(phi) + 100, r + r * Math.sin(phi) + 100, 50).attr({ 'fill' : 'yellow', 'stroke' : 'blue' });
+                }
+                vs.setOverlay(6, '1-11', null, null, function(step) {
+                    --step;
+                    var phi = 2 * Math.PI / 10 * (step + 1);
+                    paper.text(r + r * Math.cos(phi) + 100, r + r * Math.sin(phi) + 100, step).attr({ 'font-size' : '35px' });
+                });
             });
         </script>
     </div>

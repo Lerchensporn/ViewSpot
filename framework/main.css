@@ -6,6 +6,20 @@
     padding-left: 15px;
 }
 
+.jqplot-target {
+    font-family: inherit !important;
+}
+
+.jqplot-xaxis-tick {
+    margin-top: 3px;
+    margin-left: 5px;
+}
+
+.jqplot-yaxis-tick {
+    margin-top: 8px;
+    margin-right: 8px;
+}
+
 .theorem {
     box-shadow: 4px 4px 4px #d0d0d0;
     border-top: 1px solid #d0d0d0;
