@@ -100,8 +100,7 @@
         Despite the advantages of a non-WYSIWYG approach, some lusers might
         feel irritated when they cannot point and click around.</dd>
         <dt>The portability is worse than with PDF files</dt>
-        <dd>A modern web browser is required to view the presentations (Internet Explorer does
-        not count as a web browser).</dd>
+        <dd>A modern web browser is required to view the presentations.</dd>
         </dt>
         </dl>
 
@@ -119,8 +118,8 @@
     and the file »vstool«. The vstool is a Python script with a lot of helpful functions, »framework«
     contains the actual presentation software.
 
-    For basic presentation, create an HTML file in the directory containing »framework«.
-    In the head, load the javascript file »core.js« and set you desired charset. The title
+    For a basic presentation, create an HTML file in the directory containing »framework«.
+    In the head, load the javascript file »core.js« and set your desired charset. The title
     is optional.
     Every div element inside the body tag will be turned into a slide.
     <pre>
@@ -165,7 +164,7 @@
     the HTML markup of the notes.
     Each slide is supposed to contain a <code>&lt;h1&gt;&lt;/h1&gt;</code> element, which
     represents the slide title.
-    To create theorem boxed like in LaTeX beamer, use this structure:
+    To create theorem boxes like in LaTeX Beamer, use this structure:
     <pre>
         &lt;div class="theorem"&gt;
             &lt;h2&gt;Theorem title&lt;/h2&gt;
@@ -173,7 +172,7 @@
         &lt;/div&gt;
     </pre>
     There are some predefined CSS styles that can be applied to each slide by
-    setting the class name to the respective class.
+    setting the respective class name.
 
     <h3>Configuration</h3>
     Javascript is used to configure the presentation. The most important options
