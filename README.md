@@ -1,1 +1,1 @@
-Visit the [project web page](http://woho.github.com/ViewSpot).
+Visit the [project web page](http://woho.github.io/ViewSpot).
