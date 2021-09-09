@@ -51,14 +51,14 @@
         to write the presentation markup and the configuration into a HTML file.
 
         <h2>Getting started</h2>
-        To get an impression, view the <a href="demo.html"><b>demo presentation</b></a>.
+        To get an impression, view the <a href="demo.html"><b>demo presentation</b></a>. Press W to see the notes and the slide overview.
         You can download the project from the <a href="http://github.com/woho/ViewSpot">project page on github</a>.
 
         <h2>Features</h2>
         <dl>
         <dt>Excellent support for math typesetting</dt><dd>
          The MathJax plugin converts TeX markup between the tags \[ \] or
-        \( \) into MathML.</dd>
+        \( \) to SVG or MathML.</dd>
         <dt>Great looking themes</dt><dd>
         Some well-tried LaTeX Beamer themes are provided. CSS 3 supports
         eye-candy features like shadows, gradients and rounded corners.</dd>
@@ -73,7 +73,7 @@
         are supported.
         </dd>
         <dt>Customizable</dt><dd>
-        It is very easy to define own themes using CSS or even Javascript.
+        It is easy to define own themes using CSS or even Javascript.
         </dd>
         <dt>Support for controls</dt><dd>
         This extends the LaTeX approach of different elements like the footer, a title,
@@ -83,33 +83,24 @@
         One can write the content and style it afterwards. The productivity increases,
         because one only has to concentrate on one thing at the same time.</dd>
         <dt>Small download and no installation required</dt>
-        <dd>An advantage in comparision to LaTeX (hundred of megabytes) and Impress, because
-        no installation is required. However, when using many plugins, the file size is likely bigger that
+        <dd>An advantage in comparison to LaTeX (hundreds of megabytes) and Impress, because
+        no installation is required. However, when using many plugins, the file size is probably bigger than
         the size of .odf files.
         <dt>Extensibility and many useful plugins</dt><dd>
-        A plugin interface is provided and there are e. g. plugins for math, plotting.
+        A plugin interface is provided and there are e. g. plugins for math typesetting and plotting.
         </dd>
         </dl>
 
         Disadvantages:
         <dl>
-        <dt>More user experience required</dt><dd>
+        <dt>More technical proficiency is required.</dt><dd>
         You have to know HTML, CSS and Javascript. Fortunately, the basics of those
         languages are easy to learn and Javascript knowledge is only necessary
-        when using advances features.
-        Despite the advantages of a non-WYSIWYG approach, some lusers might
-        feel irritated when they cannot point and click around.</dd>
+        when using advanced features.
         <dt>The portability is worse than with PDF files</dt>
         <dd>A modern web browser is required to view the presentations.</dd>
         </dt>
         </dl>
-
-    <h2>To Do List</h2>
-    <ul>
-        <li>more themes</li>
-        <li>improve menu</li>
-        <li>implement Python tools</li>
-    </ul>
 
     <h2>Documentation</h2>
     <h3>A short intruduction</h3>
@@ -150,7 +141,7 @@
     It is possible to have different views for the audience and the presenter.
     Press »W« to change the view. Currently, there are the following views:
     <dl>
-        <dt>Normal View</dt><dd>The fullscreen slide visible to the audience</dd>
+        <dt>Normal View</dt><dd>The fullscreen slide visible to the audience.</dd>
         <dt>Preview Console</dt><dd>Shows the current slide and the next slide.</dd>
         <dt>Notes Console</dt><dd>Shows the current slides and notes. Press the up/down
             key to scroll the notes box up and down.</dd>
@@ -190,7 +181,7 @@
 
     Complete list of configuration options:
     <table>
-        <tr><th>Option</th><th>Explanation</th><th>Value</th></tr>
+        <tr><th>Option</th><th>Description</th><th>Value</th></tr>
         <tr>
             <td>modules</td>
             <td>List of modules to be loaded.</td>
@@ -211,7 +202,7 @@
         </tr>
         <tr>
             <td>cursorHideTimeout</td>
-            <td>Time after the the not moving cursor is hidden.</td>
+            <td>Time after the not moving cursor is hidden.</td>
             <td>Integer that specifies the time in milliseconds. Default value: 1000.</td>
         </tr>
         <tr>
@@ -250,7 +241,7 @@
 
 
     <h3>Overlays</h3>
-    Overlays are like animation in Impress/Powerpoint or like overlays in LaTeX Beamer. The overlays
+    Overlays are like animations in Impress/Powerpoint or like overlays in LaTeX Beamer. The overlays
     are frame based, that means when navigating, whe frame number changes and the respective overlay
     is loaded. There are both CSS and Javascript overlays.
 
@@ -285,21 +276,6 @@
         vstool doc
         vstool store-fonts</pre>
 
-    <h2>Compatibility</h2>
-    ViewSpot is developed for Firefox and Chromium (Gecko and Webkit).
-    Browser bugs:
-    <ul>
-        <li>Firefox renders scaled fonts twice, which makes letters to dance.
-            Before presenting, one should scroll through the slides, because
-            the bug only appears once for each scale.</li>
-        <li>Firefox does not render scaled borders and box shadows correctly. A complex workaround is used
-            to make it look properly.</li>
-        <li>Chromium does not support MathML, that is why the HTML-CSS output is used in MathJax.</li>
-        <li>Chromium fires the mousemove event when the cursor shape changes. There is an easy workaround.</li>
-        <li>Chromium does not support local cookies by default.</li>
-        <li>Chromium does not support local ajax requests, because it thinks this would be
-            a cross origin request.</li>
-    </ul>
     <h2>License</h2>
     You can do with the code what you want, if you put a reference to me (that means this site).
     See <a href="http://www.opensource.org/licenses/mit-license.php">MIT license</a>.

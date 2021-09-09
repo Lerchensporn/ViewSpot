@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-import os, signal, sys, argparse, zipfile, urllib2, shutil
+import os, signal, sys, argparse, zipfile, shutil
+from urllib.request import urlopen
 
 options = []
 
@@ -33,25 +34,26 @@ def exitSignal(arg1, arg2):
 def downloadFile(url):
     print('Initializing download ...')
     try:
-        ulib = urllib2.urlopen(url)
+        url = urlopen(url)
     except:
         print('Unable to download the file.')
         exit()
     fp = open('downfile', 'wb')
-    meta = ulib.info()
-    totalsize = int(meta.getheaders('Content-Length')[0])
+    totalsize = url.info().get('content-length')
     fsize = 0
     blocksize = 1024
     while True:
-        buf = ulib.read(blocksize)
+        buf = url.read(blocksize)
         if not buf:
             break
         fsize += len(buf)
         fp.write(buf)
-        status = 'Progress: [%3.0f %%]\r' % (fsize * 100 / totalsize)
-        sys.stdout.write(status)
-        sys.stdout.flush()
+        if totalsize is not None:
+            status = 'Progress: [%3.0f %%]\r' % (fsize * 100 / totalsize)
+            sys.stdout.write(status)
+            sys.stdout.flush()
     fp.close()
+    url.close()
     return 'downfile'
 
 def moveModuleFiles(modname, srcdir):
@@ -112,13 +114,11 @@ def installModule():
     if module == 'mathjax':
         path = downloadUnzip('http://github.com/mathjax/Mathjax/zipball/master')
         srcdir = os.path.join(path, os.listdir(path)[0])
-        rmdirs(srcdir, ['fonts', 'docs', 'test', 'unpacked', 'config', 'jax/output/HTML-CSS/fonts/TeX'])
-        rmfiles(srcdir, ['LICENSE', 'README.md', 'jax/output/HTML-CSS/imageFonts.js', 'extensions/MathMenu.js', 'extensions/MathZoom.js'])
     elif module == 'syntaxhighlighter':
         path = downloadUnzip('http://alexgorbatchev.com/SyntaxHighlighter/download/download.php?sh_current')
         srcdir = os.path.join(path, os.listdir(path)[0])
         rmdirs(srcdir, ['compass', 'tests', 'src'])
-        rmfiles(srcdir, ['LGPL-LICENSE', 'MIT-LICENSE', 'index.html'])
+        rmfiles(srcdir, ['index.html'])
     elif module == 'raphael':
         path = downloadFile('https://raw.github.com/DmitryBaranovskiy/raphael/master/raphael.js')
         srcdir = tmpdir
@@ -127,7 +127,7 @@ def installModule():
         path = downloadUnzip('http://flot.googlecode.com/files/flot-0.7.zip')
         srcdir = os.path.join(path, 'flot')
         rmdirs(srcdir, ['examples'])
-        rmfiles(srcdir, ['FAQ.txt', 'LICENSE.txt', 'NEWS.txt', 'API.txt', 'Makefile', 'PLUGINS.txt', 'README.txt', 'excanvas.min.js'])
+        rmfiles(srcdir, ['FAQ.txt', 'NEWS.txt', 'API.txt', 'Makefile', 'PLUGINS.txt', 'README.txt', 'excanvas.min.js'])
         for fname in os.listdir(srcdir):
             if not fname.endswith('.min.js') and fname.endswith('.js'):
                 os.remove(os.path.join(srcdir, fname))
@@ -136,8 +136,8 @@ def installModule():
         srcdir = os.path.join(path, 'dist')
         rmdirs(srcdir, ['examples', 'docs'])
         rmfiles(srcdir, ['jquery.js', 'optionsTutorial.txt', 'jquery.jqplot.css', 'jquery.jqplot.js', \
-            'excanvas.js', 'excanvas.min.js', 'copyright.txt', 'changes.txt', 'gpl-2.0.txt', 'jqPlotCssStyling.txt',\
-            'jqPlotOptions.txt', 'usage.txt', 'README.txt', 'MIT-LICENSE.txt'])
+            'excanvas.js', 'excanvas.min.js', 'copyright.txt', 'changes.txt', 'jqPlotCssStyling.txt',\
+            'jqPlotOptions.txt', 'usage.txt', 'README.txt'])
         for fname in os.listdir(os.path.join(srcdir, 'plugins')):
             if not fname.endswith('.min.js'):
                 os.remove(os.path.join(srcdir, 'plugins', fname))

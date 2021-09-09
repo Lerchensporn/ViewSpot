@@ -406,10 +406,6 @@ var vs = (function() {
         _sl.onload = function() { };
 
         _sl.appendScript = function(filename, onload) {
-            if (fileExists(filename) === false) {
-                _vs.showMessage('The script file »' + filename + '« does not exist.');
-                return;
-            }
             var js = document.createElement('script');
             js.type = 'text/javascript';
             js.async = false;
@@ -422,10 +418,6 @@ var vs = (function() {
         };
 
         _sl.appendCSS = function(filename) {
-            if (fileExists(filename) === false) {
-                _vs.showMessage('The css file »' + filename + '« does not exist.');
-                return;
-            }
             var link = document.createElement('link');
             link.rel = 'stylesheet';
             link.type = 'text/css';
@@ -477,24 +469,6 @@ var vs = (function() {
     function modulesLoaded() {
         for (var i = 0; i < readyFuncs.modulesLoaded.length; ++i) {
             readyFuncs.modulesLoaded[i]();
-        }
-    }
-
-    function fileExists(filename) {
-        if (navigator.userAgent.indexOf('AppleWebKit') !== -1) {
-            // Chromium does not support local ajax.
-            return true;
-        }
-
-        var xmlhttp = new XMLHttpRequest();
-        xmlhttp.overrideMimeType('text/plain');
-        xmlhttp.open('GET', filename, false);
-        try {
-            xmlhttp.send(null);
-            return true;
-        }
-        catch (e) {
-            return false;
         }
     }
 
@@ -808,112 +782,6 @@ var vs = (function() {
         otherWindow.vs.setSync(false);
         otherWindow.vs[func].apply(otherWindow.vs, args);
         otherWindow.vs.setSync(true);
-    }
-
-    /* Workaround for a firefox bug that creates lines around blocks when scale and box-shadow are applied.
-       A div with the same position and size (minus 1 px border) is laid under the actual element and the
-       shadow is applied to the div instead of the overlying element. */
-    function mozShadowElement(elem) {
-        if (elem.className === 'mozfix') {
-            return;
-        }
-        var computed = window.getComputedStyle(elem, null);
-        if (computed.getPropertyValue('position') === 'absolute') {
-            return;
-        }
-        var shadowid = elem.getAttribute('data-shadowid');
-        var boxshadow = computed.getPropertyValue('box-shadow');
-        if (boxshadow === 'none' && shadowid === null) {
-            return;
-        }
-
-        // the underlying div is inset by 1 px, so increase the shadow offset by 1 px
-        var add1px = function(boxshadow) {
-            var split = boxshadow.split(' ');
-            if (split.length < 3) {
-                return;
-            }
-            split[split.length - 1] = parseInt(split[split.length - 1]) + 1 + 'px';
-            return split.join(' ');
-        };
-
-        var absdiv;
-        if (shadowid !== null) {
-            absdiv = document.getElementById(shadowid);
-        }
-
-        if (shadowid === null || absdiv === null) {
-            var innershadow = [];
-            var outershadow = [];
-            var split = boxshadow.split(', rgb(');
-            for (var i = 0; i < split.length; ++i) {
-                if (i !== 0) {
-                    split[i] = 'rgb(' + split[i];
-                }
-                if (split[i].lastIndexOf('inset') !== -1) {
-                    innershadow.push(split[i]);
-                }
-                else {
-                    outershadow.push(add1px(split[i]));
-                }
-            }
-            innershadow = innershadow.join(',');
-            outershadow = outershadow.join(',');
-
-            if (outershadow.length === 0) {
-                return;
-            }
-
-            absdiv = document.createElement('div');
-            absdiv.className = 'mozfix';
-            absdiv.id = 'mozfix' + mozShadowUnique();
-            elem.setAttribute('data-shadowid', absdiv.id);
-            elem.parentNode.insertBefore(absdiv, elem);
-
-            absdiv.style.boxShadow = outershadow;
-            elem.style.boxShadow = innershadow;
-        }
-
-        var cssLength = function(prop) {
-            return parseInt(computed.getPropertyValue(prop));
-        };
-
-        var dir = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
-        for (var i = 0; i < dir.length; ++i) {
-            var prop = 'border-' + dir[i] + '-radius';
-            var radius = computed.getPropertyValue(prop);
-            if (radius !== '0px') {
-                absdiv.style.setProperty(prop, radius, null);
-            }
-        }
-
-        var paddingRight = parseInt(computed.getPropertyValue('padding-right'));
-
-        absdiv.style.marginTop = cssLength('margin-top') + 1 + 'px';
-        absdiv.style.marginLeft = cssLength('margin-left') + 1 + 'px';
-
-        absdiv.style.height = cssLength('height') + cssLength('padding-top') + cssLength('padding-bottom') - 2 + 'px';
-        absdiv.style.width = cssLength('width') + cssLength('padding-left') + cssLength('padding-right') - 2 + 'px';
-
-        absdiv.style.zIndex = computed.getPropertyValue('z-index');
-    }
-
-    var mozShadowUnique = (function() {
-        var i = 0;
-        return function() {
-            return ++i;
-        };
-    })();
-
-    function mozShadowFix(rootNode) {
-        if (navigator.userAgent.indexOf('Firefox') === -1) {
-            return;
-        }
-
-        var all = rootNode.querySelectorAll('*');
-        for (var i = 0; i < all.length; ++i) {
-            mozShadowElement(all[i]);
-        }
     }
 
     function showSlide(number) {
